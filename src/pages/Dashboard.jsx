@@ -1,13 +1,17 @@
-// import { Outlet } from "react-router";
+import Card from "../components/Card";
 
 function Dashboard() {
   return (
-    <div className="p-4">
-      {/* <Outlet /> */}
-      <h2 className="text-2xl font-semibold">Resumo Financeiro</h2>
-      <div className="mt-4">
-        <p className="text-lg">Saldo Atual: R$ 0,00</p>
-        {/* Podemos adicionar mais informações de transações depois */}
+    <div className="p-8">
+      <div className="flex gap-8">
+        <Card
+          colorStart="from-green-500"
+          colorEnd="to-green-800"
+          title="Saldo atual"
+          button="Ver Detalhes"
+        >
+          R$ 0,00
+        </Card>
       </div>
     </div>
   );

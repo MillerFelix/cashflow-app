@@ -24,9 +24,14 @@ function Navbar() {
   return (
     <nav className="bg-gradient-to-r from-green-700 via-green-800 to-green-950 text-white p-8 shadow-xl rounded-b-3xl">
       <div className="container mx-auto flex justify-between items-center px-6">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-wider text-transparent bg-clip-text bg-gradient-to-l from-green-500 to-lime-400">
+        {/* Nome do App com link para o Dashboard */}
+        <Link
+          to="/"
+          className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-wider text-transparent bg-clip-text bg-gradient-to-l from-green-500 to-lime-400 hover:bg-gradient-to-r hover:from-yellow-300 hover:to-lime-500 transition-all duration-500"
+          onClick={() => setIsOpen(false)} // Fecha o menu, se aberto
+        >
           Cash$Flow
-        </h1>
+        </Link>
 
         <ul className="hidden md:flex gap-8">
           <li>
