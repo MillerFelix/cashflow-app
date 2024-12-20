@@ -1,4 +1,5 @@
 import Card from "../components/Card";
+import CategoryList from "../components/CategoryList";
 
 function Dashboard() {
   return (
@@ -13,6 +14,7 @@ function Dashboard() {
           R$ 0,00
         </Card>
       </div>
+      <CategoryList />
     </div>
   );
 }

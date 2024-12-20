@@ -28,7 +28,7 @@ function TransactionModal({ type, onClose, onSave }) {
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-800"
             />
           </div>
           <div className="mb-4">
@@ -39,7 +39,7 @@ function TransactionModal({ type, onClose, onSave }) {
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-800"
             />
           </div>
           <div className="mb-4">
@@ -50,7 +50,7 @@ function TransactionModal({ type, onClose, onSave }) {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-800"
             />
           </div>
           <div className="mb-4">
@@ -61,7 +61,7 @@ function TransactionModal({ type, onClose, onSave }) {
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-800"
             />
           </div>
         </form>
