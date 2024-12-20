@@ -10,7 +10,11 @@ function TransactionModal({ type, onClose, onSave }) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [category, setCategory] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
-  const [errors, setErrors] = useState({}); // Estado para validações
+  const [errors, setErrors] = useState({});
+
+  // Limites
+  const maxChars = 50;
+  const maxWords = 10;
 
   const categories = type === "credit" ? incomeCategories : expenseCategories;
 
@@ -27,7 +31,6 @@ function TransactionModal({ type, onClose, onSave }) {
 
   function handleSave() {
     if (validateFields()) {
-      // Converte o valor bruto para decimal antes de salvar
       const formattedAmount = parseFloat(amount) / 100;
       onSave(type, description, formattedAmount, date, category);
       onClose();
@@ -35,15 +38,26 @@ function TransactionModal({ type, onClose, onSave }) {
   }
 
   function handleAmountChange(e) {
-    const rawValue = e.target.value.replace(/[^\d]/g, ""); // Remove caracteres não numéricos
-    setAmount(rawValue); // Mantém o valor bruto para manipulação
+    const rawValue = e.target.value.replace(/[^\d]/g, "");
+    setAmount(rawValue);
   }
 
   function formatAmount(value) {
-    const numericValue = value.replace(/\D/g, ""); // Apenas números
+    const numericValue = value.replace(/\D/g, "");
     return numericValue
       ? `R$ ${(numericValue / 100).toFixed(2).replace(".", ",")}`
       : "";
+  }
+
+  function handleDescriptionChange(e) {
+    const inputValue = e.target.value;
+    const wordCount = inputValue.trim().split(/\s+/).length;
+    const charCount = inputValue.length;
+
+    // Limita palavras e caracteres
+    if (wordCount <= maxWords && charCount <= maxChars) {
+      setDescription(inputValue);
+    }
   }
 
   return (
@@ -60,7 +74,7 @@ function TransactionModal({ type, onClose, onSave }) {
             <input
               type="text"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={handleDescriptionChange}
               className={`w-full p-2 border rounded-lg focus:outline-none ${
                 errors.description
                   ? "border-red-500 focus:ring-2 focus:ring-red-500"
@@ -70,6 +84,12 @@ function TransactionModal({ type, onClose, onSave }) {
             {errors.description && (
               <p className="text-red-500 text-xs mt-1">{errors.description}</p>
             )}
+            <p className="text-gray-500 text-xs mt-1">
+              {description.length}/{maxChars} caracteres
+            </p>
+            <p className="text-gray-500 text-xs mt-1">
+              {description.trim().split(/\s+/).length}/{maxWords} palavras
+            </p>
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">
