@@ -10,7 +10,9 @@ function InfoCard({ colorStart, colorEnd, title, button, children }) {
       <div className="mt-4">
         <p className="text-3xl font-semibold text-yellow-300">{children}</p>
       </div>
-      <Button>{button}</Button>
+      <Button bgColor="bg-yellow-400" hoverColor="hover:bg-yellow-500">
+        {button}
+      </Button>
     </div>
   );
 }

@@ -1,7 +1,10 @@
 /* eslint-disable react/prop-types */
-function Button({ children }) {
+function Button({ children, bgColor, hoverColor, className, ...props }) {
   return (
-    <button className="mt-6 py-2 px-4 w-48 bg-yellow-400 text-gray-800 font-bold rounded-lg shadow-md hover:bg-yellow-500 transition-colors duration-300 block mx-auto">
+    <button
+      className={`mt-6 py-2 px-4 w-48 font-bold rounded-lg shadow-md transition-colors duration-300 block mx-auto ${bgColor} ${hoverColor} ${className}`}
+      {...props}
+    >
       {children}
     </button>
   );

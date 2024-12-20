@@ -1,7 +1,9 @@
 import { useState } from "react";
+import Button from "../components/Button";
+import TransactionItem from "../components/TransactionItem";
+import TransactionModal from "../components/TransactionModal";
 
 function Transactions() {
-  // Posteriormente será consultado do firestore
   const [transactions, setTransactions] = useState([
     {
       id: 1,
@@ -17,101 +19,66 @@ function Transactions() {
       amount: 150,
       date: "2024-12-18",
     },
-    {
-      id: 2,
-      type: "debit",
-      description: "Bill Payment",
-      amount: 150,
-      date: "2024-12-18",
-    },
-    {
-      id: 2,
-      type: "debit",
-      description: "Bill Payment",
-      amount: 150,
-      date: "2024-12-18",
-    },
   ]);
 
-  // Adicionar transação
-  function addTransaction(type, description, amount) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState("credit");
+
+  function addTransaction(type, description, amount, date, category) {
     const newTransaction = {
       id: transactions.length + 1,
       type,
       description,
       amount,
-      date: new Date().toISOString().split("T")[0],
+      date,
+      category,
     };
     setTransactions([...transactions, newTransaction]);
   }
 
-  // Remover transação
-  function removeTransaction(id) {
-    setTransactions(
-      transactions.filter((transaction) => transaction.id !== id)
-    );
-  }
-
   return (
     <div className="m-8 p-6 bg-gray-100 rounded-lg shadow-lg w-full max-w-3xl mx-auto">
-      <h2 className="text-2xl font-semibold text-center mb-6">
+      <h2 className="text-2xl font-semibold text-center mb-1">
         Transações Financeiras
       </h2>
 
       <div className="flex justify-between mb-4">
-        <button
-          onClick={() => addTransaction("credit", "New Deposit", 100)}
-          className="bg-green-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-green-600 transition duration-200"
+        <Button
+          onClick={() => {
+            setModalType("credit");
+            setIsModalOpen(true);
+          }}
+          bgColor="bg-green-600"
+          hoverColor="hover:bg-green-700"
+          className="text-gray-200"
         >
           Adicionar Crédito
-        </button>
-        <button
-          onClick={() => addTransaction("debit", "New Payment", 50)}
-          className="bg-red-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-red-600 transition duration-200"
+        </Button>
+        <Button
+          onClick={() => {
+            setModalType("debit");
+            setIsModalOpen(true);
+          }}
+          bgColor="bg-red-500"
+          hoverColor="hover:bg-red-800"
+          className="text-gray-200"
         >
           Adicionar Débito
-        </button>
+        </Button>
       </div>
 
-      <div className="space-y-4">
-        {transactions.map((transaction) => (
-          <div
-            key={transaction.id}
-            className={`p-4 rounded-lg shadow-md ${
-              transaction.type === "credit" ? "bg-green-100" : "bg-red-100"
-            }`}
-          >
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-semibold text-lg">
-                  {transaction.description}
-                </h3>
-                <p className="text-sm text-gray-500">{transaction.date}</p>
-              </div>
-              <div>
-                <p
-                  className={`font-semibold ${
-                    transaction.type === "credit"
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }`}
-                >
-                  {transaction.type === "credit" ? "+" : "-"} $
-                  {transaction.amount}
-                </p>
-              </div>
-            </div>
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={() => removeTransaction(transaction.id)}
-                className="text-sm text-red-500 hover:text-red-700"
-              >
-                Remover
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <TransactionItem
+        transactions={transactions}
+        onTransaction={setTransactions}
+      />
+
+      {isModalOpen && (
+        <TransactionModal
+          type={modalType}
+          onClose={() => setIsModalOpen(false)}
+          onSave={addTransaction}
+        />
+      )}
     </div>
   );
 }
