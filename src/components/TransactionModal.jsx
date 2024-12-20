@@ -1,23 +1,23 @@
 import { useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import Button from "./Button";
 import { expenseCategories, incomeCategories } from "./CategoryList";
+import TextInput from "./TextInput";
+import Dropdown from "./Dropdown";
+import ActionButtons from "./ActionButtons";
 
 function TransactionModal({ type, onClose, onSave }) {
   const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(""); // Valor inicial vazio
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [category, setCategory] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Limites
   const maxChars = 50;
   const maxWords = 10;
-
   const categories = type === "credit" ? incomeCategories : expenseCategories;
 
-  function validateFields() {
+  const validateFields = () => {
     const newErrors = {};
     if (!description.trim()) newErrors.description = "Descrição é obrigatória.";
     if (!amount || isNaN(amount) || parseFloat(amount) <= 0)
@@ -26,38 +26,27 @@ function TransactionModal({ type, onClose, onSave }) {
     if (!category) newErrors.category = "Selecione uma categoria.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }
+  };
 
-  function handleSave() {
+  const handleSave = () => {
     if (validateFields()) {
       const formattedAmount = parseFloat(amount) / 100;
       onSave(type, description, formattedAmount, date, category);
       onClose();
     }
-  }
+  };
 
-  function handleAmountChange(e) {
-    const rawValue = e.target.value.replace(/[^\d]/g, "");
-    setAmount(rawValue);
-  }
+  const handleAmountChange = (rawValue) => {
+    // Atualiza apenas o valor bruto
+    const numericValue = rawValue.replace(/[^\d]/g, ""); // Remove caracteres não numéricos
+    setAmount(numericValue);
+  };
 
-  function formatAmount(value) {
-    const numericValue = value.replace(/\D/g, "");
-    return numericValue
-      ? `R$ ${(numericValue / 100).toFixed(2).replace(".", ",")}`
-      : "";
-  }
-
-  function handleDescriptionChange(e) {
-    const inputValue = e.target.value;
-    const wordCount = inputValue.trim().split(/\s+/).length;
-    const charCount = inputValue.length;
-
-    // Limita palavras e caracteres
-    if (wordCount <= maxWords && charCount <= maxChars) {
-      setDescription(inputValue);
-    }
-  }
+  const formatAmount = (value) => {
+    if (!value) return ""; // Retorna vazio se não houver valor
+    const numericValue = parseInt(value, 10); // Garante que é um número inteiro
+    return `R$ ${(numericValue / 100).toFixed(2).replace(".", ",")}`;
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
@@ -66,121 +55,39 @@ function TransactionModal({ type, onClose, onSave }) {
           Adicionar {type === "credit" ? "Crédito" : "Débito"}
         </h3>
         <form>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Descrição
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={handleDescriptionChange}
-              className={`w-full p-2 border rounded-lg focus:outline-none ${
-                errors.description
-                  ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                  : "focus:ring-2 focus:ring-green-800"
-              }`}
-            />
-            {errors.description && (
-              <p className="text-red-500 text-xs mt-1">{errors.description}</p>
-            )}
-            <p className="text-gray-500 text-xs mt-1">
-              {description.length}/{maxChars} caracteres
-            </p>
-            <p className="text-gray-500 text-xs mt-1">
-              {description.trim().split(/\s+/).length}/{maxWords} palavras
-            </p>
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Valor
-            </label>
-            <input
-              type="text"
-              value={formatAmount(amount)}
-              onChange={handleAmountChange}
-              className={`w-full p-2 border rounded-lg focus:outline-none ${
-                errors.amount
-                  ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                  : "focus:ring-2 focus:ring-green-800"
-              }`}
-            />
-            {errors.amount && (
-              <p className="text-red-500 text-xs mt-1">{errors.amount}</p>
-            )}
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Data
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className={`w-full p-2 border rounded-lg focus:outline-none ${
-                errors.date
-                  ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                  : "focus:ring-2 focus:ring-green-800"
-              }`}
-            />
-            {errors.date && (
-              <p className="text-red-500 text-xs mt-1">{errors.date}</p>
-            )}
-          </div>
-          <div className="mb-4 relative">
-            <label className="block text-sm font-medium text-gray-700">
-              Categoria
-            </label>
-            <div
-              className={`w-full p-2 border rounded-lg cursor-pointer flex justify-between items-center focus:outline-none ${
-                errors.category
-                  ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                  : "focus:ring-2 focus:ring-green-800"
-              }`}
-              onClick={() => setShowDropdown(!showDropdown)}
-            >
-              {category || "Selecione uma categoria"}
-              {showDropdown ? <FaChevronUp /> : <FaChevronDown />}
-            </div>
-            {showDropdown && (
-              <div className="absolute w-full bg-white border rounded-lg mt-1 max-h-40 overflow-y-auto shadow-lg z-10">
-                {categories.map((cat, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center p-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => {
-                      setCategory(cat.name);
-                      setShowDropdown(false);
-                    }}
-                  >
-                    <div className="text-xl mr-2">{cat.icon}</div>
-                    <span className="text-sm">{cat.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {errors.category && (
-              <p className="text-red-500 text-xs mt-1">{errors.category}</p>
-            )}
-          </div>
+          <TextInput
+            label="Descrição"
+            value={description}
+            onChange={setDescription}
+            error={errors.description}
+            maxChars={maxChars}
+            maxWords={maxWords}
+          />
+          <TextInput
+            label="Valor"
+            value={formatAmount(amount)} // Exibe o valor formatado
+            onChange={handleAmountChange} // Atualiza o valor bruto
+            error={errors.amount}
+            isNumeric // Indica que o campo é numérico
+          />
+          <TextInput
+            label="Data"
+            type="date"
+            value={date}
+            onChange={setDate}
+            error={errors.date}
+          />
+          <Dropdown
+            label="Categoria"
+            categories={categories}
+            selectedCategory={category}
+            onSelect={setCategory}
+            showDropdown={showDropdown}
+            setShowDropdown={setShowDropdown}
+            error={errors.category}
+          />
         </form>
-        <div className="flex justify-end space-x-2">
-          <Button
-            onClick={onClose}
-            bgColor="bg-gray-200"
-            hoverColor="hover:bg-gray-300"
-            className="text-gray-700"
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSave}
-            bgColor="bg-green-600"
-            hoverColor="hover:bg-green-700"
-            className="text-gray-200"
-          >
-            Salvar
-          </Button>
-        </div>
+        <ActionButtons onClose={onClose} onSave={handleSave} />
       </div>
     </div>
   );
