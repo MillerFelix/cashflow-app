@@ -19,7 +19,7 @@ import {
   FaPlusCircle,
 } from "react-icons/fa";
 
-const expenseCategories = [
+export const expenseCategories = [
   { name: "Moradia", icon: <FaHome /> },
   { name: "Alimentação", icon: <FaUtensils /> },
   { name: "Transporte", icon: <FaCar /> },
@@ -30,10 +30,10 @@ const expenseCategories = [
   { name: "Seguros", icon: <FaShieldAlt /> },
   { name: "Finanças e Investimentos", icon: <FaPiggyBank /> },
   { name: "Impostos e Taxas", icon: <FaFileInvoiceDollar /> },
-  { name: "Outros", icon: <FaEllipsisH /> },
+  { name: "Outras Despesas", icon: <FaEllipsisH /> },
 ];
 
-const incomeCategories = [
+export const incomeCategories = [
   { name: "Salário", icon: <FaMoneyBillWave /> },
   { name: "Freelance e Renda Extra", icon: <FaBriefcase /> },
   { name: "Investimentos", icon: <FaChartLine /> },
@@ -43,7 +43,7 @@ const incomeCategories = [
   { name: "Outros Ganhos", icon: <FaPlusCircle /> },
 ];
 
-const CategoryList = () => {
+function CategoryList() {
   return (
     <div className="space-y-6 mt-6">
       {/* Despesas */}
@@ -83,6 +83,6 @@ const CategoryList = () => {
       </div>
     </div>
   );
-};
+}
 
 export default CategoryList;

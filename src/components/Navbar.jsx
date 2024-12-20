@@ -1,12 +1,36 @@
-import { Link } from "react-router-dom";
-import { FaChartBar, FaWallet, FaBullseye, FaBars } from "react-icons/fa";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import {
+  FaChartBar,
+  FaWallet,
+  FaBullseye,
+  FaBars,
+  FaSignOutAlt,
+} from "react-icons/fa";
+import { auth } from "../firebase"; // Importe o auth do Firebase
+import { signOut } from "firebase/auth"; // Importe o signOut do Firebase
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false); // Estado para controlar o modal
 
   function toggleMenu() {
     setIsOpen(!isOpen);
+  }
+
+  function handleLogout() {
+    signOut(auth)
+      .then(() => {
+        console.log("Logout realizado com sucesso");
+      })
+      .catch((error) => {
+        console.error("Erro ao deslogar", error);
+      });
+  }
+
+  function handleConfirmLogout() {
+    handleLogout();
+    setShowModal(false); // Fecha o modal após o logout
   }
 
   // Fecha o menu quando a tela for redimensionada para maior que "md"
@@ -33,7 +57,9 @@ function Navbar() {
           Cash$Flow
         </Link>
 
-        <ul className="hidden md:flex gap-8">
+        {/* Abas da Navbar */}
+        <ul className="hidden md:flex flex-wrap gap-6 ml-10">
+          {/* Abas mais próximas do nome */}
           <li>
             <Link
               to="/"
@@ -59,6 +85,16 @@ function Navbar() {
             </Link>
           </li>
         </ul>
+
+        {/* Botão "Sair" visível sempre em telas grandes */}
+        <div className="ml-6 hidden md:block">
+          <button
+            onClick={() => setShowModal(true)} // Abre o modal
+            className="flex items-center gap-2 py-2 text-green-300 hover:text-lime-400 transition-transform duration-200 active:scale-95 hover:scale-105"
+          >
+            <FaSignOutAlt size={20} /> Sair
+          </button>
+        </div>
 
         {/* Ícone de menu hamburguer para dispositivos pequenos */}
         <div className="md:hidden">
@@ -101,7 +137,44 @@ function Navbar() {
               <FaBullseye size={20} /> Metas
             </Link>
           </li>
+          {/* Botão "Sair" dentro do menu hamburguer */}
+          <li>
+            <button
+              onClick={() => setShowModal(true)} // Abre o modal
+              className="flex items-center gap-2 py-2 text-green-300 hover:text-lime-400 transition-transform duration-200 active:scale-95 hover:scale-105"
+            >
+              <FaSignOutAlt size={20} /> Sair
+            </button>
+          </li>
         </ul>
+      )}
+
+      {/* Modal de Confirmação para Logout */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">
+              Tem certeza que deseja sair?
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Você pode continuar usando o aplicativo ou fazer logout.
+            </p>
+            <div className="flex justify-between">
+              <button
+                onClick={() => setShowModal(false)} // Fecha o modal
+                className="px-4 py-2 bg-gray-300 text-black rounded-lg hover:bg-gray-400"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmLogout} // Realiza o logout
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-800"
+              >
+                Sair
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </nav>
   );

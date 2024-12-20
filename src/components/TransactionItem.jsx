@@ -1,9 +1,5 @@
 /* eslint-disable react/prop-types */
-function TransactionItem({ transactions, onTransaction }) {
-  function removeTransaction(id) {
-    onTransaction(transactions.filter((transaction) => transaction.id !== id));
-  }
-
+function TransactionItem({ transactions, removeTransaction }) {
   return (
     <div className="space-y-4">
       {transactions.map((transaction) => (
@@ -19,7 +15,9 @@ function TransactionItem({ transactions, onTransaction }) {
                 {transaction.description}
               </h3>
               <p className="text-sm text-gray-500">
-                {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                {new Date(transaction.date).toLocaleDateString("pt-BR", {
+                  timeZone: "UTC",
+                })}
               </p>
             </div>
             <div>
@@ -31,13 +29,13 @@ function TransactionItem({ transactions, onTransaction }) {
                 }`}
               >
                 {transaction.type === "credit" ? "+" : "-"} R$
-                {transaction.amount}
+                {parseFloat(transaction.amount).toFixed(2).replace(".", ",")}
               </p>
             </div>
           </div>
           <div className="flex justify-end mt-2">
             <button
-              onClick={() => removeTransaction(transaction.id)}
+              onClick={() => removeTransaction(transaction.id)} // Chamando a função de remoção
               className="text-sm text-red-500 hover:text-red-700"
             >
               Remover
