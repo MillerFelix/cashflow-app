@@ -1,6 +1,4 @@
 /* eslint-disable react/prop-types */
-// Remover transação
-
 function TransactionItem({ transactions, onTransaction }) {
   function removeTransaction(id) {
     onTransaction(transactions.filter((transaction) => transaction.id !== id));
@@ -20,7 +18,9 @@ function TransactionItem({ transactions, onTransaction }) {
               <h3 className="font-semibold text-lg">
                 {transaction.description}
               </h3>
-              <p className="text-sm text-gray-500">{transaction.date}</p>
+              <p className="text-sm text-gray-500">
+                {new Date(transaction.date).toLocaleDateString("pt-BR")}
+              </p>
             </div>
             <div>
               <p
@@ -30,7 +30,7 @@ function TransactionItem({ transactions, onTransaction }) {
                     : "text-red-700"
                 }`}
               >
-                {transaction.type === "credit" ? "+" : "-"} $
+                {transaction.type === "credit" ? "+" : "-"} R$
                 {transaction.amount}
               </p>
             </div>
