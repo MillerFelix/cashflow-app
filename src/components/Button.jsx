@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 function Button({ children, bgColor, hoverColor, className, ...props }) {
   return (
     <button
@@ -9,6 +8,5 @@ function Button({ children, bgColor, hoverColor, className, ...props }) {
     </button>
   );
 }
-/* eslint-enable react/prop-types */
 
 export default Button;

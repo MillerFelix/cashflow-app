@@ -22,7 +22,6 @@ function Register() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       navigate("/login"); // Redireciona para login após registro
-      // eslint-disable-next-line no-unused-vars
     } catch (err) {
       setError("Erro ao criar conta. Tente novamente.");
     }

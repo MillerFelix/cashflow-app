@@ -3,7 +3,6 @@ import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import Button from "./Button";
 import { expenseCategories, incomeCategories } from "./CategoryList";
 
-/* eslint-disable react/prop-types */
 function TransactionModal({ type, onClose, onSave }) {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -186,6 +185,5 @@ function TransactionModal({ type, onClose, onSave }) {
     </div>
   );
 }
-/* eslint-enable react/prop-types */
 
 export default TransactionModal;

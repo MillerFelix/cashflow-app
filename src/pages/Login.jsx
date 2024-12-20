@@ -18,7 +18,6 @@ function Login() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/"); // Redireciona após login
-      // eslint-disable-next-line no-unused-vars
     } catch (err) {
       setError("Erro ao fazer login. Verifique suas credenciais.");
     } finally {

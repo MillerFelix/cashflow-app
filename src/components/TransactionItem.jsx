@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 function TransactionItem({ transactions, removeTransaction }) {
   return (
     <div className="space-y-4">
@@ -46,6 +45,5 @@ function TransactionItem({ transactions, removeTransaction }) {
     </div>
   );
 }
-/* eslint-enable react/prop-types */
 
 export default TransactionItem;

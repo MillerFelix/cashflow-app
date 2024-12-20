@@ -1,6 +1,5 @@
 import Button from "./Button";
 
-/* eslint-disable react/prop-types */
 function InfoCard({ colorStart, colorEnd, title, button, children }) {
   return (
     <div
@@ -16,6 +15,5 @@ function InfoCard({ colorStart, colorEnd, title, button, children }) {
     </div>
   );
 }
-/* eslint-enable react/prop-types */
 
 export default InfoCard;
