@@ -7,46 +7,74 @@ import Filters from "../components/Filters";
 import StatusMessage from "../components/StatusMessage";
 import { useTransactions } from "../hooks/useTransactions";
 import { useAuth } from "../hooks/useAuth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 import {
   expenseCategories,
   incomeCategories,
 } from "../components/CategoryList";
 
 function Transactions() {
-  const userId = useAuth(); // Agora retorna apenas o userId (UID)
+  const userId = useAuth();
   const { transactions, loading, message, addTransaction, removeTransaction } =
-    useTransactions(userId); // Passando o userId corretamente para o hook
+    useTransactions(userId);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState("credit");
   const [filters, setFilters] = useState({ date: "", type: "", category: "" });
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [category, setCategory] = useState("");
   const [modalConfirmOpen, setModalConfirmOpen] = useState({
     open: false,
     id: null,
   });
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters({ ...filters, [name]: value });
+  // Função para buscar o saldo atual (sem atualizações ao remover)
+  const fetchBalance = async () => {
+    if (!userId) return 0;
+    const userDoc = doc(db, "users", userId);
+    const userSnapshot = await getDoc(userDoc);
+    return userSnapshot.exists() ? userSnapshot.data().balance || 0 : 0;
   };
 
-  const clearFilters = () => {
-    setFilters({ date: "", type: "" });
-    setCategory("");
+  // Atualiza o saldo com a transação
+  const updateBalance = async (transactionAmount, type) => {
+    if (!userId) return;
+
+    const currentBalance = await fetchBalance();
+
+    // Calcula o novo saldo baseado no tipo de transação (crédito ou débito)
+    const newBalance =
+      type === "credit"
+        ? currentBalance + transactionAmount
+        : currentBalance - transactionAmount;
+
+    // Atualiza o saldo no Firestore
+    const userDoc = doc(db, "users", userId);
+    await setDoc(userDoc, { balance: newBalance }, { merge: true });
   };
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    return (
-      (!filters.date || transaction.date === filters.date) &&
-      (!filters.type || transaction.type === filters.type) &&
-      (!filters.category ||
-        transaction.category
-          .toLowerCase()
-          .includes(filters.category.toLowerCase()))
-    );
-  });
+  const handleAddTransaction = async (
+    type,
+    description,
+    amount,
+    date,
+    category
+  ) => {
+    await addTransaction(type, description, amount, date, category);
+    await updateBalance(amount, type); // Atualiza o saldo após a transação ser adicionada
+  };
+
+  const handleRemoveTransaction = async (id) => {
+    // Só removemos a transação depois da confirmação do modal
+    await removeTransaction(id);
+    // **Não atualizamos o saldo aqui**, pois a remoção não deve afetá-lo
+  };
+
+  const confirmRemoveTransaction = (id) => {
+    setModalConfirmOpen({
+      open: true,
+      id: id,
+    });
+  };
 
   return (
     <div className="m-8 p-6 bg-gray-100 rounded-lg shadow-lg w-full max-w-3xl mx-auto">
@@ -56,12 +84,11 @@ function Transactions() {
 
       <Filters
         filters={filters}
-        handleFilterChange={handleFilterChange}
-        clearFilters={clearFilters}
-        showCategoryDropdown={showCategoryDropdown}
-        setShowCategoryDropdown={setShowCategoryDropdown}
-        category={category}
-        setCategory={setCategory}
+        handleFilterChange={(e) => {
+          const { name, value } = e.target;
+          setFilters({ ...filters, [name]: value });
+        }}
+        clearFilters={() => setFilters({ date: "", type: "", category: "" })}
         expenseCategories={expenseCategories}
         incomeCategories={incomeCategories}
       />
@@ -96,15 +123,27 @@ function Transactions() {
       {loading && <Loader />}
 
       <TransactionItem
-        transactions={filteredTransactions}
-        removeTransaction={(id) => setModalConfirmOpen({ open: true, id })}
+        transactions={transactions.filter((transaction) => {
+          return (
+            (!filters.date || transaction.date === filters.date) &&
+            (!filters.type || transaction.type === filters.type) &&
+            (!filters.category ||
+              transaction.category
+                .toLowerCase()
+                .includes(filters.category.toLowerCase()))
+          );
+        })}
+        removeTransaction={(id) => {
+          // Inicia a remoção, passando o ID da transação para o modal de confirmação
+          confirmRemoveTransaction(id);
+        }}
       />
 
       {isModalOpen && (
         <TransactionModal
           type={modalType}
           onClose={() => setIsModalOpen(false)}
-          onSave={addTransaction}
+          onSave={handleAddTransaction}
         />
       )}
 
@@ -118,7 +157,7 @@ function Transactions() {
             <div className="flex justify-center gap-4">
               <Button
                 onClick={() => {
-                  removeTransaction(modalConfirmOpen.id);
+                  handleRemoveTransaction(modalConfirmOpen.id);
                   setModalConfirmOpen({ open: false, id: null });
                 }}
                 bgColor="bg-red-500"

@@ -7,15 +7,17 @@ import Loader from "../components/Loader";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Importando os ícones do olhinho
+import { useTransactions } from "../hooks/useTransactions";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [isBalanceVisible, setIsBalanceVisible] = useState(true); // Estado para controlar a visibilidade do saldo
+  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const userId = useAuth();
+  const { addTransaction } = useTransactions(userId);
 
   // Busca o saldo do usuário ao carregar a página
   useEffect(() => {
@@ -41,14 +43,26 @@ function Dashboard() {
     fetchBalance();
   }, [userId]);
 
-  // Salva o novo saldo no Firebase
+  // Salva o novo saldo no Firebase e cria uma transação
   const handleSaveBalance = async (newBalance) => {
     if (userId) {
       setSaving(true);
       try {
+        // Atualiza o saldo no Firestore
         const userDoc = doc(db, "users", userId);
         await setDoc(userDoc, { balance: newBalance }, { merge: true });
-        setBalance(newBalance);
+        // Calcula a diferença de saldo e cria a transação
+        const difference = newBalance - balance;
+        if (difference !== 0) {
+          await addTransaction(
+            difference > 0 ? "credit" : "debit",
+            "Ajuste de saldo",
+            Math.abs(difference),
+            new Date().toISOString().split("T")[0],
+            "Saldo"
+          );
+        }
+        setBalance(newBalance); // Atualiza o estado do saldo local
       } catch (error) {
         console.error("Erro ao salvar saldo:", error);
       } finally {
@@ -57,13 +71,11 @@ function Dashboard() {
     }
   };
 
-  // Formatação do saldo com separação de milhar
   const formattedBalance = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(balance);
 
-  // Exibe o Loader enquanto o saldo está sendo carregado ou salvo
   if (loading || saving) {
     return (
       <div className="flex justify-center items-center h-screen">
