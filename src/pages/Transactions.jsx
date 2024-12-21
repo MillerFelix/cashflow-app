@@ -13,9 +13,9 @@ import {
 } from "../components/CategoryList";
 
 function Transactions() {
-  const userId = useAuth();
+  const userId = useAuth(); // Agora retorna apenas o userId (UID)
   const { transactions, loading, message, addTransaction, removeTransaction } =
-    useTransactions(userId);
+    useTransactions(userId); // Passando o userId corretamente para o hook
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState("credit");

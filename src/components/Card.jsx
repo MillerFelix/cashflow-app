@@ -1,6 +1,13 @@
 import Button from "./Button";
 
-function InfoCard({ colorStart, colorEnd, title, button, children }) {
+function Card({
+  colorStart,
+  colorEnd,
+  title,
+  button,
+  children,
+  onButtonClick,
+}) {
   return (
     <div
       className={`bg-gradient-to-br ${colorStart} ${colorEnd} rounded-xl shadow-lg p-8 flex flex-col justify-between w-1/3`}
@@ -9,11 +16,14 @@ function InfoCard({ colorStart, colorEnd, title, button, children }) {
       <div className="mt-4">
         <p className="text-3xl font-semibold text-yellow-300">{children}</p>
       </div>
-      <Button bgColor="bg-yellow-400" hoverColor="hover:bg-yellow-500">
+      <button
+        onClick={onButtonClick}
+        className="mt-4 px-4 py-2 bg-yellow-400 text-white hover:bg-yellow-500 rounded-lg"
+      >
         {button}
-      </Button>
+      </button>
     </div>
   );
 }
 
-export default InfoCard;
+export default Card;

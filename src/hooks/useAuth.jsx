@@ -7,7 +7,7 @@ export function useAuth() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setUserId(user.uid);
+        setUserId(user.uid); // Agora retorna apenas o user.uid
       } else {
         setUserId(null);
       }
@@ -16,5 +16,5 @@ export function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  return userId;
+  return userId; // Retorna apenas o UID
 }

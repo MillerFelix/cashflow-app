@@ -7,6 +7,7 @@ import {
   getFirestore,
   collection,
   addDoc,
+  setDoc,
   query,
   where,
   getDocs,
@@ -36,6 +37,7 @@ export const auth = getAuth(app);
 export {
   db,
   addDoc,
+  setDoc,
   collection,
   query,
   where,
