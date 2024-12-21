@@ -3,6 +3,8 @@ import { auth } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
+import TextInput from "../components/TextInput";
+import Button from "../components/Button";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -26,48 +28,46 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-700 flex justify-center items-center px-4 relative">
+    <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-800 flex justify-center items-center px-4 relative">
       {/* Fundo nublado durante o carregamento */}
       {loading && <Loader />}
 
-      <div
-        className={`${
-          loading ? "bg-white bg-opacity-50 backdrop-blur-md" : "bg-white"
-        } p-6 rounded-xl shadow-2xl w-full max-w-sm z-10`}
-      >
-        <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-4">
-          Login
-        </h2>
+      <div className="p-6 bg-white rounded-3xl shadow-xl w-full max-w-md transform transition hover:scale-105 hover:shadow-2xl">
+        <div className="text-center mb-6">
+          <img
+            src="/image-login.svg" // Caminho relativo para a imagem na pasta public
+            alt="Login"
+            className="mx-auto w-34 h-32"
+          />
+          <h2 className="text-4xl font-extrabold text-gray-800">
+            Bem-vindo de volta!
+          </h2>
+          <p className="text-gray-600 mt-2">Faça login para continuar</p>
+        </div>
         <form onSubmit={handleLogin} className="space-y-6">
-          <div className="relative">
-            <input
-              type="email"
-              id="email"
-              placeholder="Seu email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              required
-            />
-          </div>
-          <div className="relative">
-            <input
-              type="password"
-              id="password"
-              placeholder="Sua senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              required
-            />
-          </div>
+          <TextInput
+            label="Email"
+            value={email}
+            onChange={setEmail}
+            type="email"
+            error={error && "Preencha um email válido"}
+          />
+          <TextInput
+            label="Senha"
+            value={password}
+            onChange={setPassword}
+            type="password"
+            error={error && "Digite sua senha corretamente"}
+          />
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button
+          <Button
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-green-500 to-green-700 text-white font-bold rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+            bgColor="bg-gradient-to-r from-green-500 to-green-700"
+            hoverColor="hover:opacity-90"
+            className="text-white"
           >
             Entrar
-          </button>
+          </Button>
         </form>
         <p className="mt-6 text-center text-gray-600">
           Não tem uma conta?{" "}

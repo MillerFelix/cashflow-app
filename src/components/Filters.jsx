@@ -12,7 +12,7 @@ function Filters({
   incomeCategories,
 }) {
   return (
-    <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+    <div className="mb-2 p-4 bg-white rounded-lg shadow-md">
       <div className="flex flex-wrap gap-7 items-center justify-center">
         <input
           type="date"

@@ -1,25 +1,22 @@
 import React, { useEffect, useState } from "react";
 import Card from "../components/Card";
-import Button from "../components/Button";
 import BalanceModal from "../components/BalanceModal";
 import CategoryList from "../components/CategoryList";
 import Loader from "../components/Loader";
+import BalanceVisibilityToggle from "../components/BalanceVisibilityToggle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { useTransactions } from "../hooks/useTransactions";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const userId = useAuth();
   const { addTransaction } = useTransactions(userId);
 
-  // Busca o saldo do usuário ao carregar a página
   useEffect(() => {
     const fetchBalance = async () => {
       if (userId) {
@@ -43,15 +40,13 @@ function Dashboard() {
     fetchBalance();
   }, [userId]);
 
-  // Salva o novo saldo no Firebase e cria uma transação
   const handleSaveBalance = async (newBalance) => {
     if (userId) {
       setSaving(true);
       try {
-        // Atualiza o saldo no Firestore
         const userDoc = doc(db, "users", userId);
         await setDoc(userDoc, { balance: newBalance }, { merge: true });
-        // Calcula a diferença de saldo e cria a transação
+
         const difference = newBalance - balance;
         if (difference !== 0) {
           await addTransaction(
@@ -62,7 +57,7 @@ function Dashboard() {
             "Saldo"
           );
         }
-        setBalance(newBalance); // Atualiza o estado do saldo local
+        setBalance(newBalance);
       } catch (error) {
         console.error("Erro ao salvar saldo:", error);
       } finally {
@@ -96,14 +91,9 @@ function Dashboard() {
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-yellow-300">
-              {isBalanceVisible ? formattedBalance : "••••••••"}
+              {formattedBalance}
             </p>
-            <button
-              onClick={() => setIsBalanceVisible(!isBalanceVisible)}
-              className="text-yellow-300 text-2xl"
-            >
-              {isBalanceVisible ? <FaEyeSlash /> : <FaEye />}
-            </button>
+            <BalanceVisibilityToggle />
           </div>
         </Card>
       </div>

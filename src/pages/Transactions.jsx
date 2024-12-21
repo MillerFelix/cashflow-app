@@ -14,6 +14,11 @@ import {
   incomeCategories,
 } from "../components/CategoryList";
 
+const buttonStyles = {
+  credit: { bgColor: "bg-green-600", hoverColor: "hover:bg-green-700" },
+  debit: { bgColor: "bg-red-500", hoverColor: "hover:bg-red-800" },
+};
+
 function Transactions() {
   const userId = useAuth();
   const { transactions, loading, message, addTransaction, removeTransaction } =
@@ -27,7 +32,7 @@ function Transactions() {
     id: null,
   });
 
-  // Função para buscar o saldo atual (sem atualizações ao remover)
+  // Função para buscar o saldo atual
   const fetchBalance = async () => {
     if (!userId) return 0;
     const userDoc = doc(db, "users", userId);
@@ -40,14 +45,11 @@ function Transactions() {
     if (!userId) return;
 
     const currentBalance = await fetchBalance();
-
-    // Calcula o novo saldo baseado no tipo de transação (crédito ou débito)
     const newBalance =
       type === "credit"
         ? currentBalance + transactionAmount
         : currentBalance - transactionAmount;
 
-    // Atualiza o saldo no Firestore
     const userDoc = doc(db, "users", userId);
     await setDoc(userDoc, { balance: newBalance }, { merge: true });
   };
@@ -60,21 +62,36 @@ function Transactions() {
     category
   ) => {
     await addTransaction(type, description, amount, date, category);
-    await updateBalance(amount, type); // Atualiza o saldo após a transação ser adicionada
+    await updateBalance(amount, type); // Atualiza o saldo após a transação
   };
 
   const handleRemoveTransaction = async (id) => {
-    // Só removemos a transação depois da confirmação do modal
     await removeTransaction(id);
-    // **Não atualizamos o saldo aqui**, pois a remoção não deve afetá-lo
   };
 
   const confirmRemoveTransaction = (id) => {
-    setModalConfirmOpen({
-      open: true,
-      id: id,
-    });
+    setModalConfirmOpen({ open: true, id });
   };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prevFilters) => ({ ...prevFilters, [name]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ date: "", type: "", category: "" });
+  };
+
+  const filteredTransactions = transactions.filter((transaction) => {
+    return (
+      (!filters.date || transaction.date === filters.date) &&
+      (!filters.type || transaction.type === filters.type) &&
+      (!filters.category ||
+        transaction.category
+          .toLowerCase()
+          .includes(filters.category.toLowerCase()))
+    );
+  });
 
   return (
     <div className="m-8 p-6 bg-gray-100 rounded-lg shadow-lg w-full max-w-3xl mx-auto">
@@ -84,11 +101,8 @@ function Transactions() {
 
       <Filters
         filters={filters}
-        handleFilterChange={(e) => {
-          const { name, value } = e.target;
-          setFilters({ ...filters, [name]: value });
-        }}
-        clearFilters={() => setFilters({ date: "", type: "", category: "" })}
+        handleFilterChange={handleFilterChange}
+        clearFilters={clearFilters}
         expenseCategories={expenseCategories}
         incomeCategories={incomeCategories}
       />
@@ -101,8 +115,7 @@ function Transactions() {
             setModalType("credit");
             setIsModalOpen(true);
           }}
-          bgColor="bg-green-600"
-          hoverColor="hover:bg-green-700"
+          {...buttonStyles.credit}
           className="text-gray-200"
         >
           Adicionar Crédito
@@ -112,8 +125,7 @@ function Transactions() {
             setModalType("debit");
             setIsModalOpen(true);
           }}
-          bgColor="bg-red-500"
-          hoverColor="hover:bg-red-800"
+          {...buttonStyles.debit}
           className="text-gray-200"
         >
           Adicionar Débito
@@ -123,20 +135,8 @@ function Transactions() {
       {loading && <Loader />}
 
       <TransactionItem
-        transactions={transactions.filter((transaction) => {
-          return (
-            (!filters.date || transaction.date === filters.date) &&
-            (!filters.type || transaction.type === filters.type) &&
-            (!filters.category ||
-              transaction.category
-                .toLowerCase()
-                .includes(filters.category.toLowerCase()))
-          );
-        })}
-        removeTransaction={(id) => {
-          // Inicia a remoção, passando o ID da transação para o modal de confirmação
-          confirmRemoveTransaction(id);
-        }}
+        transactions={filteredTransactions}
+        removeTransaction={confirmRemoveTransaction}
       />
 
       {isModalOpen && (
