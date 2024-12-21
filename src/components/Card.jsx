@@ -10,7 +10,7 @@ function Card({
 }) {
   return (
     <div
-      className={`bg-gradient-to-br ${colorStart} ${colorEnd} rounded-xl shadow-lg p-8 flex flex-col justify-between w-1/3`}
+      className={`bg-gradient-to-br ${colorStart} ${colorEnd} rounded-xl shadow-lg p-8 flex flex-col justify-between w-full sm:w-1/2 lg:w-1/3`}
     >
       <h2 className="text-2xl font-bold text-white">{title}</h2>
       <div className="mt-4">

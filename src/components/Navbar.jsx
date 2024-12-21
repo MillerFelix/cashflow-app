@@ -109,7 +109,7 @@ function Navbar() {
 
       {/* Caixa do menu - visível em dispositivos pequenos */}
       {isOpen && (
-        <ul className="absolute right-6 top-20 bg-green-800 p-2 rounded-lg shadow-lg w-40">
+        <ul className="absolute right-6 top-20 bg-green-800 p-2 rounded-lg shadow-lg w-40 z-50">
           <li>
             <Link
               to="/"

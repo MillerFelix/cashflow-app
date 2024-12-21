@@ -6,7 +6,9 @@ function BalanceModal({ onClose, onSave, initialBalance = "" }) {
   const [error, setError] = useState("");
 
   const validateBalance = () => {
-    if (!balance || isNaN(balance) || parseFloat(balance) <= 0) {
+    // Validar com o valor numérico sem formatação
+    const numericValue = parseFloat(balance);
+    if (isNaN(numericValue) || numericValue <= 0) {
       setError("Informe um saldo válido.");
       return false;
     }
@@ -23,14 +25,14 @@ function BalanceModal({ onClose, onSave, initialBalance = "" }) {
   };
 
   const handleBalanceChange = (rawValue) => {
-    const numericValue = rawValue.replace(/[\D]/g, "");
-    setBalance(numericValue);
+    const numericValue = rawValue.replace(/[^0-9]/g, ""); // Remove qualquer coisa que não seja número
+    setBalance(numericValue); // Armazenar o valor sem formatação
   };
 
   const formatBalance = (value) => {
     if (!value) return "";
-    const numericValue = parseInt(value, 10);
-    return `R$ ${(numericValue / 100).toFixed(2).replace(".", ",")}`;
+    const numericValue = value.replace(/\D/g, ""); // Remove tudo que não for número
+    return `R$ ${numericValue.replace(/(\d)(\d{3})(\d{1,2}$)/, "$1.$2,$3")}`; // Formatação com ponto e vírgula
   };
 
   return (
