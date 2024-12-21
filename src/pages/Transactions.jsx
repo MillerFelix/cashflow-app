@@ -13,6 +13,7 @@ import {
   expenseCategories,
   incomeCategories,
 } from "../components/CategoryList";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 const buttonStyles = {
   credit: { bgColor: "bg-green-600", hoverColor: "hover:bg-green-700" },
@@ -148,33 +149,18 @@ function Transactions() {
       )}
 
       {modalConfirmOpen.open && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-            <h3 className="text-lg font-semibold mb-4">Confirmar Exclusão</h3>
-            <p className="mb-6">
-              Tem certeza que deseja remover esta transação?
-            </p>
-            <div className="flex justify-center gap-4">
-              <Button
-                onClick={() => {
-                  handleRemoveTransaction(modalConfirmOpen.id);
-                  setModalConfirmOpen({ open: false, id: null });
-                }}
-                bgColor="bg-red-500"
-                hoverColor="hover:bg-red-700"
-              >
-                Confirmar
-              </Button>
-              <Button
-                onClick={() => setModalConfirmOpen({ open: false, id: null })}
-                bgColor="bg-gray-300"
-                hoverColor="hover:bg-gray-400"
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmationModal
+          showModal={modalConfirmOpen.open}
+          title="Confirmar Exclusão"
+          description="Tem certeza que deseja remover esta transação?"
+          onConfirm={() => {
+            handleRemoveTransaction(modalConfirmOpen.id);
+            setModalConfirmOpen({ open: false, id: null });
+          }}
+          onCancel={() => setModalConfirmOpen({ open: false, id: null })}
+          confirmText="Confirmar"
+          cancelText="Cancelar"
+        />
       )}
     </div>
   );

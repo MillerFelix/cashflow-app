@@ -10,8 +10,8 @@ import {
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import NavItem from "./NavItem";
-import LogoutModal from "./LogoutModal";
 import HamburgerMenu from "./HamburguerMenu";
+import ConfirmationModal from "./ConfirmationModal"; // Importe o modal genérico
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -98,11 +98,16 @@ function Navbar() {
         onLogout={() => setShowModal(true)}
       />
 
-      {/* Modal de Confirmação para Logout */}
-      <LogoutModal
+      <ConfirmationModal
         showModal={showModal}
-        onClose={() => setShowModal(false)}
-        onLogout={handleConfirmLogout}
+        title="Tem certeza que deseja sair?"
+        description="Você pode continuar usando o aplicativo ou sair."
+        onConfirm={handleConfirmLogout}
+        onCancel={() => setShowModal(false)}
+        confirmText="Sair"
+        cancelText="Cancelar"
+        confirmButtonStyle="bg-red-600 hover:bg-red-800"
+        cancelButtonStyle="bg-gray-300 hover:bg-gray-400 text-gray-800"
       />
     </nav>
   );
