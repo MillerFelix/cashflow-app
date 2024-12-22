@@ -12,6 +12,8 @@ import { useTransactions } from "../hooks/useTransactions";
 function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [balance, setBalance] = useState(0);
+  const storedVisibility = localStorage.getItem("balanceVisibility");
+  const [isVisible, setIsVisible] = useState(storedVisibility === "true");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const userId = useAuth();
@@ -39,6 +41,10 @@ function Dashboard() {
 
     fetchBalance();
   }, [userId]);
+
+  useEffect(() => {
+    localStorage.setItem("balanceVisibility", isVisible);
+  }, [isVisible]);
 
   const handleSaveBalance = async (newBalance) => {
     if (userId) {
@@ -91,9 +97,12 @@ function Dashboard() {
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-yellow-300">
-              {formattedBalance}
+              {isVisible ? formattedBalance : "******"}{" "}
             </p>
-            <BalanceVisibilityToggle />
+            <BalanceVisibilityToggle
+              isVisible={isVisible}
+              setIsVisible={setIsVisible}
+            />
           </div>
         </Card>
       </div>
