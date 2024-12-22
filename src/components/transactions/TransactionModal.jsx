@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { expenseCategories, incomeCategories } from "../category/CategoryList";
 import TextInput from "../common/TextInput";
-import Dropdown from "../common/Dropdown";
+import Dropdown from "../category/Dropdown";
 import ActionButtons from "../common/ActionButtons";
 import MoneyInput from "../common/MoneyInput";
 

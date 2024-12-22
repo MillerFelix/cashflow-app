@@ -1,45 +1,53 @@
-import React from "react";
+import { useState } from "react";
 import TextInput from "../common/TextInput";
+import MoneyInput from "../common/MoneyInput";
 import ActionButtons from "../common/ActionButtons";
+import Dropdown from "../category/Dropdown"; // Importando o Dropdown
+import { expenseCategories, incomeCategories } from "../category/CategoryList";
 
-function GoalsModal({ showModal, onClose, onSave, newGoal, setNewGoal }) {
-  if (!showModal) return null;
+function GoalsModal({ isOpen, onClose, onSave, newGoal, handleGoalChange }) {
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  if (!isOpen) return null;
+
+  const categories = [...incomeCategories, ...expenseCategories];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h2 className="text-lg font-bold mb-4">Nova Meta</h2>
-        <TextInput
-          placeholder="Categoria"
-          value={newGoal.category}
-          onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value })}
-          className="mb-4"
+    <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+      <div className="bg-white p-6 rounded-md shadow-lg w-1/3">
+        <h2 className="text-xl mb-4">Criar Meta</h2>
+
+        {/* Dropdown substituindo o campo de categoria */}
+        <Dropdown
+          label="Categoria"
+          categories={categories}
+          selectedCategory={newGoal.category} // Passando a categoria selecionada
+          onSelect={(category) => handleGoalChange(category.name, "category")}
+          showDropdown={showDropdown}
+          setShowDropdown={setShowDropdown}
         />
-        <TextInput
-          type="number"
-          placeholder="Valor Limite (R$)"
-          value={newGoal.target}
-          onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}
-          className="mb-4"
+
+        <MoneyInput
+          label="Valor Alvo"
+          value={newGoal.goal}
+          onChange={(e) => handleGoalChange(e, "goal")}
+          error={""}
         />
-        <div className="flex space-x-4">
-          <TextInput
-            type="date"
-            value={newGoal.startDate}
-            onChange={(e) =>
-              setNewGoal({ ...newGoal, startDate: e.target.value })
-            }
-            className="w-full mb-4"
-          />
-          <TextInput
-            type="date"
-            value={newGoal.endDate}
-            onChange={(e) =>
-              setNewGoal({ ...newGoal, endDate: e.target.value })
-            }
-            className="w-full mb-4"
-          />
-        </div>
+
+        <TextInput
+          label="Data de Início"
+          value={newGoal.startDate}
+          onChange={(e) => handleGoalChange(e, "startDate")}
+          type="date"
+        />
+
+        <TextInput
+          label="Data de Fim"
+          value={newGoal.endDate}
+          onChange={(e) => handleGoalChange(e, "endDate")}
+          type="date"
+        />
+
         <ActionButtons onClose={onClose} onSave={onSave} />
       </div>
     </div>

@@ -1,79 +1,103 @@
 import React, { useState } from "react";
-import GoalsModal from "../components/goals/GoalsModal";
 import Button from "../components/common/Button";
+import GoalsModal from "../components/goals/GoalsModal";
 
-function Goals() {
-  const [goals, setGoals] = useState([]);
-  const [showModal, setShowModal] = useState(false);
+const categories = ["Ganho", "Despesa"]; // Exemplo de categorias
+const sampleGoals = [
+  {
+    id: 1,
+    category: "Ganho",
+    goal: 5000,
+    progress: 2000,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+  },
+  {
+    id: 2,
+    category: "Despesa",
+    goal: 3000,
+    progress: 1200,
+    startDate: "2024-01-01",
+    endDate: "2024-06-30",
+  },
+];
+
+const Goals = () => {
+  const [goals, setGoals] = useState(sampleGoals);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({
     category: "",
-    target: "",
+    goal: "",
     startDate: "",
     endDate: "",
   });
 
-  const handleSaveGoal = () => {
-    if (newGoal.category && newGoal.target) {
-      setGoals([
-        ...goals,
-        {
-          id: goals.length + 1,
-          ...newGoal,
-          spent: 0,
-          target: parseFloat(newGoal.target),
-        },
-      ]);
-      setNewGoal({ category: "", target: "", startDate: "", endDate: "" });
-      setShowModal(false);
-    }
+  const handleModalToggle = () => setIsModalOpen(!isModalOpen);
+
+  const handleGoalChange = (value, field) => {
+    setNewGoal((prevState) => ({
+      ...prevState,
+      [field]: value,
+    }));
+  };
+
+  const handleAddGoal = () => {
+    setGoals([...goals, { ...newGoal, id: goals.length + 1, progress: 0 }]);
+    setIsModalOpen(false);
+    setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
+  };
+
+  const getProgressBarColor = (category) => {
+    return category === "Ganho" ? "bg-green-500" : "bg-red-500";
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-green-700 mb-6">Metas do Mês</h1>
+    <div className="p-8">
+      <h1 className="text-2xl font-semibold mb-4">Metas Financeiras</h1>
 
-      <div className="space-y-4">
+      <Button
+        onClick={handleModalToggle}
+        bgColor="bg-blue-500"
+        hoverColor="hover:bg-blue-600"
+        className="text-white mb-6"
+      >
+        Adicionar Meta
+      </Button>
+      <GoalsModal
+        isOpen={isModalOpen}
+        onClose={handleModalToggle}
+        onSave={handleAddGoal}
+        newGoal={newGoal}
+        handleGoalChange={handleGoalChange}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {goals.map((goal) => (
           <div
             key={goal.id}
-            className="bg-white shadow-md p-4 rounded-lg border border-gray-200"
+            className={`bg-white p-4 rounded-lg shadow-lg ${getProgressBarColor(
+              goal.category
+            )}`}
           >
-            <h2 className="text-lg font-semibold text-gray-800">
-              {goal.category}
-            </h2>
-            <p className="text-sm text-gray-600">
-              Meta: R${goal.target} - Gasto: R${goal.spent}
-            </p>
-            <p className="text-sm text-gray-600">
-              De: {goal.startDate || "N/A"} até {goal.endDate || "N/A"}
-            </p>
-            <div className="relative h-4 bg-gray-200 rounded-full mt-2">
+            <h3 className="text-xl font-semibold">{goal.category} - Meta</h3>
+            <p>Objetivo: R${goal.goal}</p>
+            <p>Progresso: R${goal.progress}</p>
+            <div className="h-2 bg-gray-300 rounded-full mb-4">
               <div
-                className="absolute top-0 left-0 h-full bg-green-500 rounded-full"
-                style={{ width: `${(goal.spent / goal.target) * 100}%` }}
-              ></div>
+                className={`h-full ${getProgressBarColor(
+                  goal.category
+                )} rounded-full`}
+                style={{ width: `${(goal.progress / goal.goal) * 100}%` }}
+              />
             </div>
+            <p>
+              {goal.startDate} - {goal.endDate}
+            </p>
           </div>
         ))}
       </div>
-
-      <Button
-        label="Criar Meta"
-        onClick={() => setShowModal(true)}
-        className="mt-6 bg-green-700 text-white hover:bg-green-600"
-      >
-        Criar Meta
-      </Button>
-
-      <GoalsModal
-        showModal={showModal}
-        onClose={() => setShowModal(false)}
-        onSave={handleSaveGoal}
-        newGoal={newGoal}
-        setNewGoal={setNewGoal}
-      />
     </div>
   );
-}
+};
 
 export default Goals;

@@ -3,7 +3,7 @@ function StatusMessage({ message }) {
 
   return (
     <div
-      className={`p-4 text-center rounded-lg mt-4 ${
+      className={`p-4 text-center rounded-lg my-4 ${
         message.includes("Erro")
           ? "bg-red-200 text-red-800"
           : "bg-green-200 text-green-800"
