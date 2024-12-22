@@ -44,7 +44,7 @@ function Register() {
       <div className="p-6 bg-white rounded-3xl shadow-xl w-full max-w-md transform transition hover:scale-105 hover:shadow-2xl">
         <div className="text-center mb-6">
           <img
-            src="/image-login.svg" // Reutilizando a mesma imagem do login
+            src="/login-image.svg"
             alt="Registro"
             className="mx-auto w-34 h-32"
           />

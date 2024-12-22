@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { auth } from "./firebase"; // Certifique-se de importar o auth do Firebase
+import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 import Login from "./pages/Login";
@@ -38,8 +38,8 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* Rotas com Navbar e Footer */}
         <Route path="/" element={<BasePage />}>
-          {/* Rotas protegidas */}
           <Route
             index
             element={
@@ -64,10 +64,8 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
-
-          {/* Rota para página não encontrada */}
-          <Route path="*" element={<PageNotFound />} />
         </Route>
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </BrowserRouter>
   );
