@@ -1,5 +1,5 @@
-import Navbar from "./Navbar";
-import Footer from "./Footer";
+import Navbar from "../navbar/Navbar";
+import Footer from "../common/Footer";
 
 function Container({ children }) {
   return (

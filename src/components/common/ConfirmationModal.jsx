@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "../common/Button";
 
 function ConfirmationModal({
   showModal,
@@ -9,7 +10,7 @@ function ConfirmationModal({
   confirmText = "Confirmar",
   cancelText = "Cancelar",
   confirmButtonStyle = "bg-red-500 hover:bg-red-700",
-  cancelButtonStyle = "bg-gray-300 hover:bg-gray-400 text-gray-800", // Garantindo cor consistente para o texto
+  cancelButtonStyle = "bg-gray-300 hover:bg-gray-400 text-gray-800",
 }) {
   if (!showModal) return null;
 
@@ -19,18 +20,22 @@ function ConfirmationModal({
         <h3 className="text-lg font-semibold mb-4 text-gray-800">{title}</h3>
         <p className="text-sm text-gray-600 mb-6">{description}</p>
         <div className="flex justify-between">
-          <button
+          <Button
             onClick={onCancel}
-            className={`px-4 py-2 rounded-lg ${cancelButtonStyle}`}
+            bgColor={cancelButtonStyle.split(" ")[0]}
+            hoverColor={cancelButtonStyle.split(" ")[1]}
+            className="text-gray-800"
           >
             {cancelText}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onConfirm}
-            className={`px-4 py-2 rounded-lg text-white ${confirmButtonStyle}`}
+            bgColor={confirmButtonStyle.split(" ")[0]}
+            hoverColor={confirmButtonStyle.split(" ")[1]}
+            className="text-white"
           >
             {confirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

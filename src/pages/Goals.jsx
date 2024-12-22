@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import GoalsModal from "../components/goals/GoalsModal";
+import Button from "../components/common/Button";
 
 function Goals() {
   const [goals, setGoals] = useState([]);
@@ -55,70 +57,21 @@ function Goals() {
         ))}
       </div>
 
-      <button
-        className="mt-6 px-4 py-2 bg-green-700 text-white rounded-md shadow hover:bg-green-600"
+      <Button
+        label="Criar Meta"
         onClick={() => setShowModal(true)}
+        className="mt-6 bg-green-700 text-white hover:bg-green-600"
       >
         Criar Meta
-      </button>
+      </Button>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-lg font-bold mb-4">Nova Meta</h2>
-            <input
-              type="text"
-              placeholder="Categoria"
-              className="w-full mb-4 p-2 border rounded"
-              value={newGoal.category}
-              onChange={(e) =>
-                setNewGoal({ ...newGoal, category: e.target.value })
-              }
-            />
-            <input
-              type="number"
-              placeholder="Valor Limite (R$)"
-              className="w-full mb-4 p-2 border rounded"
-              value={newGoal.target}
-              onChange={(e) =>
-                setNewGoal({ ...newGoal, target: e.target.value })
-              }
-            />
-            <div className="flex space-x-4">
-              <input
-                type="date"
-                className="w-full mb-4 p-2 border rounded"
-                value={newGoal.startDate}
-                onChange={(e) =>
-                  setNewGoal({ ...newGoal, startDate: e.target.value })
-                }
-              />
-              <input
-                type="date"
-                className="w-full mb-4 p-2 border rounded"
-                value={newGoal.endDate}
-                onChange={(e) =>
-                  setNewGoal({ ...newGoal, endDate: e.target.value })
-                }
-              />
-            </div>
-            <div className="flex justify-end space-x-4">
-              <button
-                className="px-4 py-2 bg-gray-300 rounded-md"
-                onClick={() => setShowModal(false)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="px-4 py-2 bg-green-700 text-white rounded-md"
-                onClick={handleSaveGoal}
-              >
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GoalsModal
+        showModal={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSaveGoal}
+        newGoal={newGoal}
+        setNewGoal={setNewGoal}
+      />
     </div>
   );
 }

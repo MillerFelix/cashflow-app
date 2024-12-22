@@ -1,10 +1,10 @@
 import { useState } from "react";
-import Button from "../components/Button";
-import TransactionItem from "../components/TransactionItem";
-import TransactionModal from "../components/TransactionModal";
-import Loader from "../components/Loader";
-import Filters from "../components/Filters";
-import StatusMessage from "../components/StatusMessage";
+import Button from "../components/common/Button";
+import TransactionItem from "../components/transactions/TransactionItem";
+import TransactionModal from "../components/transactions/TransactionModal";
+import Loader from "../components/common/Loader";
+import Filters from "../components/transactions/Filters";
+import StatusMessage from "../components/common/StatusMessage";
 import { useTransactions } from "../hooks/useTransactions";
 import { useAuth } from "../hooks/useAuth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -12,8 +12,8 @@ import { db } from "../firebase";
 import {
   expenseCategories,
   incomeCategories,
-} from "../components/CategoryList";
-import ConfirmationModal from "../components/ConfirmationModal";
+} from "../components/category/CategoryList";
+import ConfirmationModal from "../components/common/ConfirmationModal";
 
 const buttonStyles = {
   credit: { bgColor: "bg-green-600", hoverColor: "hover:bg-green-700" },

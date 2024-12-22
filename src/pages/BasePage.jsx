@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import Container from "../components/Container";
+import Container from "../components/common/Container";
 
 function BasePage() {
   return (

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import Button from "./Button";
-import { expenseCategories, incomeCategories } from "./CategoryList";
-import TextInput from "./TextInput";
-import Dropdown from "./Dropdown";
-import ActionButtons from "./ActionButtons";
+import { expenseCategories, incomeCategories } from "../category/CategoryList";
+import TextInput from "../common/TextInput";
+import Dropdown from "../common/Dropdown";
+import ActionButtons from "../common/ActionButtons";
+import MoneyInput from "../common/MoneyInput";
 
 function TransactionModal({ type, onClose, onSave }) {
   const [description, setDescription] = useState("");
@@ -36,18 +36,6 @@ function TransactionModal({ type, onClose, onSave }) {
     }
   };
 
-  const handleAmountChange = (rawValue) => {
-    // Atualiza apenas o valor bruto
-    const numericValue = rawValue.replace(/[^\d]/g, ""); // Remove caracteres não numéricos
-    setAmount(numericValue);
-  };
-
-  const formatAmount = (value) => {
-    if (!value) return ""; // Retorna vazio se não houver valor
-    const numericValue = parseInt(value, 10); // Garante que é um número inteiro
-    return `R$ ${(numericValue / 100).toFixed(2).replace(".", ",")}`;
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
@@ -63,12 +51,11 @@ function TransactionModal({ type, onClose, onSave }) {
             maxChars={maxChars}
             maxWords={maxWords}
           />
-          <TextInput
+          <MoneyInput
             label="Valor"
-            value={formatAmount(amount)} // Exibe o valor formatado
-            onChange={handleAmountChange} // Atualiza o valor bruto
+            value={amount} // Passa o valor bruto
+            onChange={setAmount} // Atualiza o estado diretamente
             error={errors.amount}
-            isNumeric // Indica que o campo é numérico
           />
           <TextInput
             label="Data"

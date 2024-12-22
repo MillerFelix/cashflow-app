@@ -1,4 +1,4 @@
-import TransactionCard from "../components/TransactionCard";
+import TransactionCard from "./TransactionCard";
 
 function TransactionItem({ transactions, removeTransaction }) {
   return (

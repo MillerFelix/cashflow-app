@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import Card from "../components/Card";
-import BalanceModal from "../components/BalanceModal";
-import CategoryList from "../components/CategoryList";
-import Loader from "../components/Loader";
-import BalanceVisibilityToggle from "../components/BalanceVisibilityToggle";
+import Card from "../components/common/Card";
+import BalanceModal from "../components/dashboard/BalanceModal";
+import CategoryList from "../components/category/CategoryList";
+import Loader from "../components/common/Loader";
+import BalanceVisibilityToggle from "../components/dashboard/BalanceVisibilityToggle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";

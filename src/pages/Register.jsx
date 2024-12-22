@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { auth } from "../firebase"; // Importando o Firebase
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
-import Loader from "../components/Loader";
-import TextInput from "../components/TextInput";
-import Button from "../components/Button";
+import { Link, useNavigate } from "react-router-dom";
+import Loader from "../components/common/Loader";
+import TextInput from "../components/common/TextInput";
+import Button from "../components/common/Button";
 
 function Register() {
   const [email, setEmail] = useState("");
@@ -75,19 +75,19 @@ function Register() {
             type="submit"
             bgColor="bg-gradient-to-r from-green-500 to-green-700"
             hoverColor="hover:opacity-90"
-            className="text-white"
+            className="text-white w-48 mx-auto block" // Adiciona centralização e largura fixa
           >
             Criar Conta
           </Button>
         </form>
         <p className="mt-6 text-center text-gray-600">
           Já tem uma conta?{" "}
-          <a
-            href="/login"
+          <Link
+            to="/login"
             className="text-green-600 hover:text-green-700 font-bold transition"
           >
             Faça login
-          </a>
+          </Link>
         </p>
       </div>
     </div>

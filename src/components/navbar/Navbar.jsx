@@ -7,11 +7,11 @@ import {
   FaBullseye,
   FaWallet,
 } from "react-icons/fa";
-import { auth } from "../firebase";
+import { auth } from "../../firebase";
 import { signOut } from "firebase/auth";
 import NavItem from "./NavItem";
 import HamburgerMenu from "./HamburguerMenu";
-import ConfirmationModal from "./ConfirmationModal"; // Importe o modal genérico
+import ConfirmationModal from "../common/ConfirmationModal";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);

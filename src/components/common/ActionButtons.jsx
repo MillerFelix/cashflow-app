@@ -2,7 +2,7 @@ import Button from "./Button";
 
 function ActionButtons({ onClose, onSave }) {
   return (
-    <div className="flex justify-end space-x-2">
+    <div className="flex justify-between gap-4 mt-4">
       <Button
         onClick={onClose}
         bgColor="bg-gray-200"

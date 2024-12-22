@@ -1,7 +1,7 @@
 import { FaChartBar, FaWallet, FaBullseye, FaSignOutAlt } from "react-icons/fa";
-import NavItem from "../components/NavItem";
+import NavItem from "./NavItem";
 
-const HamburgerMenu = ({ isOpen, toggleMenu, onLogout }) => {
+function HamburgerMenu({ isOpen, toggleMenu, onLogout }) {
   if (!isOpen) return null;
 
   return (
@@ -34,6 +34,6 @@ const HamburgerMenu = ({ isOpen, toggleMenu, onLogout }) => {
       </li>
     </ul>
   );
-};
+}
 
 export default HamburgerMenu;

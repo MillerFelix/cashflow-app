@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
-import Loader from "../components/Loader";
-import TextInput from "../components/TextInput";
-import Button from "../components/Button";
+import { Link, useNavigate } from "react-router-dom";
+import Loader from "../components/common/Loader";
+import TextInput from "../components/common/TextInput";
+import Button from "../components/common/Button";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -64,19 +64,19 @@ function Login() {
             type="submit"
             bgColor="bg-gradient-to-r from-green-500 to-green-700"
             hoverColor="hover:opacity-90"
-            className="text-white"
+            className="text-white w-48 mx-auto block" // Adiciona centralização e largura fixa
           >
             Entrar
           </Button>
         </form>
         <p className="mt-6 text-center text-gray-600">
           Não tem uma conta?{" "}
-          <a
-            href="/register"
+          <Link
+            to="/register"
             className="text-green-600 hover:text-green-700 font-bold transition"
           >
             Cadastre-se
-          </a>
+          </Link>
         </p>
       </div>
     </div>
