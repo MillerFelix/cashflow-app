@@ -4,17 +4,18 @@ import TextInput from "../common/TextInput";
 import Dropdown from "../category/Dropdown";
 import ActionButtons from "../common/ActionButtons";
 import MoneyInput from "../common/MoneyInput";
+import LimitedTextInput from "../common/LimitedTextInput";
 
 function TransactionModal({ type, onClose, onSave }) {
   const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState(""); // Valor inicial vazio
+  const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [category, setCategory] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const maxChars = 50;
-  const maxWords = 10;
+  const maxChars = 35;
+  const maxWords = 6;
   const categories = type === "credit" ? incomeCategories : expenseCategories;
 
   const validateFields = () => {
@@ -43,7 +44,7 @@ function TransactionModal({ type, onClose, onSave }) {
           Adicionar {type === "credit" ? "Crédito" : "Débito"}
         </h3>
         <form>
-          <TextInput
+          <LimitedTextInput
             label="Descrição"
             value={description}
             onChange={setDescription}
@@ -53,8 +54,8 @@ function TransactionModal({ type, onClose, onSave }) {
           />
           <MoneyInput
             label="Valor"
-            value={amount} // Passa o valor bruto
-            onChange={setAmount} // Atualiza o estado diretamente
+            value={amount}
+            onChange={setAmount}
             error={errors.amount}
           />
           <TextInput
