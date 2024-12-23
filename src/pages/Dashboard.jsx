@@ -113,7 +113,7 @@ function Dashboard() {
           initialBalance={(balance * 100).toString()}
         />
       )}
-      <CategoryList />
+      {/* <CategoryList /> */}
     </div>
   );
 }

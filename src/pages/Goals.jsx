@@ -1,29 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "../components/common/Button";
 import GoalsModal from "../components/goals/GoalsModal";
-
-const categories = ["Ganho", "Despesa"]; // Exemplo de categorias
-const sampleGoals = [
-  {
-    id: 1,
-    category: "Ganho",
-    goal: 5000,
-    progress: 2000,
-    startDate: "2024-01-01",
-    endDate: "2024-12-31",
-  },
-  {
-    id: 2,
-    category: "Despesa",
-    goal: 3000,
-    progress: 1200,
-    startDate: "2024-01-01",
-    endDate: "2024-06-30",
-  },
-];
+import { db, addDoc, collection, query, getDocs } from "../firebase"; // Importando funções do Firebase
+import { useAuth } from "../hooks/useAuth"; // Importando o hook useAuth
 
 const Goals = () => {
-  const [goals, setGoals] = useState(sampleGoals);
+  const [goals, setGoals] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({
     category: "",
@@ -31,6 +13,27 @@ const Goals = () => {
     startDate: "",
     endDate: "",
   });
+
+  const userId = useAuth(); // Pegando o userId através do hook useAuth
+
+  // Função para buscar as metas do Firestore
+  const fetchGoals = async () => {
+    if (userId) {
+      const q = query(collection(db, "users", userId, "goals")); // Usando userId para buscar metas
+      const querySnapshot = await getDocs(q);
+      const goalsList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setGoals(goalsList); // Atualiza o estado com as metas do Firestore
+    }
+  };
+
+  useEffect(() => {
+    if (userId) {
+      fetchGoals(); // Chama a função para carregar as metas assim que o userId estiver disponível
+    }
+  }, [userId]);
 
   const handleModalToggle = () => setIsModalOpen(!isModalOpen);
 
@@ -41,10 +44,18 @@ const Goals = () => {
     }));
   };
 
-  const handleAddGoal = () => {
-    setGoals([...goals, { ...newGoal, id: goals.length + 1, progress: 0 }]);
-    setIsModalOpen(false);
-    setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
+  // Função para adicionar a meta no Firestore
+  const handleAddGoal = async () => {
+    if (userId) {
+      // Adiciona a nova meta na subcoleção de metas do usuário
+      await addDoc(collection(db, "users", userId, "goals"), {
+        ...newGoal,
+        progress: 0,
+      });
+      setIsModalOpen(false);
+      setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
+      fetchGoals(); // Atualiza as metas na tela após salvar
+    }
   };
 
   const getProgressBarColor = (category) => {
