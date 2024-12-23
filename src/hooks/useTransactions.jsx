@@ -7,7 +7,6 @@ import {
   doc,
   getDocs,
   query,
-  where,
 } from "../firebase";
 
 export function useTransactions(userId) {
@@ -38,7 +37,7 @@ export function useTransactions(userId) {
     }
   };
 
-  const addTransaction = async (type, description, amount, date, category) => {
+  const addTransaction = async (type, description, value, date, category) => {
     if (!userId) return;
     setLoading(true);
     setMessage("");
@@ -46,7 +45,7 @@ export function useTransactions(userId) {
       const newTransaction = {
         type,
         description,
-        amount,
+        value,
         date,
         category,
       };

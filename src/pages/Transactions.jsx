@@ -42,14 +42,14 @@ function Transactions() {
   };
 
   // Atualiza o saldo com a transação
-  const updateBalance = async (transactionAmount, type) => {
+  const updateBalance = async (transactionValue, type) => {
     if (!userId) return;
 
     const currentBalance = await fetchBalance();
     const newBalance =
       type === "credit"
-        ? currentBalance + transactionAmount
-        : currentBalance - transactionAmount;
+        ? currentBalance + transactionValue
+        : currentBalance - transactionValue;
 
     const userDoc = doc(db, "users", userId);
     await setDoc(userDoc, { balance: newBalance }, { merge: true });
@@ -58,12 +58,12 @@ function Transactions() {
   const handleAddTransaction = async (
     type,
     description,
-    amount,
+    value,
     date,
     category
   ) => {
-    await addTransaction(type, description, amount, date, category);
-    await updateBalance(amount, type); // Atualiza o saldo após a transação
+    await addTransaction(type, description, value, date, category);
+    await updateBalance(value, type); // Atualiza o saldo após a transação
   };
 
   const handleRemoveTransaction = async (id) => {

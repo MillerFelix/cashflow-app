@@ -24,7 +24,7 @@ function TransactionCard({ transaction, onRemove }) {
           }`}
         >
           {isCredit ? "+" : "-"} R$
-          {parseFloat(transaction.amount).toFixed(2).replace(".", ",")}
+          {parseFloat(transaction.value).toFixed(2).replace(".", ",")}
         </p>
       </div>
 

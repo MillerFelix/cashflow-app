@@ -8,7 +8,7 @@ import LimitedTextInput from "../common/LimitedTextInput";
 
 function TransactionModal({ type, onClose, onSave }) {
   const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
+  const [value, setValue] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [category, setCategory] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -21,7 +21,7 @@ function TransactionModal({ type, onClose, onSave }) {
   const validateFields = () => {
     const newErrors = {};
     if (!description.trim()) newErrors.description = "Descrição é obrigatória.";
-    if (!amount || isNaN(amount) || parseFloat(amount) <= 0)
+    if (!value || isNaN(value) || parseFloat(value) <= 0)
       newErrors.amount = "Informe um valor válido.";
     if (!date) newErrors.date = "Data é obrigatória.";
     if (!category) newErrors.category = "Selecione uma categoria.";
@@ -31,7 +31,7 @@ function TransactionModal({ type, onClose, onSave }) {
 
   const handleSave = () => {
     if (validateFields()) {
-      const formattedAmount = parseFloat(amount) / 100;
+      const formattedAmount = parseFloat(value) / 100;
       onSave(type, description, formattedAmount, date, category);
       onClose();
     }
@@ -54,8 +54,8 @@ function TransactionModal({ type, onClose, onSave }) {
           />
           <MoneyInput
             label="Valor"
-            value={amount}
-            onChange={setAmount}
+            value={value}
+            onChange={setValue}
             error={errors.amount}
           />
           <TextInput
