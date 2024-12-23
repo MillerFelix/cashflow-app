@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Button from "../components/common/Button";
 import GoalsModal from "../components/goals/GoalsModal";
-import { db, addDoc, collection, query, getDocs } from "../firebase"; // Importando funções do Firebase
-import { useAuth } from "../hooks/useAuth"; // Importando o hook useAuth
+import { db, addDoc, collection, query, getDocs } from "../firebase"; // Firebase imports
+import { useAuth } from "../hooks/useAuth"; // Auth hook
 
 function Goals() {
   const [goals, setGoals] = useState([]);
@@ -13,12 +13,13 @@ function Goals() {
     startDate: "",
     endDate: "",
   });
+  const [successMessage, setSuccessMessage] = useState(""); // Adicionando estado para mensagem de sucesso
 
   const userId = useAuth();
 
   const fetchGoals = async () => {
     if (userId) {
-      const q = query(collection(db, "users", userId, "goals")); // Busca metas na subcoleção
+      const q = query(collection(db, "users", userId, "goals"));
       const querySnapshot = await getDocs(q);
       const goalsList = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -34,7 +35,13 @@ function Goals() {
     }
   }, [userId]);
 
-  const handleModalToggle = () => setIsModalOpen(!isModalOpen);
+  const handleModalToggle = () => {
+    setIsModalOpen(!isModalOpen);
+    if (!isModalOpen) {
+      setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
+      setSuccessMessage(""); // Resetando a mensagem de sucesso ao abrir o modal
+    }
+  };
 
   const handleGoalChange = (value, field) => {
     setNewGoal((prevState) => ({
@@ -51,6 +58,8 @@ function Goals() {
       });
       setIsModalOpen(false);
       setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
+      setSuccessMessage("Meta salva com sucesso!"); // Exibindo a mensagem de sucesso
+      setTimeout(() => setSuccessMessage(""), 3000); // A mensagem some após 3 segundos
       fetchGoals();
     }
   };
@@ -70,12 +79,18 @@ function Goals() {
       >
         Adicionar Meta
       </Button>
+      {successMessage && (
+        <div className="p-4 text-center rounded-lg my-4 bg-green-200 text-green-800">
+          {successMessage}
+        </div>
+      )}
       <GoalsModal
         isOpen={isModalOpen}
         onClose={handleModalToggle}
         onSave={handleAddGoal}
         newGoal={newGoal}
         handleGoalChange={handleGoalChange}
+        existingGoals={goals} // Passa as metas existentes para validação
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {goals.map((goal) => (

@@ -2,18 +2,70 @@ import { useState } from "react";
 import TextInput from "../common/TextInput";
 import MoneyInput from "../common/MoneyInput";
 import ActionButtons from "../common/ActionButtons";
+import Loader from "../common/Loader";
+import StatusMessage from "../common/StatusMessage";
 import { expenseCategories, incomeCategories } from "../category/CategoryList";
 
-function GoalsModal({ isOpen, onClose, onSave, newGoal, handleGoalChange }) {
+function GoalsModal({
+  isOpen,
+  onClose,
+  onSave,
+  newGoal,
+  handleGoalChange,
+  existingGoals,
+}) {
   const [selectedCategory, setSelectedCategory] = useState(
     newGoal.category || ""
   );
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   if (!isOpen) return null;
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category.name);
     handleGoalChange(category.name, "category");
+    setError(""); // Remove o erro ao selecionar nova categoria
+  };
+
+  const validateForm = () => {
+    if (!newGoal.category) {
+      setError("Por favor, selecione uma categoria.");
+      return false;
+    }
+    if (existingGoals.some((goal) => goal.category === newGoal.category)) {
+      setError("Já existe uma meta para essa categoria.");
+      return false;
+    }
+    if (isNaN(newGoal.goal) || newGoal.goal <= 0) {
+      setError("O valor da meta deve ser maior que zero.");
+      return false;
+    }
+    if (!newGoal.startDate || !newGoal.endDate) {
+      setError("As datas de início e fim devem ser preenchidas.");
+      return false;
+    }
+    if (newGoal.startDate > newGoal.endDate) {
+      setError("A data de início deve ser anterior à data de fim.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (validateForm()) {
+      setLoading(true);
+      try {
+        await onSave();
+        setSuccessMessage("Meta salva com sucesso!");
+        setTimeout(() => setSuccessMessage(""), 3000); // Apaga após 3 segundos
+      } catch {
+        setError("Erro ao salvar a meta.");
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const categories = [...incomeCategories, ...expenseCategories];
@@ -25,7 +77,10 @@ function GoalsModal({ isOpen, onClose, onSave, newGoal, handleGoalChange }) {
           Criar Meta
         </h2>
 
-        {/* Lista de categorias com ícones */}
+        {successMessage && <StatusMessage message={successMessage} />}
+        {error && <StatusMessage message={`Erro: ${error}`} />}
+        {loading && <Loader />}
+
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">
             Selecione a Categoria
@@ -54,12 +109,10 @@ function GoalsModal({ isOpen, onClose, onSave, newGoal, handleGoalChange }) {
           </div>
         </div>
 
-        {/* Formulário de meta */}
         <MoneyInput
           label="Valor Alvo"
           value={newGoal.goal}
           onChange={(e) => handleGoalChange(e, "goal")}
-          error={""}
         />
 
         <TextInput
@@ -76,7 +129,15 @@ function GoalsModal({ isOpen, onClose, onSave, newGoal, handleGoalChange }) {
           type="date"
         />
 
-        <ActionButtons onClose={onClose} onSave={onSave} />
+        <ActionButtons
+          onClose={() => {
+            if (error) return; // Não fecha o modal se houver erro
+            setSelectedCategory("");
+            setError("");
+            onClose();
+          }}
+          onSave={handleSave}
+        />
       </div>
     </div>
   );
