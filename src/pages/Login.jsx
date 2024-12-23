@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { auth } from "../firebase";
+import { useState, useEffect } from "react";
+import { auth, db } from "../firebase"; // Importando o Firebase
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore"; // Para buscar dados no Firestore
 import { Link, useNavigate } from "react-router-dom";
 import Loader from "../components/common/Loader";
 import TextInput from "../components/common/TextInput";
@@ -11,14 +12,28 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userName, setUserName] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true); // Ativa o loader
-    setError(""); // Reseta os erros
+    setLoading(true);
+    setError("");
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Buscar o nome do usuário no Firestore usando o userId (uid)
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setUserName(docSnap.data().name); // Salva o nome do usuário no estado
+      }
+
       navigate("/"); // Redireciona após login
     } catch (err) {
       setError("Erro ao fazer login. Verifique suas credenciais.");
@@ -40,7 +55,7 @@ function Login() {
             className="mx-auto w-34 h-32"
           />
           <h2 className="text-4xl font-extrabold text-gray-800">
-            Bem-vindo de volta!
+            Bem-vindo de volta, {userName ? userName : "Usuário"}!
           </h2>
           <p className="text-gray-600 mt-2">Faça login para continuar</p>
         </div>

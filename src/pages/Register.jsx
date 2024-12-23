@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { auth } from "../firebase"; // Importando o Firebase
+import { auth, db } from "../firebase"; // Importando o Firebase
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore"; // Importando para manipulação do Firestore
 import { Link, useNavigate } from "react-router-dom";
 import Loader from "../components/common/Loader";
 import TextInput from "../components/common/TextInput";
@@ -9,6 +10,7 @@ import Button from "../components/common/Button";
 function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState(""); // Novo estado para o nome
   const [error, setError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +29,19 @@ function Register() {
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      // Criação do usuário no Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Salvar o nome do usuário no Firestore, junto com o userId (uid)
+      await setDoc(doc(db, "users", user.uid), {
+        name: name, // Salva o nome
+      });
+
       navigate("/login"); // Redireciona para login após registro
     } catch (err) {
       setError("Erro ao criar conta. Tente novamente.");
@@ -56,6 +70,13 @@ function Register() {
           </p>
         </div>
         <form onSubmit={handleRegister} className="space-y-6">
+          <TextInput
+            label="Nome"
+            value={name}
+            onChange={setName} // Atualiza o estado de nome
+            type="text"
+            error={error && "Digite seu nome"}
+          />
           <TextInput
             label="Email"
             value={email}

@@ -2,10 +2,7 @@ import { useState } from "react";
 import TextInput from "../common/TextInput";
 import MoneyInput from "../common/MoneyInput";
 import ActionButtons from "../common/ActionButtons";
-import CategoryList, {
-  expenseCategories,
-  incomeCategories,
-} from "../category/CategoryList";
+import { expenseCategories, incomeCategories } from "../category/CategoryList";
 
 function GoalsModal({ isOpen, onClose, onSave, newGoal, handleGoalChange }) {
   const [selectedCategory, setSelectedCategory] = useState(

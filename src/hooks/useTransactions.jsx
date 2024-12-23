@@ -23,10 +23,8 @@ export function useTransactions(userId) {
   const fetchTransactions = async (uid) => {
     setLoading(true);
     try {
-      const q = query(
-        collection(db, "transactions"),
-        where("userId", "==", uid)
-      );
+      // Busca transações na subcoleção do usuário
+      const q = query(collection(db, "users", uid, "transactions"));
       const querySnapshot = await getDocs(q);
       const fetchedTransactions = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -46,15 +44,15 @@ export function useTransactions(userId) {
     setMessage("");
     try {
       const newTransaction = {
-        userId,
         type,
         description,
         amount,
         date,
         category,
       };
+      // Adiciona na subcoleção de transações do usuário
       const docRef = await addDoc(
-        collection(db, "transactions"),
+        collection(db, "users", userId, "transactions"),
         newTransaction
       );
       newTransaction.id = docRef.id;
@@ -72,13 +70,13 @@ export function useTransactions(userId) {
     if (!id) return;
     setLoading(true);
     try {
-      await deleteDoc(doc(db, "transactions", id));
+      // Remove da subcoleção de transações do usuário
+      await deleteDoc(doc(db, "users", userId, "transactions", id));
       setTransactions(
         transactions.filter((transaction) => transaction.id !== id)
       );
       setMessage("Transação removida com sucesso!");
       setTimeout(() => setMessage(""), 3000);
-      // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setMessage("Erro ao remover a transação. Tente novamente!");
     } finally {
