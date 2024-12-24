@@ -15,6 +15,7 @@ import {
 } from "../components/category/CategoryList";
 import ConfirmationModal from "../components/common/ConfirmationModal";
 
+// Estilos dos botões
 const buttonStyles = {
   credit: { bgColor: "bg-green-600", hoverColor: "hover:bg-green-700" },
   debit: { bgColor: "bg-red-500", hoverColor: "hover:bg-red-800" },
@@ -32,17 +33,18 @@ function Transactions() {
     open: false,
     id: null,
   });
+  const [loadingRemove, setLoadingRemove] = useState(false); // Novo estado para controle de remoção
 
   // Função para buscar o saldo atual
-  const fetchBalance = async () => {
+  async function fetchBalance() {
     if (!userId) return 0;
     const userDoc = doc(db, "users", userId);
     const userSnapshot = await getDoc(userDoc);
     return userSnapshot.exists() ? userSnapshot.data().balance || 0 : 0;
-  };
+  }
 
   // Atualiza o saldo com a transação
-  const updateBalance = async (transactionValue, type) => {
+  async function updateBalance(transactionValue, type) {
     if (!userId) return;
 
     const currentBalance = await fetchBalance();
@@ -53,36 +55,44 @@ function Transactions() {
 
     const userDoc = doc(db, "users", userId);
     await setDoc(userDoc, { balance: newBalance }, { merge: true });
-  };
+  }
 
-  const handleAddTransaction = async (
+  // Função para adicionar transação
+  async function handleAddTransaction(
     type,
     description,
     value,
     date,
     category
-  ) => {
+  ) {
     await addTransaction(type, description, value, date, category);
-    await updateBalance(value, type); // Atualiza o saldo após a transação
-  };
+    await updateBalance(value, type);
+  }
 
-  const handleRemoveTransaction = async (id) => {
+  // Função para remover transação
+  async function handleRemoveTransaction(id) {
+    setLoadingRemove(true); // Inicia o carregamento
     await removeTransaction(id);
-  };
+    setLoadingRemove(false); // Finaliza o carregamento
+  }
 
-  const confirmRemoveTransaction = (id) => {
+  // Função para confirmar remoção
+  function confirmRemoveTransaction(id) {
     setModalConfirmOpen({ open: true, id });
-  };
+  }
 
-  const handleFilterChange = (e) => {
+  // Função para alterar filtros
+  function handleFilterChange(e) {
     const { name, value } = e.target;
     setFilters((prevFilters) => ({ ...prevFilters, [name]: value }));
-  };
+  }
 
-  const clearFilters = () => {
+  // Função para limpar filtros
+  function clearFilters() {
     setFilters({ date: "", type: "", category: "" });
-  };
+  }
 
+  // Filtra transações com base nos filtros aplicados
   const filteredTransactions = transactions.filter((transaction) => {
     return (
       (!filters.date || transaction.date === filters.date) &&
@@ -99,7 +109,6 @@ function Transactions() {
       <h2 className="text-gray-800 text-2xl font-semibold text-center mb-4">
         Transações Financeiras
       </h2>
-
       <Filters
         filters={filters}
         handleFilterChange={handleFilterChange}
@@ -107,9 +116,7 @@ function Transactions() {
         expenseCategories={expenseCategories}
         incomeCategories={incomeCategories}
       />
-
       <StatusMessage message={message} />
-
       <div className="flex justify-between mb-4">
         <Button
           onClick={() => {
@@ -132,14 +139,12 @@ function Transactions() {
           Adicionar Débito
         </Button>
       </div>
-
       {loading && <Loader />}
-
+      {loadingRemove && <Loader />} {/* Loader para remoção */}
       <TransactionItem
         transactions={filteredTransactions}
         removeTransaction={confirmRemoveTransaction}
       />
-
       {isModalOpen && (
         <TransactionModal
           type={modalType}
@@ -147,7 +152,6 @@ function Transactions() {
           onSave={handleAddTransaction}
         />
       )}
-
       {modalConfirmOpen.open && (
         <ConfirmationModal
           showModal={modalConfirmOpen.open}

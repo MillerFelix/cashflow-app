@@ -22,7 +22,7 @@ export function useTransactions(userId) {
     fetchTransactions(userId);
   }, [userId]);
 
-  const fetchTransactions = async (uid) => {
+  async function fetchTransactions(uid) {
     setLoading(true);
     try {
       const q = query(collection(db, "users", uid, "transactions"));
@@ -37,9 +37,9 @@ export function useTransactions(userId) {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const addTransaction = async (type, description, value, date, category) => {
+  async function addTransaction(type, description, value, date, category) {
     if (!userId) return;
     setLoading(true);
     setMessage("");
@@ -69,9 +69,9 @@ export function useTransactions(userId) {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const updateGoalsProgress = async (uid, category, value, date) => {
+  async function updateGoalsProgress(uid, category, value, date) {
     try {
       const q = query(
         collection(db, "users", uid, "goals"),
@@ -81,9 +81,9 @@ export function useTransactions(userId) {
 
       const goalsToUpdate = querySnapshot.docs.filter((doc) => {
         const goal = doc.data();
-        const goalStartDate = new Date(goal.startDate); // Converte a string para objeto Date
-        const goalEndDate = new Date(goal.endDate); // Converte a string para objeto Date
-        const transactionDate = new Date(date); // A data da transação
+        const goalStartDate = new Date(goal.startDate);
+        const goalEndDate = new Date(goal.endDate);
+        const transactionDate = new Date(date);
 
         // Verifica se a data da transação está dentro do intervalo da meta
         return (
@@ -105,9 +105,9 @@ export function useTransactions(userId) {
     } catch (error) {
       console.error("Erro ao atualizar progresso das metas:", error);
     }
-  };
+  }
 
-  const removeTransaction = async (id) => {
+  async function removeTransaction(id) {
     if (!id) return;
     setLoading(true);
     try {
@@ -134,7 +134,7 @@ export function useTransactions(userId) {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return { transactions, loading, message, addTransaction, removeTransaction };
 }

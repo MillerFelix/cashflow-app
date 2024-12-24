@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { auth, db } from "../firebase"; // Importando o Firebase
+import { useState } from "react";
+import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore"; // Para buscar dados no Firestore
+import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import Loader from "../components/common/Loader";
 import TextInput from "../components/common/TextInput";
@@ -15,7 +15,7 @@ function Login() {
   const [userName, setUserName] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  async function handleLogin(e) {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -31,20 +31,19 @@ function Login() {
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setUserName(docSnap.data().name); // Salva o nome do usuário no estado
+        setUserName(docSnap.data().name);
       }
 
-      navigate("/"); // Redireciona após login
+      navigate("/");
     } catch (err) {
       setError("Erro ao fazer login. Verifique suas credenciais.");
     } finally {
-      setLoading(false); // Desativa o loader
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-800 flex justify-center items-center px-4 relative">
-      {/* Fundo nublado durante o carregamento */}
       {loading && <Loader />}
 
       <div className="p-6 bg-white rounded-3xl shadow-xl w-full max-w-md transform transition hover:scale-105 hover:shadow-2xl">
@@ -79,7 +78,7 @@ function Login() {
             type="submit"
             bgColor="bg-gradient-to-r from-green-500 to-green-700"
             hoverColor="hover:opacity-90"
-            className="text-white w-48 mx-auto block" // Adiciona centralização e largura fixa
+            className="text-white w-48 mx-auto block"
           >
             Entrar
           </Button>

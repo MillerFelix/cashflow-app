@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { expenseCategories, incomeCategories } from "../category/CategoryList";
 import TextInput from "../common/TextInput";
-import Dropdown from "../category/Dropdown";
+import CategoryDropdown from "../category/CategoryDropdown";
 import ActionButtons from "../common/ActionButtons";
 import MoneyInput from "../common/MoneyInput";
 import LimitedTextInput from "../common/LimitedTextInput";
@@ -18,7 +18,7 @@ function TransactionModal({ type, onClose, onSave }) {
   const maxWords = 6;
   const categories = type === "credit" ? incomeCategories : expenseCategories;
 
-  const validateFields = () => {
+  function validateFields() {
     const newErrors = {};
     if (!description.trim()) newErrors.description = "Descrição é obrigatória.";
     if (!value || isNaN(value) || parseFloat(value) <= 0)
@@ -27,15 +27,15 @@ function TransactionModal({ type, onClose, onSave }) {
     if (!category) newErrors.category = "Selecione uma categoria.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }
 
-  const handleSave = () => {
+  function handleSave() {
     if (validateFields()) {
       const formattedAmount = parseFloat(value) / 100;
       onSave(type, description, formattedAmount, date, category);
       onClose();
     }
-  };
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
@@ -65,7 +65,7 @@ function TransactionModal({ type, onClose, onSave }) {
             onChange={setDate}
             error={errors.date}
           />
-          <Dropdown
+          <CategoryDropdown
             label="Categoria"
             categories={categories}
             selectedCategory={category}

@@ -16,15 +16,15 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
+  async function handleRegister(e) {
     e.preventDefault();
-    setLoading(true); // Ativa o loader
+    setLoading(true);
     setError("");
     setPasswordError("");
 
     if (password.length < 6) {
       setPasswordError("A senha deve ter no mínimo 6 caracteres.");
-      setLoading(false); // Desativa o loader se houver erro
+      setLoading(false);
       return;
     }
 
@@ -42,17 +42,16 @@ function Register() {
         name: name, // Salva o nome
       });
 
-      navigate("/login"); // Redireciona para login após registro
+      navigate("/login");
     } catch (err) {
       setError("Erro ao criar conta. Tente novamente.");
     } finally {
-      setLoading(false); // Desativa o loader
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-800 flex justify-center items-center px-4 relative">
-      {/* Fundo nublado durante o carregamento */}
       {loading && <Loader />}
 
       <div className="p-6 bg-white rounded-3xl shadow-xl w-full max-w-md transform transition hover:scale-105 hover:shadow-2xl">
@@ -73,7 +72,7 @@ function Register() {
           <TextInput
             label="Nome"
             value={name}
-            onChange={setName} // Atualiza o estado de nome
+            onChange={setName}
             type="text"
             error={error && "Digite seu nome"}
           />
@@ -96,7 +95,7 @@ function Register() {
             type="submit"
             bgColor="bg-gradient-to-r from-green-500 to-green-700"
             hoverColor="hover:opacity-90"
-            className="text-white w-48 mx-auto block" // Adiciona centralização e largura fixa
+            className="text-white w-48 mx-auto block"
           >
             Criar Conta
           </Button>

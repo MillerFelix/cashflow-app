@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Card from "../components/common/Card";
 import BalanceModal from "../components/dashboard/BalanceModal";
-import CategoryList from "../components/category/CategoryList";
 import Loader from "../components/common/Loader";
 import BalanceVisibilityToggle from "../components/dashboard/BalanceVisibilityToggle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -20,7 +19,7 @@ function Dashboard() {
   const { addTransaction } = useTransactions(userId);
 
   useEffect(() => {
-    const fetchBalance = async () => {
+    async function fetchBalance() {
       if (userId) {
         try {
           setLoading(true);
@@ -37,7 +36,7 @@ function Dashboard() {
       } else {
         setLoading(false);
       }
-    };
+    }
 
     fetchBalance();
   }, [userId]);
@@ -46,7 +45,7 @@ function Dashboard() {
     localStorage.setItem("balanceVisibility", isVisible);
   }, [isVisible]);
 
-  const handleSaveBalance = async (newBalance) => {
+  async function handleSaveBalance(newBalance) {
     if (userId) {
       setSaving(true);
       try {
@@ -70,7 +69,7 @@ function Dashboard() {
         setSaving(false);
       }
     }
-  };
+  }
 
   const formattedBalance = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -113,7 +112,6 @@ function Dashboard() {
           initialBalance={(balance * 100).toString()}
         />
       )}
-      {/* <CategoryList /> */}
     </div>
   );
 }

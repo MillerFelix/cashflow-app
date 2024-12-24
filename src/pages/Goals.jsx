@@ -1,83 +1,33 @@
 import React, { useState, useEffect } from "react";
 import Button from "../components/common/Button";
 import GoalsModal from "../components/goals/GoalsModal";
-import { db, addDoc, collection, query, getDocs } from "../firebase"; // Firebase imports
-import { useAuth } from "../hooks/useAuth"; // Auth hook
+import useGoals from "../hooks/useGoals";
 
 function Goals() {
-  const [goals, setGoals] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newGoal, setNewGoal] = useState({
-    category: "",
-    goal: "",
-    startDate: "",
-    endDate: "",
-  });
-  const [successMessage, setSuccessMessage] = useState(""); // Adicionando estado para mensagem de sucesso
+  const {
+    goals,
+    fetchGoals,
+    addGoal,
+    isModalOpen,
+    toggleModal,
+    newGoal,
+    handleGoalChange,
+    successMessage,
+  } = useGoals();
 
-  const userId = useAuth();
-
-  const fetchGoals = async () => {
-    if (userId) {
-      const q = query(collection(db, "users", userId, "goals"));
-      const querySnapshot = await getDocs(q);
-      const goalsList = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setGoals(goalsList);
-    }
-  };
+  function getProgressBarColor(category) {
+    return category === "Ganho" ? "bg-green-500" : "bg-red-500";
+  }
 
   useEffect(() => {
-    if (userId) {
-      fetchGoals();
-    }
-  }, [userId]);
-
-  const handleModalToggle = () => {
-    setIsModalOpen(!isModalOpen);
-    if (!isModalOpen) {
-      setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
-      setSuccessMessage(""); // Resetando a mensagem de sucesso ao abrir o modal
-    }
-  };
-
-  const handleGoalChange = (value, field) => {
-    setNewGoal((prevState) => ({
-      ...prevState,
-      [field]: value,
-    }));
-  };
-
-  const handleAddGoal = async () => {
-    if (userId) {
-      const parsedGoalValue = parseFloat(newGoal.goal) / 100; // Converte para número correto
-      await addDoc(collection(db, "users", userId, "goals"), {
-        goalValue: parsedGoalValue, // Salva como número
-        progress: 0,
-        currentValue: 0,
-        category: newGoal.category,
-        startDate: newGoal.startDate,
-        endDate: newGoal.endDate,
-      });
-      setIsModalOpen(false);
-      setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
-      setSuccessMessage("Meta salva com sucesso!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-      fetchGoals();
-    }
-  };
-
-  const getProgressBarColor = (category) => {
-    return category === "Ganho" ? "bg-green-500" : "bg-red-500";
-  };
+    fetchGoals();
+  }, []);
 
   return (
     <div className="p-8">
       <h1 className="text-2xl font-semibold mb-4">Metas Financeiras</h1>
       <Button
-        onClick={handleModalToggle}
+        onClick={toggleModal}
         bgColor="bg-blue-500"
         hoverColor="hover:bg-blue-600"
         className="text-white mb-6"
@@ -91,12 +41,13 @@ function Goals() {
       )}
       <GoalsModal
         isOpen={isModalOpen}
-        onClose={handleModalToggle}
-        onSave={handleAddGoal}
+        onClose={toggleModal}
+        onSave={addGoal}
         newGoal={newGoal}
         handleGoalChange={handleGoalChange}
-        existingGoals={goals} // Passa as metas existentes para validação
+        existingGoals={goals}
       />
+      {/* Dividir em componente próprio posteriormente */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {goals.map((goal) => (
           <div key={goal.id} className="bg-white p-4 rounded-lg shadow-lg">

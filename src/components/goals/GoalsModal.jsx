@@ -26,7 +26,7 @@ function GoalsModal({
   const handleCategorySelect = (category) => {
     setSelectedCategory(category.name);
     handleGoalChange(category.name, "category");
-    setError(""); // Remove o erro ao selecionar nova categoria
+    setError("");
   };
 
   const validateForm = () => {
@@ -54,15 +54,14 @@ function GoalsModal({
   };
 
   const handleSave = async () => {
-    debugger;
     if (validateForm()) {
       setLoading(true);
       try {
         await onSave();
         setSuccessMessage("Meta salva com sucesso!");
-        setTimeout(() => setSuccessMessage(""), 3000); // Apaga após 3 segundos
+        setTimeout(() => setSuccessMessage(""), 3000);
       } catch {
-        setError("Erro ao salvar a meta.");
+        setTimeout(() => setError("Erro ao salvar a meta."), 3000);
       } finally {
         setLoading(false);
       }
@@ -73,22 +72,25 @@ function GoalsModal({
 
   return (
     <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-      <div className="bg-white p-8 rounded-lg shadow-xl w-4/5 sm:w-2/3 md:w-1/2 lg:w-1/3 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-11/12 sm:w-2/3 md:w-1/2 lg:w-1/3 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           Criar Meta
         </h2>
 
-        {successMessage && <StatusMessage message={successMessage} />}
-        {error && <StatusMessage message={`Erro: ${error}`} />}
+        {successMessage && (
+          <StatusMessage message={successMessage} type="success" />
+        )}
+        {error && <StatusMessage message={`Erro: ${error}`} type="error" />}
         {loading && <Loader />}
 
+        {/* Seleção de Categoria */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">
             Selecione a Categoria
           </h3>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
             {categories.map((category, index) => (
-              <div
+              <button
                 key={index}
                 onClick={() => handleCategorySelect(category)}
                 className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out 
@@ -105,7 +107,7 @@ function GoalsModal({
               >
                 <div className="text-2xl">{category.icon}</div>
                 <p className="mt-2 text-xs text-center">{category.name}</p>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -115,14 +117,12 @@ function GoalsModal({
           value={newGoal.goal}
           onChange={(e) => handleGoalChange(e, "goal")}
         />
-
         <TextInput
           label="Data de Início"
           value={newGoal.startDate}
           onChange={(e) => handleGoalChange(e, "startDate")}
           type="date"
         />
-
         <TextInput
           label="Data de Fim"
           value={newGoal.endDate}
@@ -132,7 +132,7 @@ function GoalsModal({
 
         <ActionButtons
           onClose={() => {
-            if (error) return; // Não fecha o modal se houver erro
+            if (error) return;
             setSelectedCategory("");
             setError("");
             onClose();

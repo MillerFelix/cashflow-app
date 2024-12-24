@@ -6,22 +6,22 @@ function BalanceModal({ onClose, onSave, initialBalance = "" }) {
   const [balance, setBalance] = useState(initialBalance);
   const [error, setError] = useState("");
 
-  const validateBalance = () => {
+  function validateBalance() {
     if (!balance || isNaN(balance) || parseFloat(balance) <= 0) {
       setError("Informe um saldo válido.");
       return false;
     }
     setError("");
     return true;
-  };
+  }
 
-  const handleSave = () => {
+  function handleSave() {
     if (validateBalance()) {
       const formattedBalance = parseFloat(balance) / 100;
       onSave(formattedBalance);
       onClose();
     }
-  };
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
