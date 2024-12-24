@@ -53,13 +53,17 @@ function Goals() {
   const handleAddGoal = async () => {
     if (userId) {
       await addDoc(collection(db, "users", userId, "goals"), {
-        ...newGoal,
+        goalValue: newGoal.goal, // Renomeado de 'goal' para 'goalValue'
         progress: 0,
+        currentValue: 0, // Inicializando 'currentValue' como 0
+        category: newGoal.category,
+        startDate: newGoal.startDate,
+        endDate: newGoal.endDate,
       });
       setIsModalOpen(false);
       setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
-      setSuccessMessage("Meta salva com sucesso!"); // Exibindo a mensagem de sucesso
-      setTimeout(() => setSuccessMessage(""), 3000); // A mensagem some após 3 segundos
+      setSuccessMessage("Meta salva com sucesso!");
+      setTimeout(() => setSuccessMessage(""), 3000);
       fetchGoals();
     }
   };

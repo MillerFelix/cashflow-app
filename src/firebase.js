@@ -9,8 +9,9 @@ import {
   addDoc,
   setDoc,
   query,
-  where,
+  where, // Aqui
   getDocs,
+  writeBatch,
 } from "firebase/firestore";
 
 // Configuração do Firebase
@@ -41,6 +42,7 @@ export {
   collection,
   query,
   where,
+  writeBatch,
   getDocs,
   deleteDoc,
   doc,
