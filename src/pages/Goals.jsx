@@ -52,10 +52,11 @@ function Goals() {
 
   const handleAddGoal = async () => {
     if (userId) {
+      const parsedGoalValue = parseFloat(newGoal.goal) / 100; // Converte para número correto
       await addDoc(collection(db, "users", userId, "goals"), {
-        goalValue: newGoal.goal, // Renomeado de 'goal' para 'goalValue'
+        goalValue: parsedGoalValue, // Salva como número
         progress: 0,
-        currentValue: 0, // Inicializando 'currentValue' como 0
+        currentValue: 0,
         category: newGoal.category,
         startDate: newGoal.startDate,
         endDate: newGoal.endDate,

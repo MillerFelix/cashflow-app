@@ -1,7 +1,18 @@
 function MoneyInput({ label, value = "", onChange, error }) {
+  // const handleValueChange = (rawValue) => {
+  //   const numericValue = rawValue.replace(/[^\d]/g, ""); // Remove caracteres não numéricos
+  //   onChange(numericValue); // Atualiza apenas o valor bruto
+  // };
+
+  // const formatValue = (value) => {
+  //   if (!value) return ""; // Retorna vazio se não houver valor
+  //   const numericValue = parseInt(value, 10); // Garante que é um número inteiro
+  //   return `R$ ${(numericValue / 100).toFixed(2).replace(".", ",")}`;
+  // };
+
   const handleValueChange = (rawValue) => {
     const numericValue = rawValue.replace(/[^\d]/g, ""); // Remove caracteres não numéricos
-    onChange(numericValue); // Atualiza apenas o valor bruto
+    onChange(numericValue); // Atualiza o valor bruto (ainda em centavos)
   };
 
   const formatValue = (value) => {

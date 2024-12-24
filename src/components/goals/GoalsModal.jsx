@@ -54,6 +54,7 @@ function GoalsModal({
   };
 
   const handleSave = async () => {
+    debugger;
     if (validateForm()) {
       setLoading(true);
       try {
