@@ -7,6 +7,7 @@ import {
   doc,
   getDocs,
   query,
+  orderBy,
   where,
   writeBatch,
 } from "../firebase";
@@ -25,7 +26,10 @@ export function useTransactions(userId) {
   async function fetchTransactions(uid) {
     setLoading(true);
     try {
-      const q = query(collection(db, "users", uid, "transactions"));
+      const q = query(
+        collection(db, "users", uid, "transactions"),
+        orderBy("date", "desc") // Ordena por data mais recente
+      );
       const querySnapshot = await getDocs(q);
       const fetchedTransactions = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -57,7 +61,12 @@ export function useTransactions(userId) {
         newTransaction
       );
       newTransaction.id = docRef.id;
-      setTransactions([...transactions, newTransaction]);
+
+      // Atualiza a lista de transações ordenada
+      setTransactions((prevTransactions) => {
+        const updatedTransactions = [...prevTransactions, newTransaction];
+        return updatedTransactions.sort((a, b) => (b.date > a.date ? 1 : -1)); // Ordena pela data
+      });
 
       // Atualiza metas relacionadas à categoria
       await updateGoalsProgress(userId, category, value, date);

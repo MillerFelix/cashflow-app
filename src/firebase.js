@@ -9,7 +9,8 @@ import {
   addDoc,
   setDoc,
   query,
-  where, // Aqui
+  where,
+  orderBy,
   getDocs,
   writeBatch,
 } from "firebase/firestore";
@@ -43,6 +44,7 @@ export {
   query,
   where,
   writeBatch,
+  orderBy,
   getDocs,
   deleteDoc,
   doc,
