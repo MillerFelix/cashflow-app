@@ -29,7 +29,7 @@ function GoalCard({ goal }) {
     return `${day}/${month}/${year}`;
   }
 
-  const progressPercentage = (goal.currentValue / goal.goalValue) * 100;
+  const achievementPercentage = (goal.currentValue / goal.goalValue) * 100;
 
   return (
     <div className={`${getCardStyle(categoryDetails?.type)} relative`}>
@@ -60,7 +60,7 @@ function GoalCard({ goal }) {
         {formatDate(goal.endDate)}
       </p>
       <p className="text-sm mt-2">
-        <strong>Progresso:</strong> {`${Math.round(progressPercentage)}%`}
+        <strong>Progresso:</strong> {`${Math.round(achievementPercentage)}%`}
       </p>
     </div>
   );

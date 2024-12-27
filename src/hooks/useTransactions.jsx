@@ -69,7 +69,7 @@ export function useTransactions(userId) {
       });
 
       // Atualiza metas relacionadas à categoria
-      await updateGoalsProgress(userId, category, value, date);
+      await updateGoalsAchievement(userId, category, value, date);
 
       setMessage("Transação salva com sucesso!");
       setTimeout(() => setMessage(""), 3000);
@@ -80,7 +80,7 @@ export function useTransactions(userId) {
     }
   }
 
-  async function updateGoalsProgress(uid, category, value, date) {
+  async function updateGoalsAchievement(uid, category, value, date) {
     try {
       const q = query(
         collection(db, "users", uid, "goals"),
@@ -104,10 +104,10 @@ export function useTransactions(userId) {
       goalsToUpdate.forEach((doc) => {
         const goal = doc.data();
         const updatedValue = goal.currentValue + value;
-        const progress = (updatedValue / goal.goalValue) * 100;
+        const achievement = (updatedValue / goal.goalValue) * 100;
         batch.update(doc.ref, {
           currentValue: updatedValue,
-          progress: progress > 100 ? 100 : progress,
+          achievement: achievement > 100 ? 100 : achievement,
         });
       });
       await batch.commit();
@@ -125,7 +125,7 @@ export function useTransactions(userId) {
 
       // Reverter progresso da meta associada
       if (transactionToRemove) {
-        await updateGoalsProgress(
+        await updateGoalsAchievement(
           userId,
           transactionToRemove.category,
           -transactionToRemove.value,

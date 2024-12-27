@@ -57,7 +57,7 @@ function useGoals() {
       const parsedGoalValue = parseFloat(newGoal.goal) / 100;
       await addDoc(collection(db, "users", userId, "goals"), {
         goalValue: parsedGoalValue,
-        progress: 0,
+        achievement: 0,
         currentValue: 0,
         category: newGoal.category,
         startDate: newGoal.startDate,
