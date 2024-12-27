@@ -71,7 +71,7 @@ function GoalsModal({
   const categories = [...incomeCategories, ...expenseCategories];
 
   return (
-    <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+    <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-xl w-11/12 sm:w-2/3 md:w-1/2 lg:w-1/3 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           Criar Meta
