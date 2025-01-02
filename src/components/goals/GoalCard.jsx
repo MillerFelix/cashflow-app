@@ -23,11 +23,8 @@ function GoalCard({ goal, onDelete }) {
   }
 
   function formatDate(date) {
-    const d = new Date(date);
-    const day = d.getDate().toString().padStart(2, "0");
-    const month = (d.getMonth() + 1).toString().padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    const d = new Date(date + "T00:00:00"); // Garantir que seja interpretado no horário local
+    return d.toLocaleDateString("pt-BR");
   }
 
   const achievementPercentage = (goal.currentValue / goal.goalValue) * 100;
@@ -43,7 +40,7 @@ function GoalCard({ goal, onDelete }) {
         <h3 className="text-lg font-semibold tracking-wide">{goal.category}</h3>
         <button
           onClick={() => onDelete(goal.id)}
-          className="absolute top-2 right-2 text-yellow-300 hover:text-orange-400 transition-transform duration-200 active:scale-95 hover:scale-105"
+          className="p-2 absolute top-2 right-2 text-yellow-300 hover:text-orange-400 transition-transform duration-200 active:scale-95 hover:scale-105"
         >
           <FaTrashAlt />
         </button>

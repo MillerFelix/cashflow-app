@@ -23,6 +23,8 @@ const buttonStyles = {
 
 function Transactions() {
   const userId = useAuth();
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [category, setCategory] = useState("");
   const { transactions, loading, message, addTransaction, removeTransaction } =
     useTransactions(userId);
 
@@ -113,6 +115,10 @@ function Transactions() {
         filters={filters}
         handleFilterChange={handleFilterChange}
         clearFilters={clearFilters}
+        showCategoryDropdown={showCategoryDropdown}
+        setShowCategoryDropdown={setShowCategoryDropdown}
+        category={category} // Passando o estado category
+        setCategory={setCategory} // Passando a função setCategory
         expenseCategories={expenseCategories}
         incomeCategories={incomeCategories}
       />

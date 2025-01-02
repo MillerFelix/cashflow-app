@@ -1,11 +1,3 @@
-import { useState } from "react";
-import { expenseCategories, incomeCategories } from "../category/CategoryList";
-import TextInput from "../common/TextInput";
-import CategoryDropdown from "../category/CategoryDropdown";
-import ActionButtons from "../common/ActionButtons";
-import MoneyInput from "../common/MoneyInput";
-import LimitedTextInput from "../common/LimitedTextInput";
-
 function TransactionModal({ type, onClose, onSave }) {
   const [description, setDescription] = useState("");
   const [value, setValue] = useState("");
@@ -29,7 +21,8 @@ function TransactionModal({ type, onClose, onSave }) {
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleSave() {
+  function handleSave(e) {
+    e.preventDefault();
     if (validateFields()) {
       const formattedAmount = parseFloat(value) / 100;
       onSave(type, description, formattedAmount, date, category);
@@ -43,7 +36,7 @@ function TransactionModal({ type, onClose, onSave }) {
         <h3 className="text-xl font-semibold mb-4">
           Adicionar {type === "credit" ? "Crédito" : "Débito"}
         </h3>
-        <form>
+        <form onSubmit={handleSave}>
           <LimitedTextInput
             label="Descrição"
             value={description}
@@ -74,11 +67,9 @@ function TransactionModal({ type, onClose, onSave }) {
             setShowDropdown={setShowDropdown}
             error={errors.category}
           />
+          <ActionButtons onClose={onClose} />
         </form>
-        <ActionButtons onClose={onClose} onSave={handleSave} />
       </div>
     </div>
   );
 }
-
-export default TransactionModal;

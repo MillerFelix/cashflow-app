@@ -23,11 +23,17 @@ function BalanceModal({ onClose, onSave, initialBalance = "" }) {
     }
   }
 
+  // Previne o comportamento de submit do formulário
+  function handleSubmit(event) {
+    event.preventDefault();
+    handleSave();
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
         <h3 className="text-xl font-semibold mb-4">Inserir Saldo</h3>
-        <form>
+        <form onSubmit={handleSubmit}>
           <MoneyInput
             label="Saldo"
             value={balance} // Passa o valor bruto

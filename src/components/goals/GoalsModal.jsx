@@ -23,13 +23,13 @@ function GoalsModal({
 
   if (!isOpen) return null;
 
-  const handleCategorySelect = (category) => {
+  function handleCategorySelect(category) {
     setSelectedCategory(category.name);
     handleGoalChange(category.name, "category");
     setError("");
-  };
+  }
 
-  const validateForm = () => {
+  function validateForm() {
     if (!newGoal.category) {
       setError("Por favor, selecione uma categoria.");
       return false;
@@ -51,9 +51,10 @@ function GoalsModal({
       return false;
     }
     return true;
-  };
+  }
 
-  const handleSave = async () => {
+  async function handleSubmit(e) {
+    e.preventDefault(); // Previne o comportamento padrão do formulário
     if (validateForm()) {
       setLoading(true);
       try {
@@ -66,7 +67,7 @@ function GoalsModal({
         setLoading(false);
       }
     }
-  };
+  }
 
   const categories = [...incomeCategories, ...expenseCategories];
 
@@ -83,62 +84,65 @@ function GoalsModal({
         {error && <StatusMessage message={`Erro: ${error}`} type="error" />}
         {loading && <Loader />}
 
-        {/* Seleção de Categoria */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">
-            Selecione a Categoria
-          </h3>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {categories.map((category, index) => (
-              <button
-                key={index}
-                onClick={() => handleCategorySelect(category)}
-                className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out 
-                  ${
-                    selectedCategory === category.name
-                      ? category.type === "expense"
-                        ? "bg-red-500 text-white"
-                        : "bg-green-500 text-white"
-                      : category.type === "expense"
-                      ? "bg-red-100 text-red-700"
-                      : "bg-green-100 text-green-700"
-                  } 
-                  transform hover:scale-105`}
-              >
-                <div className="text-2xl">{category.icon}</div>
-                <p className="mt-2 text-xs text-center">{category.name}</p>
-              </button>
-            ))}
+        <form onSubmit={handleSubmit}>
+          {/* Seleção de Categoria */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">
+              Selecione a Categoria
+            </h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {categories.map((category, index) => (
+                <button
+                  type="button"
+                  key={index}
+                  onClick={() => handleCategorySelect(category)}
+                  className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out 
+                    ${
+                      selectedCategory === category.name
+                        ? category.type === "expense"
+                          ? "bg-red-500 text-white"
+                          : "bg-green-500 text-white"
+                        : category.type === "expense"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-green-100 text-green-700"
+                    } 
+                    transform hover:scale-105`}
+                >
+                  <div className="text-2xl">{category.icon}</div>
+                  <p className="mt-2 text-xs text-center">{category.name}</p>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <MoneyInput
-          label="Valor Alvo"
-          value={newGoal.goal}
-          onChange={(e) => handleGoalChange(e, "goal")}
-        />
-        <TextInput
-          label="Data de Início"
-          value={newGoal.startDate}
-          onChange={(e) => handleGoalChange(e, "startDate")}
-          type="date"
-        />
-        <TextInput
-          label="Data de Fim"
-          value={newGoal.endDate}
-          onChange={(e) => handleGoalChange(e, "endDate")}
-          type="date"
-        />
+          <MoneyInput
+            label="Valor Alvo"
+            value={newGoal.goal}
+            onChange={(e) => handleGoalChange(e, "goal")}
+          />
+          <TextInput
+            label="Data de Início"
+            value={newGoal.startDate}
+            onChange={(e) => handleGoalChange(e, "startDate")}
+            type="date"
+          />
+          <TextInput
+            label="Data de Fim"
+            value={newGoal.endDate}
+            onChange={(e) => handleGoalChange(e, "endDate")}
+            type="date"
+          />
 
-        <ActionButtons
-          onClose={() => {
-            if (error) return;
-            setSelectedCategory("");
-            setError("");
-            onClose();
-          }}
-          onSave={handleSave}
-        />
+          <ActionButtons
+            onClose={() => {
+              if (error) return;
+              setSelectedCategory("");
+              setError("");
+              onClose();
+            }}
+            onSave={null} // Removido o handleSave, pois o botão de salvar é submit
+          />
+        </form>
       </div>
     </div>
   );
