@@ -1,8 +1,9 @@
 import React from "react";
 import { expenseCategories, incomeCategories } from "../category/CategoryList";
 import ProgressBar from "./ProgressBar";
+import { FaTrashAlt } from "react-icons/fa";
 
-function GoalCard({ goal }) {
+function GoalCard({ goal, onDelete }) {
   function getCategoryDetails(categoryName) {
     const allCategories = [...expenseCategories, ...incomeCategories];
     return allCategories.find((cat) => cat.name === categoryName);
@@ -40,6 +41,12 @@ function GoalCard({ goal }) {
           </div>
         )}
         <h3 className="text-lg font-semibold tracking-wide">{goal.category}</h3>
+        <button
+          onClick={() => onDelete(goal.id)}
+          className="absolute top-2 right-2 text-yellow-300 hover:text-orange-400 transition-transform duration-200 active:scale-95 hover:scale-105"
+        >
+          <FaTrashAlt />
+        </button>
       </div>
       <p className="mb-2">
         <strong>
