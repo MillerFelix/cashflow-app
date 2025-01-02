@@ -7,6 +7,7 @@ import {
   getDocs,
   doc,
   deleteDoc,
+  where,
 } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 
@@ -57,19 +58,55 @@ function useGoals() {
 
   async function addGoal() {
     if (!userId) return;
+    setIsLoading(true);
     const parsedGoalValue = parseFloat(newGoal.goal) / 100;
-    await addDoc(collection(db, "users", userId, "goals"), {
-      goalValue: parsedGoalValue,
-      achievement: 0,
-      currentValue: 0,
-      category: newGoal.category,
-      startDate: newGoal.startDate,
-      endDate: newGoal.endDate,
-    });
-    toggleModal();
-    setSuccessMessage("Meta salva com sucesso!");
-    setTimeout(() => setSuccessMessage(""), 3000);
-    fetchGoals();
+
+    try {
+      // 1. Buscar transações relacionadas à categoria da meta
+      const transactionsRef = collection(db, "users", userId, "transactions");
+      const q = query(
+        transactionsRef,
+        where("category", "==", newGoal.category)
+      );
+      const querySnapshot = await getDocs(q);
+
+      // 2. Filtrar transações dentro do período da meta
+      const startDate = new Date(newGoal.startDate);
+      const endDate = new Date(newGoal.endDate);
+      const filteredTransactions = querySnapshot.docs.filter((doc) => {
+        const transaction = doc.data();
+        const transactionDate = new Date(transaction.date);
+        return transactionDate >= startDate && transactionDate <= endDate;
+      });
+
+      // 3. Calcular currentValue e achievement
+      const currentValue = filteredTransactions.reduce(
+        (sum, t) => sum + t.data().value,
+        0
+      );
+      const achievement = (currentValue / parsedGoalValue) * 100;
+
+      // 4. Salvar a meta com os valores calculados
+      await addDoc(collection(db, "users", userId, "goals"), {
+        goalValue: parsedGoalValue,
+        achievement: achievement > 100 ? 100 : achievement,
+        currentValue,
+        category: newGoal.category,
+        startDate: newGoal.startDate,
+        endDate: newGoal.endDate,
+      });
+
+      toggleModal();
+      setSuccessMessage("Meta salva com sucesso!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+
+      // Atualizar lista de metas
+      fetchGoals();
+    } catch (error) {
+      console.error("Erro ao criar meta:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   async function deleteGoal(goalId) {
