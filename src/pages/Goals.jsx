@@ -25,17 +25,17 @@ function Goals() {
 
   useEffect(() => {
     fetchGoals();
-  }, []);
+  }, [fetchGoals]);
 
-  const handleDeleteClick = (goalId) => {
+  function handleDeleteClick(goalId) {
     setGoalToDelete(goalId);
     setShowDeleteModal(true);
-  };
+  }
 
-  const handleDeleteConfirm = () => {
+  function handleDeleteConfirm() {
     deleteGoal(goalToDelete);
     setShowDeleteModal(false);
-  };
+  }
 
   return (
     <div className="p-8 bg-gradient-to-r from-gray-100 to-gray-300 min-h-screen relative">
@@ -63,7 +63,6 @@ function Goals() {
         handleGoalChange={handleGoalChange}
         existingGoals={goals}
       />
-
       {isLoading ? (
         <Loader />
       ) : (
@@ -77,7 +76,6 @@ function Goals() {
           ))}
         </div>
       )}
-
       <ConfirmationModal
         showModal={showDeleteModal}
         title="Confirmar Exclusão"

@@ -1,3 +1,11 @@
+import { useState } from "react";
+import { expenseCategories, incomeCategories } from "../category/CategoryList";
+import TextInput from "../common/TextInput";
+import CategoryDropdown from "../category/CategoryDropdown";
+import ActionButtons from "../common/ActionButtons";
+import MoneyInput from "../common/MoneyInput";
+import LimitedTextInput from "../common/LimitedTextInput";
+
 function TransactionModal({ type, onClose, onSave }) {
   const [description, setDescription] = useState("");
   const [value, setValue] = useState("");
@@ -73,3 +81,5 @@ function TransactionModal({ type, onClose, onSave }) {
     </div>
   );
 }
+
+export default TransactionModal;

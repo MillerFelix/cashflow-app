@@ -23,6 +23,8 @@ function GoalsModal({
 
   if (!isOpen) return null;
 
+  const categories = [...incomeCategories, ...expenseCategories];
+
   function handleCategorySelect(category) {
     setSelectedCategory(category.name);
     handleGoalChange(category.name, "category");
@@ -30,46 +32,37 @@ function GoalsModal({
   }
 
   function validateForm() {
-    if (!newGoal.category) {
-      setError("Por favor, selecione uma categoria.");
-      return false;
-    }
-    if (existingGoals.some((goal) => goal.category === newGoal.category)) {
-      setError("Já existe uma meta para essa categoria.");
-      return false;
-    }
-    if (isNaN(newGoal.goal) || newGoal.goal <= 0) {
-      setError("O valor da meta deve ser maior que zero.");
-      return false;
-    }
-    if (!newGoal.startDate || !newGoal.endDate) {
-      setError("As datas de início e fim devem ser preenchidas.");
-      return false;
-    }
-    if (newGoal.startDate > newGoal.endDate) {
-      setError("A data de início deve ser anterior à data de fim.");
-      return false;
-    }
-    return true;
+    if (!newGoal.category) return "Por favor, selecione uma categoria.";
+    if (existingGoals.some((goal) => goal.category === newGoal.category))
+      return "Já existe uma meta para essa categoria.";
+    if (isNaN(newGoal.goal) || newGoal.goal <= 0)
+      return "O valor da meta deve ser maior que zero.";
+    if (!newGoal.startDate || !newGoal.endDate)
+      return "As datas de início e fim devem ser preenchidas.";
+    if (newGoal.startDate > newGoal.endDate)
+      return "A data de início deve ser anterior à data de fim.";
+    return null;
   }
 
   async function handleSubmit(e) {
-    e.preventDefault(); // Previne o comportamento padrão do formulário
-    if (validateForm()) {
-      setLoading(true);
-      try {
-        await onSave();
-        setSuccessMessage("Meta salva com sucesso!");
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } catch {
-        setTimeout(() => setError("Erro ao salvar a meta."), 3000);
-      } finally {
-        setLoading(false);
-      }
+    e.preventDefault();
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setLoading(true);
+    try {
+      await onSave();
+      setSuccessMessage("Meta salva com sucesso!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch {
+      setError("Erro ao salvar a meta.");
+      setTimeout(() => setError(""), 3000);
+    } finally {
+      setLoading(false);
     }
   }
-
-  const categories = [...incomeCategories, ...expenseCategories];
 
   return (
     <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
@@ -77,15 +70,12 @@ function GoalsModal({
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           Criar Meta
         </h2>
-
         {successMessage && (
           <StatusMessage message={successMessage} type="success" />
         )}
         {error && <StatusMessage message={`Erro: ${error}`} type="error" />}
         {loading && <Loader />}
-
         <form onSubmit={handleSubmit}>
-          {/* Seleção de Categoria */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-700 mb-4">
               Selecione a Categoria
@@ -93,8 +83,8 @@ function GoalsModal({
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
               {categories.map((category, index) => (
                 <button
-                  type="button"
                   key={index}
+                  type="button"
                   onClick={() => handleCategorySelect(category)}
                   className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out 
                     ${
@@ -105,7 +95,7 @@ function GoalsModal({
                         : category.type === "expense"
                         ? "bg-red-100 text-red-700"
                         : "bg-green-100 text-green-700"
-                    } 
+                    }
                     transform hover:scale-105`}
                 >
                   <div className="text-2xl">{category.icon}</div>
@@ -114,7 +104,6 @@ function GoalsModal({
               ))}
             </div>
           </div>
-
           <MoneyInput
             label="Valor Alvo"
             value={newGoal.goal}
@@ -132,16 +121,7 @@ function GoalsModal({
             onChange={(e) => handleGoalChange(e, "endDate")}
             type="date"
           />
-
-          <ActionButtons
-            onClose={() => {
-              if (error) return;
-              setSelectedCategory("");
-              setError("");
-              onClose();
-            }}
-            onSave={null} // Removido o handleSave, pois o botão de salvar é submit
-          />
+          <ActionButtons onClose={onClose} onSave={null} />
         </form>
       </div>
     </div>
