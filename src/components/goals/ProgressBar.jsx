@@ -1,28 +1,27 @@
 import React from "react";
 
 function ProgressBar({ type, currentValue, goalValue }) {
-  const progressPercentage = (currentValue / goalValue) * 100;
+  const progressPercentage = Math.min((currentValue / goalValue) * 100, 100);
 
   return (
-    <div className="relative h-6 rounded-full overflow-hidden mb-4">
-      {/* Fundo da barra */}
-      <div
-        className={`absolute top-0 left-0 h-full transition-all duration-300 ${
-          type === "expense" ? "bg-green-500" : "bg-white"
-        }`}
-        style={{
-          width: "100%",
-        }}
-      />
+    <div className="relative h-8 rounded-lg overflow-hidden mb-3">
+      {/* Fundo estático */}
+      <div className="absolute top-0 left-0 h-full w-full bg-gray-300" />
       {/* Barra de progresso */}
       <div
         className={`absolute top-0 left-0 h-full transition-all duration-300 ${
-          type === "expense" ? "bg-orange-500" : "bg-green-500"
+          type === "expense"
+            ? "bg-gradient-to-r from-red-600 via-red-800 to-red-900"
+            : "bg-gradient-to-r from-emerald-300 via-emerald-500 to-green-700"
         }`}
         style={{
-          width: `${Math.min(progressPercentage, 100)}%`,
+          width: `${progressPercentage}%`,
         }}
       />
+      {/* Texto de progresso */}
+      <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-semibold">
+        {`${Math.round(progressPercentage)}%`}
+      </span>
     </div>
   );
 }
