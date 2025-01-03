@@ -31,10 +31,8 @@ function GoalCard({ goal, onDelete }) {
 
   return (
     <div className={`${getCardStyle(categoryDetails?.type)}`}>
-      {/* Fundo decorativo */}
       <div className="absolute inset-0 opacity-10 bg-white rounded-xl blur-xl"></div>
 
-      {/* Conteúdo principal */}
       <div className="relative z-10">
         <div className="flex items-center mb-4">
           {categoryDetails?.icon && (
@@ -71,7 +69,10 @@ function GoalCard({ goal, onDelete }) {
           {formatDate(goal.endDate)}
         </p>
         <p className="text-sm mt-2">
-          <strong>Progresso:</strong> {`${Math.round(achievementPercentage)}%`}
+          <strong>
+            {categoryDetails?.type === "expense" ? "Utilizado" : "Progresso"}:
+          </strong>{" "}
+          {`${Math.round(achievementPercentage)}%`}
         </p>
       </div>
     </div>
