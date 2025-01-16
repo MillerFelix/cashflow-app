@@ -14,6 +14,7 @@ import {
   incomeCategories,
 } from "../components/category/CategoryList";
 import ConfirmationModal from "../components/common/ConfirmationModal";
+import NoData from "../components/common/NoData";
 
 // Estilos dos botões
 const buttonStyles = {
@@ -117,8 +118,8 @@ function Transactions() {
         clearFilters={clearFilters}
         showCategoryDropdown={showCategoryDropdown}
         setShowCategoryDropdown={setShowCategoryDropdown}
-        category={category} // Passando o estado category
-        setCategory={setCategory} // Passando a função setCategory
+        category={category}
+        setCategory={setCategory}
         expenseCategories={expenseCategories}
         incomeCategories={incomeCategories}
       />
@@ -146,11 +147,21 @@ function Transactions() {
         </Button>
       </div>
       {loading && <Loader />}
-      {loadingRemove && <Loader />} {/* Loader para remoção */}
-      <TransactionItem
-        transactions={filteredTransactions}
-        removeTransaction={confirmRemoveTransaction}
-      />
+      {loadingRemove && <Loader />}
+
+      {/* Exibe imagem se não houver transações */}
+      {filteredTransactions.length === 0 && !loading && (
+        <NoData message="Nenhuma transação encontrada." />
+      )}
+
+      {/* Renderiza as transações se houver dados */}
+      {filteredTransactions.length > 0 && (
+        <TransactionItem
+          transactions={filteredTransactions}
+          removeTransaction={confirmRemoveTransaction}
+        />
+      )}
+
       {isModalOpen && (
         <TransactionModal
           type={modalType}

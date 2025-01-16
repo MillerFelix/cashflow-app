@@ -85,7 +85,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-100">
       <div className="flex gap-8 flex-wrap justify-center md:justify-start relative">
         <Card
           colorStart="from-green-500"

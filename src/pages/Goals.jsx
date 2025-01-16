@@ -9,6 +9,7 @@ import {
   expenseCategories,
   incomeCategories,
 } from "../components/category/CategoryList";
+import NoData from "../components/common/NoData";
 
 function Goals() {
   const {
@@ -61,14 +62,14 @@ function Goals() {
   });
 
   return (
-    <div className="p-4 sm:p-8 bg-gradient-to-r from-gray-100 to-gray-300 min-h-screen relative">
+    <div className="p-4 sm:p-8 bg-gray-100 min-h-screen relative">
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">
         Metas Financeiras
       </h1>
       <Button
         onClick={toggleModal}
-        bgColor="bg-gradient-to-r from-blue-500 to-blue-700"
-        hoverColor="hover:bg-blue-600"
+        bgColor="bg-yellow-400"
+        hoverColor="hover:bg-yellow-600"
         className="text-sm sm:text-base text-white mb-4 sm:mb-6 px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-md"
       >
         Adicionar Meta
@@ -88,6 +89,8 @@ function Goals() {
       />
       {isLoading ? (
         <Loader />
+      ) : goals.length === 0 ? (
+        <NoData message="Nenhuma meta cadastrada. Adicione uma para começar!" />
       ) : (
         <div
           className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${
