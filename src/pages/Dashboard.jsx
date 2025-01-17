@@ -9,6 +9,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useTransactions } from "../hooks/useTransactions";
 import ExpenseChart from "../components/dashboard/ExpenseChart";
 import IncomeChart from "../components/dashboard/IncomeChart";
+import GraphCard from "../components/dashboard/GraphCard";
 
 function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,10 +120,20 @@ function Dashboard() {
 
       {/* Gráficos */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-8">
-        <ExpenseChart transactions={filteredTransactions} />{" "}
-        {/* Gráfico de gastos */}
-        <IncomeChart transactions={filteredTransactions} />{" "}
-        {/* Gráfico de ganhos */}
+        <GraphCard
+          colorStart="from-red-500"
+          colorEnd="to-red-800"
+          title="Gastos por Categoria"
+        >
+          <ExpenseChart transactions={filteredTransactions} />
+        </GraphCard>
+        <GraphCard
+          colorStart="from-blue-500"
+          colorEnd="to-blue-800"
+          title="Ganhos por Categoria"
+        >
+          <IncomeChart transactions={filteredTransactions} />
+        </GraphCard>
       </div>
 
       {isModalOpen && (
