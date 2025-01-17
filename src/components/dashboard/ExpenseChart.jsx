@@ -16,11 +16,17 @@ const ExpenseChart = ({ transactions }) => {
     }, []);
 
   return (
-    <div style={{ height: "400px", width: "100%" }}>
+    <div
+      className="h-full w-full"
+      style={{
+        minHeight: "250px",
+        maxHeight: "400px",
+      }}
+    >
       <ResponsivePie
         data={expenseData}
         sortByValue={true}
-        margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
+        margin={{ top: 20, right: 20, bottom: 30, left: 20 }}
         innerRadius={0.25}
         padAngle={2}
         cornerRadius={5}
@@ -33,10 +39,11 @@ const ExpenseChart = ({ transactions }) => {
             ["opacity", 0.5],
           ],
         }}
-        colors={{ scheme: "dark2", kind: "categorical", schemeIndex: 1 }}
+        colors={{ scheme: "dark2" }}
+        arcLinkLabelsThickness={4}
         arcLabelsTextColor="#fff"
-        arcLinkLabelsTextColor="#ffffff"
-        arcLinkLabelsColor="#fff"
+        arcLinkLabelsTextColor="#fff"
+        arcLinkLabelsColor={{ from: "color" }}
         arcLabel={(e) =>
           `${new Intl.NumberFormat("pt-BR", {
             style: "currency",
@@ -64,7 +71,7 @@ const ExpenseChart = ({ transactions }) => {
         theme={{
           labels: {
             text: {
-              fontSize: 15,
+              fontSize: 12,
               fontWeight: 500,
             },
           },
