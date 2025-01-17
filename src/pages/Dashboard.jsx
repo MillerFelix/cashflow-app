@@ -7,6 +7,8 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { useTransactions } from "../hooks/useTransactions";
+import ExpenseChart from "../components/dashboard/ExpenseChart";
+import IncomeChart from "../components/dashboard/IncomeChart";
 
 function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,7 +18,11 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const userId = useAuth();
-  const { addTransaction } = useTransactions(userId);
+  const {
+    transactions,
+    loading: transactionsLoading,
+    addTransaction,
+  } = useTransactions(userId);
 
   useEffect(() => {
     async function fetchBalance() {
@@ -76,13 +82,18 @@ function Dashboard() {
     currency: "BRL",
   }).format(balance);
 
-  if (loading || saving) {
+  if (loading || saving || transactionsLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader />
       </div>
     );
   }
+
+  // Filtra as transações para remover a categoria "Saldo"
+  const filteredTransactions = transactions.filter(
+    (transaction) => transaction.category !== "Saldo"
+  );
 
   return (
     <div className="p-8 bg-gray-100">
@@ -105,6 +116,15 @@ function Dashboard() {
           </div>
         </Card>
       </div>
+
+      {/* Gráficos */}
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-8">
+        <ExpenseChart transactions={filteredTransactions} />{" "}
+        {/* Gráfico de gastos */}
+        <IncomeChart transactions={filteredTransactions} />{" "}
+        {/* Gráfico de ganhos */}
+      </div>
+
       {isModalOpen && (
         <BalanceModal
           onClose={() => setIsModalOpen(false)}
