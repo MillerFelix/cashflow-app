@@ -18,6 +18,7 @@ function Dashboard() {
   const [isVisible, setIsVisible] = useState(storedVisibility === "true");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const userId = useAuth();
   const {
     transactions,
@@ -70,6 +71,8 @@ function Dashboard() {
           );
         }
         setBalance(newBalance);
+        setSuccessMessage("Saldo atualizado com sucesso!");
+        setTimeout(() => setSuccessMessage(""), 3000);
       } catch (error) {
         console.error("Erro ao salvar saldo:", error);
       } finally {
@@ -117,6 +120,11 @@ function Dashboard() {
           </div>
         </Card>
       </div>
+      {successMessage && (
+        <div className="p-4 text-center rounded-lg my-4 bg-green-200 text-green-800 shadow-md">
+          {successMessage}
+        </div>
+      )}
 
       {/* Gráficos */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
