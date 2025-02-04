@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Card from "../components/common/Card";
 import BalanceModal from "../components/dashboard/BalanceModal";
-import FreeBalanceModal from "../components/dashboard/FreeBalanceModal"; // Novo modal
+import FreeBalanceModal from "../components/dashboard/FreeBalanceModal";
 import Loader from "../components/common/Loader";
 import BalanceVisibilityToggle from "../components/dashboard/BalanceVisibilityToggle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -11,11 +11,15 @@ import { useTransactions } from "../hooks/useTransactions";
 import ExpenseChart from "../components/dashboard/ExpenseChart";
 import IncomeChart from "../components/dashboard/IncomeChart";
 import GraphCard from "../components/dashboard/GraphCard";
+import useGoals from "../hooks/useGoals";
+import { expenseCategories } from "../components/category/CategoryList";
 
 function Dashboard() {
   const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
   const [isFreeBalanceModalOpen, setIsFreeBalanceModalOpen] = useState(false);
+  const { goals, fetchGoals } = useGoals();
   const [balance, setBalance] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0); // Novo estado para o total de despesas
   const storedVisibility = localStorage.getItem("balanceVisibility");
   const [isVisible, setIsVisible] = useState(storedVisibility === "true");
   const [loading, setLoading] = useState(true);
@@ -47,6 +51,7 @@ function Dashboard() {
         setLoading(false);
       }
     }
+    fetchGoals();
 
     fetchBalance();
   }, [userId]);
@@ -54,6 +59,19 @@ function Dashboard() {
   useEffect(() => {
     localStorage.setItem("balanceVisibility", isVisible);
   }, [isVisible]);
+
+  useEffect(() => {
+    // Atualiza o total de despesas ao alterar as metas
+    const expenseCategoryNames = expenseCategories.map((c) => c.name);
+
+    const total = goals
+      .filter((goal) => expenseCategoryNames.includes(goal.category))
+      .reduce((sum, goal) => sum + goal.goalValue, 0);
+
+    setTotalExpenses(total);
+  }, [goals]);
+
+  const freeBalance = balance - totalExpenses;
 
   async function handleSaveBalance(newBalance) {
     if (userId) {
@@ -96,7 +114,6 @@ function Dashboard() {
     );
   }
 
-  // Filtra as transações para remover a categoria "Saldo"
   const filteredTransactions = transactions.filter(
     (transaction) => transaction.category !== "Saldo"
   );
@@ -113,7 +130,7 @@ function Dashboard() {
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-yellow-300">
-              {isVisible ? formattedBalance : "******"}{" "}
+              {isVisible ? formattedBalance : "******"}
             </p>
             <BalanceVisibilityToggle
               isVisible={isVisible}
@@ -121,6 +138,7 @@ function Dashboard() {
             />
           </div>
         </Card>
+
         <Card
           colorStart="from-purple-500"
           colorEnd="to-purple-800"
@@ -129,17 +147,22 @@ function Dashboard() {
           onButtonClick={() => setIsFreeBalanceModalOpen(true)}
         >
           <div className="flex items-center justify-between">
-            <p className="text-3xl font-semibold text-white">{"R$ 2.500,00"}</p>
+            <p className="text-3xl font-semibold text-white">
+              {freeBalance.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </p>
           </div>
         </Card>
       </div>
+
       {successMessage && (
         <div className="p-4 text-center rounded-lg my-4 bg-green-200 text-green-800 shadow-md">
           {successMessage}
         </div>
       )}
 
-      {/* Gráficos */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <GraphCard
           colorStart="from-red-500"
@@ -157,6 +180,15 @@ function Dashboard() {
         </GraphCard>
       </div>
 
+      {/* Modal de Saldo Livre */}
+      {isFreeBalanceModalOpen && (
+        <FreeBalanceModal
+          onClose={() => setIsFreeBalanceModalOpen(false)}
+          balance={balance}
+          totalExpenses={totalExpenses}
+        />
+      )}
+
       {/* Modal de Saldo Atual */}
       {isBalanceModalOpen && (
         <BalanceModal
@@ -164,11 +196,6 @@ function Dashboard() {
           onSave={handleSaveBalance}
           initialBalance={(balance * 100).toString()}
         />
-      )}
-
-      {/* Modal de Saldo Livre */}
-      {isFreeBalanceModalOpen && (
-        <FreeBalanceModal onClose={() => setIsFreeBalanceModalOpen(false)} />
       )}
     </div>
   );
