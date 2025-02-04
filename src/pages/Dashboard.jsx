@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Card from "../components/common/Card";
 import BalanceModal from "../components/dashboard/BalanceModal";
+import FreeBalanceModal from "../components/dashboard/FreeBalanceModal"; // Novo modal
 import Loader from "../components/common/Loader";
 import BalanceVisibilityToggle from "../components/dashboard/BalanceVisibilityToggle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -12,7 +13,8 @@ import IncomeChart from "../components/dashboard/IncomeChart";
 import GraphCard from "../components/dashboard/GraphCard";
 
 function Dashboard() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
+  const [isFreeBalanceModalOpen, setIsFreeBalanceModalOpen] = useState(false);
   const [balance, setBalance] = useState(0);
   const storedVisibility = localStorage.getItem("balanceVisibility");
   const [isVisible, setIsVisible] = useState(storedVisibility === "true");
@@ -105,9 +107,9 @@ function Dashboard() {
         <Card
           colorStart="from-green-500"
           colorEnd="to-green-800"
-          title="Saldo atual"
+          title="Saldo Atual"
           button="Atualizar Saldo"
-          onButtonClick={() => setIsModalOpen(true)}
+          onButtonClick={() => setIsBalanceModalOpen(true)}
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-yellow-300">
@@ -117,6 +119,17 @@ function Dashboard() {
               isVisible={isVisible}
               setIsVisible={setIsVisible}
             />
+          </div>
+        </Card>
+        <Card
+          colorStart="from-purple-500"
+          colorEnd="to-purple-800"
+          title="Saldo Livre"
+          button="Visualizar"
+          onButtonClick={() => setIsFreeBalanceModalOpen(true)}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-3xl font-semibold text-white">{"R$ 2.500,00"}</p>
           </div>
         </Card>
       </div>
@@ -144,12 +157,18 @@ function Dashboard() {
         </GraphCard>
       </div>
 
-      {isModalOpen && (
+      {/* Modal de Saldo Atual */}
+      {isBalanceModalOpen && (
         <BalanceModal
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => setIsBalanceModalOpen(false)}
           onSave={handleSaveBalance}
           initialBalance={(balance * 100).toString()}
         />
+      )}
+
+      {/* Modal de Saldo Livre */}
+      {isFreeBalanceModalOpen && (
+        <FreeBalanceModal onClose={() => setIsFreeBalanceModalOpen(false)} />
       )}
     </div>
   );
