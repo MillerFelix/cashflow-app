@@ -4,6 +4,8 @@ import { db } from "../../firebase";
 import { useAuth } from "../../hooks/useAuth";
 import useGoals from "../../hooks/useGoals";
 import { expenseCategories } from "../../components/category/CategoryList";
+import ActionButtons from "../common/ActionButtons";
+import Button from "../common/Button";
 
 function FreeBalanceModal({ onClose }) {
   const userId = useAuth();
@@ -47,11 +49,11 @@ function FreeBalanceModal({ onClose }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h3 className="text-xl font-semibold mb-4">Saldo Livre</h3>
+        <h3 className="text-xl font-semibold mb-4">Informações de Saldo</h3>
 
         <div className="mb-4">
-          <p className="text-gray-700">
-            <strong>Saldo Total:</strong>
+          <p className="text-gray-800">
+            <strong>Saldo:</strong>
             <span className="ml-2 text-green-600 font-medium">
               {balance.toLocaleString("pt-BR", {
                 style: "currency",
@@ -60,8 +62,8 @@ function FreeBalanceModal({ onClose }) {
             </span>
           </p>
 
-          <p className="text-gray-700">
-            <strong>Total comprometido com metas de gasto:</strong>
+          <p className="text-gray-800">
+            <strong>Saldo reservado às metas:</strong>
             <span className="ml-2 text-red-600 font-medium">
               {totalExpenses.toLocaleString("pt-BR", {
                 style: "currency",
@@ -87,9 +89,7 @@ function FreeBalanceModal({ onClose }) {
 
         {goals.length > 0 && (
           <div className="mt-4">
-            <h4 className="text-md font-semibold text-gray-800 mb-2">
-              Metas de Gasto
-            </h4>
+            <h4 className="text-md font-semibold text-gray-800 mb-2">Metas</h4>
             <ul className="max-h-40 overflow-y-auto border rounded-md p-2 bg-gray-50">
               {goals
                 .filter((goal) =>
@@ -113,12 +113,14 @@ function FreeBalanceModal({ onClose }) {
           </div>
         )}
 
-        <button
+        <Button
           onClick={onClose}
-          className="mt-4 w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-900 transition"
+          bgColor="bg-gray-200"
+          hoverColor="hover:bg-gray-300"
+          className="mt-4 w-full text-gray-700"
         >
           Fechar
-        </button>
+        </Button>
       </div>
     </div>
   );

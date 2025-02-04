@@ -118,6 +118,20 @@ function Dashboard() {
     (transaction) => transaction.category !== "Saldo"
   );
 
+  function calculateSums(transactions) {
+    const sumDebit = transactions
+      .filter((transaction) => transaction.type === "debit")
+      .reduce((acc, transaction) => acc + transaction.value, 0);
+
+    const sumCredit = transactions
+      .filter((transaction) => transaction.type === "credit")
+      .reduce((acc, transaction) => acc + transaction.value, 0);
+
+    return { sumDebit, sumCredit };
+  }
+
+  const { sumDebit, sumCredit } = calculateSums(filteredTransactions);
+
   return (
     <div className="p-8 bg-gray-100">
       <div className="flex gap-8 flex-wrap justify-center md:justify-start relative">
@@ -170,13 +184,32 @@ function Dashboard() {
           title="Gastos por Categoria"
         >
           <ExpenseChart transactions={filteredTransactions} />
+          <div className="mt-4 flex flex-col items-center bg-gray-100 p-3 rounded-lg shadow">
+            <span className="text-sm text-gray-600">Total</span>
+            <span className="text-lg font-semibold text-red-700">
+              {sumDebit.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </span>
+          </div>
         </GraphCard>
+
         <GraphCard
           colorStart="from-blue-500"
           colorEnd="to-blue-800"
           title="Ganhos por Categoria"
         >
           <IncomeChart transactions={filteredTransactions} />
+          <div className="mt-4 flex flex-col items-center bg-gray-100 p-3 rounded-lg shadow">
+            <span className="text-sm text-gray-600">Total</span>
+            <span className="text-lg font-semibold text-blue-700">
+              {sumCredit.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </span>
+          </div>
         </GraphCard>
       </div>
 
