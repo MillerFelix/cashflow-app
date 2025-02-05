@@ -19,15 +19,15 @@ const IncomeChart = ({ transactions }) => {
     <div
       className="h-full w-full"
       style={{
-        minHeight: "250px",
-        maxHeight: "400px",
+        minHeight: "350px",
+        maxHeight: "100%",
       }}
     >
       <ResponsivePie
         data={incomeData}
         sortByValue={true}
-        margin={{ top: 20, right: 20, bottom: 30, left: 20 }}
-        innerRadius={0.25}
+        margin={{ top: 30, right: 20, bottom: 40, left: 80 }}
+        innerRadius={0.3}
         padAngle={2}
         cornerRadius={5}
         activeOuterRadiusOffset={8}

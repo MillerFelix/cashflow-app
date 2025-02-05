@@ -141,6 +141,7 @@ function Dashboard() {
           title="Saldo Atual"
           button="Atualizar Saldo"
           onButtonClick={() => setIsBalanceModalOpen(true)}
+          className="w-full sm:w-[45%] lg:w-[30%]" // Cards maiores
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-yellow-300">
@@ -159,6 +160,7 @@ function Dashboard() {
           title="Saldo Livre"
           button="Visualizar"
           onButtonClick={() => setIsFreeBalanceModalOpen(true)}
+          className="w-full sm:w-[45%] lg:w-[30%]" // Cards maiores
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-white">
@@ -177,11 +179,13 @@ function Dashboard() {
         </div>
       )}
 
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Ajuste no layout dos gráficos */}
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <GraphCard
           colorStart="from-red-500"
           colorEnd="to-red-800"
           title="Gastos por Categoria"
+          className="w-full"
         >
           <ExpenseChart transactions={filteredTransactions} />
           <div className="mt-4 flex flex-col items-center bg-gray-100 p-3 rounded-lg shadow">
@@ -199,6 +203,7 @@ function Dashboard() {
           colorStart="from-blue-500"
           colorEnd="to-blue-800"
           title="Ganhos por Categoria"
+          className="w-full"
         >
           <IncomeChart transactions={filteredTransactions} />
           <div className="mt-4 flex flex-col items-center bg-gray-100 p-3 rounded-lg shadow">
@@ -212,24 +217,6 @@ function Dashboard() {
           </div>
         </GraphCard>
       </div>
-
-      {/* Modal de Saldo Livre */}
-      {isFreeBalanceModalOpen && (
-        <FreeBalanceModal
-          onClose={() => setIsFreeBalanceModalOpen(false)}
-          balance={balance}
-          totalExpenses={totalExpenses}
-        />
-      )}
-
-      {/* Modal de Saldo Atual */}
-      {isBalanceModalOpen && (
-        <BalanceModal
-          onClose={() => setIsBalanceModalOpen(false)}
-          onSave={handleSaveBalance}
-          initialBalance={(balance * 100).toString()}
-        />
-      )}
     </div>
   );
 }
