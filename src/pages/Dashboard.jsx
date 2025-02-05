@@ -185,7 +185,7 @@ function Dashboard() {
         >
           <ExpenseChart transactions={filteredTransactions} />
           <div className="mt-4 flex flex-col items-center bg-gray-100 p-3 rounded-lg shadow">
-            <span className="text-sm text-gray-600">Total</span>
+            <span className="text-sm text-gray-600">Gasto Total</span>
             <span className="text-lg font-semibold text-red-700">
               {sumDebit.toLocaleString("pt-BR", {
                 style: "currency",
@@ -202,7 +202,7 @@ function Dashboard() {
         >
           <IncomeChart transactions={filteredTransactions} />
           <div className="mt-4 flex flex-col items-center bg-gray-100 p-3 rounded-lg shadow">
-            <span className="text-sm text-gray-600">Total</span>
+            <span className="text-sm text-gray-600">Ganho Total</span>
             <span className="text-lg font-semibold text-blue-700">
               {sumCredit.toLocaleString("pt-BR", {
                 style: "currency",
