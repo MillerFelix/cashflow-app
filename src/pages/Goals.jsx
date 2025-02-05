@@ -72,7 +72,7 @@ function Goals() {
         hoverColor="hover:bg-yellow-600"
         className="text-sm sm:text-base text-white mb-4 sm:mb-6 px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-md"
       >
-        Adicionar Meta
+        Criar Meta
       </Button>
       {successMessage && (
         <div className="p-4 text-center rounded-lg my-4 bg-green-200 text-green-800 shadow-md">
