@@ -11,23 +11,31 @@ import Transactions from "./pages/Transactions";
 import Goals from "./pages/Goals";
 import PageNotFound from "./pages/PageNotFound";
 
-/* eslint-disable react/prop-types */
 function AppRoutes() {
   const [user, setUser] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Verifica se o usuário está autenticado
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+
+      if (currentUser) {
+        const hasSeenHelp = localStorage.getItem("hasSeenHelp");
+        if (!hasSeenHelp) {
+          setShowHelpModal(true);
+          localStorage.setItem("hasSeenHelp", "true");
+        }
+      }
     });
 
-    return () => unsubscribe(); // Limpa o ouvinte quando o componente desmonta
+    return () => unsubscribe();
   }, []);
 
   // Componente de rota protegida
   const ProtectedRoute = ({ children }) => {
     if (!user) {
-      return <Navigate to="/login" />; // Redireciona para login se não estiver autenticado
+      return <Navigate to="/login" />;
     }
     return children;
   };
@@ -39,7 +47,15 @@ function AppRoutes() {
         <Route path="/register" element={<Register />} />
 
         {/* Rotas com Navbar e Footer */}
-        <Route path="/" element={<BasePage />}>
+        <Route
+          path="/"
+          element={
+            <BasePage
+              showHelpModal={showHelpModal}
+              setShowHelpModal={setShowHelpModal}
+            />
+          }
+        >
           <Route
             index
             element={
@@ -70,6 +86,5 @@ function AppRoutes() {
     </BrowserRouter>
   );
 }
-/* eslint-enable react/prop-types */
 
 export default AppRoutes;

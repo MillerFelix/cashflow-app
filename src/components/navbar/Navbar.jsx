@@ -62,12 +62,12 @@ function Navbar() {
         {/* Abas da Navbar */}
         <ul className="hidden md:flex flex-wrap gap-6 ml-10">
           <NavItem to="/" icon={<FaChartBar size={20} />} label="Dashboard" />
+          <NavItem to="/goals" icon={<FaBullseye size={20} />} label="Metas" />
           <NavItem
             to="/transactions"
             icon={<FaWallet size={20} />}
             label="Transações"
           />
-          <NavItem to="/goals" icon={<FaBullseye size={20} />} label="Metas" />
         </ul>
 
         {/* Botão "Sair" */}
