@@ -37,22 +37,29 @@ function TransactionCard({ transaction, onRemove }) {
     <div
       className={`p-6 rounded-lg shadow-lg transition-all ${bgColor} hover:shadow-xl`}
     >
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-start sm:items-center">
         <div className="flex items-center gap-2">
           {categoryIcon}
-          <h3 className="font-semibold text-lg">{transaction.description}</h3>
+          <h3 className="font-semibold text-base sm:text-lg">
+            {transaction.description}
+          </h3>
         </div>
-        <p className={`font-semibold ${textColor}`}>
-          {isCredit ? "+" : "-"} R$
-          {parseFloat(transaction.value).toFixed(2).replace(".", ",")}
-        </p>
+        <div className="flex items-center gap-1">
+          <span className={textColor}>{isCredit ? "+" : "-"}</span>
+          <p className={`font-semibold ${textColor} text-sm sm:text-base`}>
+            {parseFloat(transaction.value).toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })}
+          </p>
+        </div>
       </div>
 
-      <p className="text-sm">
+      <p className="text-xs sm:text-sm">
         {transactionDate.toLocaleDateString("pt-BR", { timeZone: "UTC" })}
       </p>
       {isFutureTransaction && (
-        <div className="flex items-center gap-1 mt-2 text-sm font-semibold italic">
+        <div className="flex items-center gap-1 mt-2 text-xs sm:text-sm font-semibold italic">
           <FaClock /> Transação Futura
         </div>
       )}
@@ -60,11 +67,13 @@ function TransactionCard({ transaction, onRemove }) {
       <div className="flex justify-between items-center mt-4">
         <button
           onClick={() => onRemove(transaction.id)}
-          className={`text-sm ${removeBtnColor} transition-colors`}
+          className={`text-xs sm:text-sm ${removeBtnColor} transition-colors`}
         >
           Remover
         </button>
-        <span className="text-sm italic">{transaction.category}</span>
+        <span className="text-xs sm:text-sm italic">
+          {transaction.category}
+        </span>
       </div>
     </div>
   );

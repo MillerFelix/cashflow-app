@@ -108,84 +108,90 @@ function Transactions() {
   });
 
   return (
-    <div className="m-8 p-6 bg-gray-100 rounded-lg shadow-lg w-full max-w-3xl mx-auto">
-      <h1 className="text-4xl font-extrabold text-gray-900 text-center">
-        Transações Financeiras
-      </h1>
-      <p className="text-gray-600 mt-2 text-center">
-        Registre e visualize suas transações para um melhor controle financeiro.
-      </p>
-      <Filters
-        filters={filters}
-        handleFilterChange={handleFilterChange}
-        clearFilters={clearFilters}
-        showCategoryDropdown={showCategoryDropdown}
-        setShowCategoryDropdown={setShowCategoryDropdown}
-        category={category}
-        setCategory={setCategory}
-        expenseCategories={expenseCategories}
-        incomeCategories={incomeCategories}
-      />
-      <StatusMessage message={message} />
-      <div className="flex justify-between mb-4">
-        <Button
-          onClick={() => {
-            setModalType("credit");
-            setIsModalOpen(true);
-          }}
-          {...buttonStyles.credit}
-          className="text-gray-200"
-        >
-          Adicionar Crédito
-        </Button>
-        <Button
-          onClick={() => {
-            setModalType("debit");
-            setIsModalOpen(true);
-          }}
-          {...buttonStyles.debit}
-          className="text-gray-200"
-        >
-          Adicionar Débito
-        </Button>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="m-4 p-4 sm:m-6 sm:p-6 bg-gray-100 rounded-lg shadow-lg w-full max-w-3xl">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 text-center">
+          Transações Financeiras
+        </h1>
+        <p className="text-gray-600 mt-2 text-center text-sm sm:text-base">
+          Registre e visualize suas transações para um melhor controle
+          financeiro.
+        </p>
+
+        <Filters
+          filters={filters}
+          handleFilterChange={handleFilterChange}
+          clearFilters={clearFilters}
+          showCategoryDropdown={showCategoryDropdown}
+          setShowCategoryDropdown={setShowCategoryDropdown}
+          category={category}
+          setCategory={setCategory}
+          expenseCategories={expenseCategories}
+          incomeCategories={incomeCategories}
+        />
+
+        <StatusMessage message={message} />
+
+        <div className="flex flex-col sm:flex-row justify-center gap-3 mb-4 w-full">
+          <Button
+            onClick={() => {
+              setModalType("credit");
+              setIsModalOpen(true);
+            }}
+            {...buttonStyles.credit}
+            className="text-gray-200 w-full sm:w-auto"
+          >
+            Adicionar Crédito
+          </Button>
+          <Button
+            onClick={() => {
+              setModalType("debit");
+              setIsModalOpen(true);
+            }}
+            {...buttonStyles.debit}
+            className="text-gray-200 w-full sm:w-auto"
+          >
+            Adicionar Débito
+          </Button>
+        </div>
+
+        {loading && <Loader />}
+        {loadingRemove && <Loader />}
+
+        {filteredTransactions.length === 0 && !loading && (
+          <NoData message="Nenhuma transação encontrada." />
+        )}
+
+        {filteredTransactions.length > 0 && (
+          <TransactionItem
+            transactions={filteredTransactions}
+            removeTransaction={confirmRemoveTransaction}
+          />
+        )}
+
+        {isModalOpen && (
+          <TransactionModal
+            type={modalType}
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleAddTransaction}
+          />
+        )}
+
+        {modalConfirmOpen.open && (
+          <ConfirmationModal
+            showModal={modalConfirmOpen.open}
+            title="Confirmar Exclusão"
+            description="Tem certeza que deseja remover esta transação?"
+            onConfirm={() => {
+              handleRemoveTransaction(modalConfirmOpen.id);
+              setModalConfirmOpen({ open: false, id: null });
+            }}
+            onCancel={() => setModalConfirmOpen({ open: false, id: null })}
+            confirmText="Confirmar"
+            cancelText="Cancelar"
+          />
+        )}
       </div>
-      {loading && <Loader />}
-      {loadingRemove && <Loader />}
-
-      {/* Exibe imagem se não houver transações */}
-      {filteredTransactions.length === 0 && !loading && (
-        <NoData message="Nenhuma transação encontrada." />
-      )}
-
-      {/* Renderiza as transações se houver dados */}
-      {filteredTransactions.length > 0 && (
-        <TransactionItem
-          transactions={filteredTransactions}
-          removeTransaction={confirmRemoveTransaction}
-        />
-      )}
-
-      {isModalOpen && (
-        <TransactionModal
-          type={modalType}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleAddTransaction}
-        />
-      )}
-      {modalConfirmOpen.open && (
-        <ConfirmationModal
-          showModal={modalConfirmOpen.open}
-          title="Confirmar Exclusão"
-          description="Tem certeza que deseja remover esta transação?"
-          onConfirm={() => {
-            handleRemoveTransaction(modalConfirmOpen.id);
-            setModalConfirmOpen({ open: false, id: null });
-          }}
-          onCancel={() => setModalConfirmOpen({ open: false, id: null })}
-          confirmText="Confirmar"
-          cancelText="Cancelar"
-        />
-      )}
     </div>
   );
 }
