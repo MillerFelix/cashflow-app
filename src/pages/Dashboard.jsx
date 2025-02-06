@@ -132,6 +132,7 @@ function Dashboard() {
   }
 
   const { sumDebit, sumCredit } = calculateSums(filteredTransactions);
+  console.log(filteredTransactions);
 
   return (
     <div className="p-8 bg-gray-100">
@@ -176,12 +177,14 @@ function Dashboard() {
         </Card>
 
         {/* Card de Balanço Resumo */}
-        <TipsAverageCard
-          balanceSheet={formattedBalance}
-          sumCredit={sumCredit}
-          sumDebit={sumDebit}
-          className="w-full sm:w-[45%] md:w-[30%]"
-        />
+        {filteredTransactions.length > 0 && (
+          <TipsAverageCard
+            accountBalance={formattedBalance}
+            sumCredit={sumCredit}
+            sumDebit={sumDebit}
+            className="w-full sm:w-[45%] md:w-[30%]"
+          />
+        )}
       </div>
 
       {successMessage && (
@@ -198,7 +201,7 @@ function Dashboard() {
             title="Gastos"
             className="w-full"
           >
-            {filteredTransactions.length === 0 ? (
+            {sumDebit === 0 ? (
               <div className="flex flex-col items-center justify-center text-white mt-6">
                 <p className="text-lg font-semibold">
                   Você ainda não fez débitos
@@ -233,7 +236,7 @@ function Dashboard() {
             title="Ganhos"
             className="w-full"
           >
-            {filteredTransactions.length === 0 ? (
+            {sumCredit === 0 ? (
               <div className="flex flex-col items-center justify-center text-white mt-6">
                 <p className="text-lg font-semibold">
                   Você ainda não fez créditos
