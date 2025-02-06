@@ -6,9 +6,12 @@ import {
   FaEnvelope,
   FaInstagram,
 } from "react-icons/fa";
+import { useAuth } from "../../hooks/useAuth";
 
 function HelpModal({ isOpen, onClose }) {
   const [step, setStep] = useState(0);
+  const user = useAuth();
+  const userName = user?.displayName?.split(" ")[0] || "Usuário";
 
   useEffect(() => {
     if (isOpen) setStep(0); // Sempre volta para a primeira página ao abrir
@@ -34,7 +37,7 @@ function HelpModal({ isOpen, onClose }) {
         {step === 0 && (
           <div className="text-center">
             <h2 className="text-2xl font-semibold text-green-800">
-              Bem-vindo ao CashFlow
+              Olá, {userName}! Bem-vindo ao CashFlow
             </h2>
             <img
               src="/about-image.svg"

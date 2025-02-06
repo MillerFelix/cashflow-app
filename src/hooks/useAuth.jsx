@@ -1,20 +1,36 @@
 import { useState, useEffect } from "react";
-import { auth, onAuthStateChanged } from "../firebase";
+import { auth, db } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 export function useAuth() {
-  const [userId, setUserId] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserId(user.uid); // Agora retorna apenas o user.uid
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setUser({
+            uid: firebaseUser.uid,
+            displayName: userData.name || "Usuário",
+          });
+        } else {
+          setUser({
+            uid: firebaseUser.uid,
+            displayName: "Usuário",
+          });
+        }
       } else {
-        setUserId(null);
+        setUser(null);
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  return userId; // Retorna apenas o UID
+  return user;
 }

@@ -8,7 +8,8 @@ import ActionButtons from "../common/ActionButtons";
 import Button from "../common/Button";
 
 function FreeBalanceModal({ onClose }) {
-  const userId = useAuth();
+  const user = useAuth();
+  const userId = user?.uid;
   const { goals, fetchGoals } = useGoals();
   const [balance, setBalance] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);

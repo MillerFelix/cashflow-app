@@ -26,7 +26,8 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const userId = useAuth();
+  const user = useAuth();
+  const userId = user?.uid;
   const {
     transactions,
     loading: transactionsLoading,
@@ -132,7 +133,6 @@ function Dashboard() {
   }
 
   const { sumDebit, sumCredit } = calculateSums(filteredTransactions);
-  console.log(filteredTransactions);
 
   return (
     <div className="p-8 bg-gray-100">

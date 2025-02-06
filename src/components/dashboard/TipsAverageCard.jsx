@@ -10,7 +10,6 @@ const TipsAverageCard = ({ accountBalance, sumCredit, sumDebit }) => {
   });
 
   const tips = generateTips(accountBalance, sumCredit, sumDebit);
-  console.log(tips);
   return (
     <div className="w-full sm:w-[95%] lg:w-[80%] bg-gradient-to-r from-teal-500 to-teal-800 text-white p-6 rounded-2xl shadow-lg flex flex-col lg:flex-row items-center justify-between">
       <div className="flex flex-col items-start lg:items-center lg:mr-4">

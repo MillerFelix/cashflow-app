@@ -23,7 +23,8 @@ const buttonStyles = {
 };
 
 function Transactions() {
-  const userId = useAuth();
+  const user = useAuth();
+  const userId = user?.uid;
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [category, setCategory] = useState("");
   const { transactions, loading, message, addTransaction, removeTransaction } =

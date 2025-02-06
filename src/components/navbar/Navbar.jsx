@@ -12,10 +12,13 @@ import { signOut } from "firebase/auth";
 import NavItem from "./NavItem";
 import HamburgerMenu from "./HamburguerMenu";
 import ConfirmationModal from "../common/ConfirmationModal";
+import { useAuth } from "../../hooks/useAuth"; // Importa o hook de autenticação
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const user = useAuth();
+  const userName = user?.displayName?.split(" ")[0] || "Usuário"; // Pega o primeiro nome
 
   const toggleMenu = useCallback(() => {
     setIsOpen((prevState) => !prevState);
@@ -98,9 +101,10 @@ function Navbar() {
         onLogout={() => setShowModal(true)}
       />
 
+      {/* Modal de Confirmação de Logout */}
       <ConfirmationModal
         showModal={showModal}
-        title="Tem certeza que deseja sair?"
+        title={`Tem certeza que deseja sair, ${userName}?`}
         description="Você pode continuar usando o aplicativo ou sair."
         onConfirm={handleConfirmLogout}
         onCancel={() => setShowModal(false)}

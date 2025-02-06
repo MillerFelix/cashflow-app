@@ -17,10 +17,7 @@ export const generateTips = (accountBalance, sumCredit, sumDebit) => {
     accountBalance.replace(/[^\d,-]/g, "").replace(",", ".")
   );
 
-  console.log("Valores recebidos:", { numericBalance, sumCredit, sumDebit });
-
   const balance = sumCredit - sumDebit;
-  console.log("Balanço calculado:", balance);
 
   // Calcula porcentagem dos gastos em relação aos ganhos
   const spendingPercentage = sumDebit > 0 ? (sumDebit / sumCredit) * 100 : 0;
@@ -199,6 +196,5 @@ export const generateTips = (accountBalance, sumCredit, sumDebit) => {
   // Limita o número total de dicas para 4
   const finalTips = [...tips.slice(0, 2), ...randomGeneralTips].slice(0, 4);
 
-  console.log("Dicas geradas:", finalTips);
   return finalTips;
 };

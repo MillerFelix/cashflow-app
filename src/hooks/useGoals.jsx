@@ -22,7 +22,8 @@ function useGoals() {
     endDate: "",
   });
   const [successMessage, setSuccessMessage] = useState("");
-  const userId = useAuth();
+  const user = useAuth();
+  const userId = user?.uid;
 
   const fetchGoals = useCallback(async () => {
     if (!userId) return;
