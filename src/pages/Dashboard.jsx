@@ -13,6 +13,7 @@ import IncomeChart from "../components/dashboard/IncomeChart";
 import GraphCard from "../components/dashboard/GraphCard";
 import useGoals from "../hooks/useGoals";
 import { expenseCategories } from "../components/category/CategoryList";
+import TipsAverageCard from "../components/dashboard/TipsAverageCard";
 
 function Dashboard() {
   const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
@@ -134,14 +135,15 @@ function Dashboard() {
 
   return (
     <div className="p-8 bg-gray-100">
-      <div className="flex gap-8 flex-wrap justify-center md:justify-start relative">
+      <div className="flex flex-wrap gap-8 justify-center">
+        {/* Card: Saldo Atual */}
         <Card
           colorStart="from-green-500"
           colorEnd="to-green-800"
           title="Saldo Atual"
           button="Atualizar Saldo"
           onButtonClick={() => setIsBalanceModalOpen(true)}
-          className="w-full sm:w-[45%] lg:w-[30%]"
+          className="w-full sm:w-[45%] md:w-[30%]"
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-yellow-300">
@@ -154,13 +156,14 @@ function Dashboard() {
           </div>
         </Card>
 
+        {/* Card: Saldo Livre */}
         <Card
           colorStart="from-purple-500"
           colorEnd="to-purple-800"
           title="Saldo Livre"
           button="Visualizar"
           onButtonClick={() => setIsFreeBalanceModalOpen(true)}
-          className="w-full sm:w-[45%] lg:w-[30%]"
+          className="w-full sm:w-[45%] md:w-[30%]"
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-white">
@@ -171,6 +174,14 @@ function Dashboard() {
             </p>
           </div>
         </Card>
+
+        {/* Card de Balanço Resumo */}
+        <TipsAverageCard
+          balanceSheet={formattedBalance}
+          sumCredit={sumCredit}
+          sumDebit={sumDebit}
+          className="w-full sm:w-[45%] md:w-[30%]"
+        />
       </div>
 
       {successMessage && (

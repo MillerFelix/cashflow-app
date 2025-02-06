@@ -102,19 +102,33 @@ function Goals() {
             <div className="bg-red-100 p-4 rounded-lg shadow-md text-center">
               <p className="text-red-600 font-bold text-lg">Gastos</p>
               <p className="text-gray-900 text-xl font-semibold">
-                R$ {totalExpenses.toFixed(2)}
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(totalExpenses)}
               </p>
               <p className="text-gray-600">
-                Limite: R$ {limitExpenses.toFixed(2)}
+                Limite:{" "}
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(limitExpenses)}
               </p>
             </div>
             <div className="bg-green-100 p-4 rounded-lg shadow-md text-center">
               <p className="text-green-600 font-bold text-lg">Ganhos</p>
               <p className="text-gray-900 text-xl font-semibold">
-                R$ {totalIncome.toFixed(2)}
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(totalIncome)}
               </p>
               <p className="text-gray-600">
-                Planejado: R$ {plannedIncome.toFixed(2)}
+                Planejado:{" "}
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(plannedIncome)}
               </p>
             </div>
           </div>
