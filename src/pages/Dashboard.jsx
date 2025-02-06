@@ -179,16 +179,22 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Ajuste no layout dos gráficos */}
+      {/* Ajuste no layout dos gráficos e do balão */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <GraphCard
-          colorStart="from-red-500"
-          colorEnd="to-red-800"
-          title="Gastos"
-          className="w-full"
-        >
-          <ExpenseChart transactions={filteredTransactions} />
-          <div className="mt-4 flex flex-col items-center bg-red-200 p-3 rounded-lg shadow">
+        <div className="flex flex-col gap-4">
+          <GraphCard
+            colorStart="from-red-500"
+            colorEnd="to-red-800"
+            title="Gastos"
+            className="w-full"
+          >
+            <ExpenseChart transactions={filteredTransactions} />
+          </GraphCard>
+
+          {/* Balão de Gasto Total, abaixo do gráfico em telas pequenas */}
+          <div className="flex flex-col items-center bg-red-200 p-3 rounded-lg shadow mt-4 md:mt-0 relative">
+            {/* Linha ligando o gráfico ao balão */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 top-[-12px] w-4 h-4 bg-red-700 rotate-45 rounded-sm"></div>
             <span className="text-sm text-gray-700">Gasto Total</span>
             <span className="text-lg font-semibold text-red-700">
               {sumDebit.toLocaleString("pt-BR", {
@@ -197,16 +203,22 @@ function Dashboard() {
               })}
             </span>
           </div>
-        </GraphCard>
+        </div>
 
-        <GraphCard
-          colorStart="from-blue-500"
-          colorEnd="to-blue-800"
-          title="Ganhos"
-          className="w-full"
-        >
-          <IncomeChart transactions={filteredTransactions} />
-          <div className="mt-4 flex flex-col items-center bg-blue-200 p-3 rounded-lg shadow">
+        <div className="flex flex-col gap-4">
+          <GraphCard
+            colorStart="from-blue-500"
+            colorEnd="to-blue-800"
+            title="Ganhos"
+            className="w-full"
+          >
+            <IncomeChart transactions={filteredTransactions} />
+          </GraphCard>
+
+          {/* Balão de Ganho Total, abaixo do gráfico em telas pequenas */}
+          <div className="flex flex-col items-center bg-blue-200 p-3 rounded-lg shadow mt-4 md:mt-0 relative">
+            {/* Linha ligando o gráfico ao balão */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 top-[-12px] w-4 h-4 bg-blue-700 rotate-45 rounded-sm"></div>
             <span className="text-sm text-gray-700">Ganho Total</span>
             <span className="text-lg font-semibold text-blue-700">
               {sumCredit.toLocaleString("pt-BR", {
@@ -215,9 +227,10 @@ function Dashboard() {
               })}
             </span>
           </div>
-        </GraphCard>
+        </div>
       </div>
-      {/* Modal de Saldo Livre */}
+
+      {/* Modais */}
       {isFreeBalanceModalOpen && (
         <FreeBalanceModal
           onClose={() => setIsFreeBalanceModalOpen(false)}
@@ -226,7 +239,6 @@ function Dashboard() {
         />
       )}
 
-      {/* Modal de Saldo Atual */}
       {isBalanceModalOpen && (
         <BalanceModal
           onClose={() => setIsBalanceModalOpen(false)}

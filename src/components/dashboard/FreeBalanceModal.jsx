@@ -89,7 +89,9 @@ function FreeBalanceModal({ onClose }) {
 
         {goals.length > 0 && (
           <div className="mt-4">
-            <h4 className="text-md font-semibold text-gray-800 mb-2">Metas</h4>
+            <h4 className="text-md font-semibold text-gray-800 mb-2">
+              Valores reservados
+            </h4>
             <ul className="max-h-40 overflow-y-auto border rounded-md p-2 bg-gray-50">
               {goals
                 .filter((goal) =>
