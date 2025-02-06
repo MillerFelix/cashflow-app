@@ -29,7 +29,6 @@ function Register() {
     }
 
     try {
-      // Criação do usuário no Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -37,7 +36,6 @@ function Register() {
       );
       const user = userCredential.user;
 
-      // Salvar o nome do usuário no Firestore, junto com o userId (uid)
       await setDoc(doc(db, "users", user.uid), {
         name: name, // Salva o nome
       });
@@ -54,17 +52,17 @@ function Register() {
     <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-800 flex justify-center items-center px-4 relative">
       {loading && <Loader />}
 
-      <div className="p-6 bg-white rounded-3xl shadow-xl w-full max-w-md transform transition hover:scale-105 hover:shadow-2xl">
-        <div className="text-center mb-6">
+      <div className="p-4 sm:p-6 bg-white rounded-3xl shadow-xl w-full max-w-md sm:max-w-lg transform transition hover:scale-105 hover:shadow-2xl">
+        <div className="text-center mb-4 sm:mb-6">
           <img
             src="/login-image.svg"
             alt="Registro"
-            className="mx-auto w-34 h-32"
+            className="mx-auto w-20 sm:w-32 md:w-36 lg:w-40"
           />
-          <h2 className="text-4xl font-extrabold text-gray-800">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2 mt-2">
             Crie sua Conta
           </h2>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Insira seus dados para criar uma conta
           </p>
         </div>
@@ -75,6 +73,7 @@ function Register() {
             onChange={setName}
             type="text"
             error={error && "Digite seu nome"}
+            className="w-full"
           />
           <TextInput
             label="Email"
@@ -82,6 +81,7 @@ function Register() {
             onChange={setEmail}
             type="email"
             error={error && "Preencha um email válido"}
+            className="w-full"
           />
           <TextInput
             label="Senha"
@@ -89,6 +89,7 @@ function Register() {
             onChange={setPassword}
             type="password"
             error={passwordError}
+            className="w-full"
           />
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           <Button
@@ -100,7 +101,7 @@ function Register() {
             Criar Conta
           </Button>
         </form>
-        <p className="mt-6 text-center text-gray-600">
+        <p className="mt-6 text-center text-gray-600 text-sm sm:text-base">
           Já tem uma conta?{" "}
           <Link
             to="/login"

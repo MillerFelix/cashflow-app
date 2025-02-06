@@ -86,7 +86,7 @@ function HelpModal({ isOpen, onClose }) {
             <p className="text-gray-700 mt-3">Futuras melhorias incluem:</p>
             <ul className="list-disc list-inside text-gray-700 mt-2">
               <li>🔹 Agendar transações recorrentes</li>
-              <li>🔹 Mais formas de análise</li>
+              <li>🔹 Perfil do Usuário</li>
               <li>🔹 Exportação de dados</li>
             </ul>
 

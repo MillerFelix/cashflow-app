@@ -27,7 +27,6 @@ function Login() {
       );
       const user = userCredential.user;
 
-      // Buscar o nome do usuário no Firestore usando o userId (uid)
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
@@ -46,17 +45,19 @@ function Login() {
     <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-800 flex justify-center items-center px-4 relative">
       {loading && <Loader />}
 
-      <div className="p-6 bg-white rounded-3xl shadow-xl w-full max-w-md transform transition hover:scale-105 hover:shadow-2xl">
+      <div className="p-6 bg-white rounded-3xl shadow-xl w-full max-w-lg sm:max-w-md lg:max-w-lg xl:max-w-xl transform transition hover:scale-105 hover:shadow-2xl">
         <div className="text-center mb-6">
           <img
             src="/login-image.svg"
             alt="Login"
-            className="mx-auto w-34 h-32"
+            className="mx-auto w-24 sm:w-32 md:w-36 lg:w-40"
           />
-          <h2 className="text-4xl font-extrabold text-gray-800">
-            Bem-vindo de volta, {userName ? userName : "Usuário"}!
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2 mt-2">
+            Bem-vindo de volta!
           </h2>
-          <p className="text-gray-600 mt-2">Faça login para continuar</p>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
+            Faça login para continuar
+          </p>
         </div>
         <form onSubmit={handleLogin} className="space-y-6">
           <TextInput
@@ -83,7 +84,7 @@ function Login() {
             Entrar
           </Button>
         </form>
-        <p className="mt-6 text-center text-gray-600">
+        <p className="mt-6 text-center text-gray-600 text-sm sm:text-base">
           Não tem uma conta?{" "}
           <Link
             to="/register"
