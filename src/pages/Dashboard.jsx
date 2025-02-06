@@ -141,7 +141,7 @@ function Dashboard() {
           title="Saldo Atual"
           button="Atualizar Saldo"
           onButtonClick={() => setIsBalanceModalOpen(true)}
-          className="w-full sm:w-[45%] lg:w-[30%]" // Cards maiores
+          className="w-full sm:w-[45%] lg:w-[30%]"
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-yellow-300">
@@ -160,7 +160,7 @@ function Dashboard() {
           title="Saldo Livre"
           button="Visualizar"
           onButtonClick={() => setIsFreeBalanceModalOpen(true)}
-          className="w-full sm:w-[45%] lg:w-[30%]" // Cards maiores
+          className="w-full sm:w-[45%] lg:w-[30%]"
         >
           <div className="flex items-center justify-between">
             <p className="text-3xl font-semibold text-white">
@@ -179,7 +179,6 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Ajuste no layout dos gráficos e do balão */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex flex-col gap-4">
           <GraphCard
@@ -188,12 +187,23 @@ function Dashboard() {
             title="Gastos"
             className="w-full"
           >
-            <ExpenseChart transactions={filteredTransactions} />
+            {filteredTransactions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-white mt-6">
+                <p className="text-lg font-semibold">
+                  Você ainda não fez débitos
+                </p>
+                <img
+                  src="/no-debit-image.svg"
+                  alt="Nenhuma transação"
+                  className="mt-4 w-48 opacity-70"
+                />
+              </div>
+            ) : (
+              <ExpenseChart transactions={filteredTransactions} />
+            )}
           </GraphCard>
 
-          {/* Balão de Gasto Total, abaixo do gráfico em telas pequenas */}
           <div className="flex flex-col items-center bg-red-200 p-3 rounded-lg shadow mt-4 md:mt-0 relative">
-            {/* Linha ligando o gráfico ao balão */}
             <div className="absolute left-1/2 transform -translate-x-1/2 top-[-12px] w-4 h-4 bg-red-700 rotate-45 rounded-sm"></div>
             <span className="text-sm text-gray-700">Gasto Total</span>
             <span className="text-lg font-semibold text-red-700">
@@ -212,12 +222,23 @@ function Dashboard() {
             title="Ganhos"
             className="w-full"
           >
-            <IncomeChart transactions={filteredTransactions} />
+            {filteredTransactions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-white mt-6">
+                <p className="text-lg font-semibold">
+                  Você ainda não fez créditos
+                </p>
+                <img
+                  src="/no-credit-image.svg"
+                  alt="Nenhuma transação"
+                  className="mt-4 w-48 opacity-70"
+                />
+              </div>
+            ) : (
+              <IncomeChart transactions={filteredTransactions} />
+            )}
           </GraphCard>
 
-          {/* Balão de Ganho Total, abaixo do gráfico em telas pequenas */}
           <div className="flex flex-col items-center bg-blue-200 p-3 rounded-lg shadow mt-4 md:mt-0 relative">
-            {/* Linha ligando o gráfico ao balão */}
             <div className="absolute left-1/2 transform -translate-x-1/2 top-[-12px] w-4 h-4 bg-blue-700 rotate-45 rounded-sm"></div>
             <span className="text-sm text-gray-700">Ganho Total</span>
             <span className="text-lg font-semibold text-blue-700">
@@ -230,7 +251,6 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Modais */}
       {isFreeBalanceModalOpen && (
         <FreeBalanceModal
           onClose={() => setIsFreeBalanceModalOpen(false)}

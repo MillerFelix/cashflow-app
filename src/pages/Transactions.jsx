@@ -108,7 +108,7 @@ function Transactions() {
   });
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex justify-center mt-4">
       <div className="m-4 p-4 sm:m-6 sm:p-6 bg-gray-100 rounded-lg shadow-lg w-full max-w-3xl">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 text-center">
           Transações Financeiras

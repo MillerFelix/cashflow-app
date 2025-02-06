@@ -7,7 +7,9 @@ function MoneyInput({ label, value = "", onChange, error }) {
   const formatValue = (value) => {
     if (!value) return ""; // Retorna vazio se não houver valor
     const numericValue = parseInt(value, 10); // Garante que é um número inteiro
-    return `R$ ${(numericValue / 100).toFixed(2).replace(".", ",")}`;
+    return `R$ ${(numericValue / 100).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+    })}`;
   };
 
   return (
