@@ -109,9 +109,12 @@ function Transactions() {
 
   return (
     <div className="m-8 p-6 bg-gray-100 rounded-lg shadow-lg w-full max-w-3xl mx-auto">
-      <h2 className="text-gray-800 text-2xl font-semibold text-center mb-4">
+      <h1 className="text-4xl font-extrabold text-gray-900 text-center">
         Transações Financeiras
-      </h2>
+      </h1>
+      <p className="text-gray-600 mt-2 text-center">
+        Registre e visualize suas transações para um melhor controle financeiro.
+      </p>
       <Filters
         filters={filters}
         handleFilterChange={handleFilterChange}

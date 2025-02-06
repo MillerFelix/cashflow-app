@@ -33,11 +33,11 @@ function Filters({
         </select>
 
         <div className="mb-4 relative w-64">
-          <label className="block text-sm font-medium text-gray-700">
+          {/* <label className="block text-sm font-medium text-gray-700">
             Categoria
-          </label>
+          </label> */}
           <div
-            className={`w-full p-2 border rounded-lg cursor-pointer flex justify-between items-center focus:outline-none ${
+            className={`w-full p-2 mt-4 border rounded-lg cursor-pointer flex justify-between items-center focus:outline-none ${
               filters.category
                 ? "focus:ring-2 focus:ring-green-800"
                 : "focus:ring-2 focus:ring-gray-300"
