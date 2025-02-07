@@ -14,7 +14,13 @@ function HelpModal({ isOpen, onClose }) {
   const userName = user?.displayName?.split(" ")[0] || "Usuário";
 
   useEffect(() => {
-    if (isOpen) setStep(0); // Sempre volta para a primeira página ao abrir
+    if (isOpen) {
+      setStep(0);
+      document.body.style.overflow = "hidden"; // Evita scroll no fundo
+      document.getElementById("modal-content")?.focus(); // Foca no modal
+    } else {
+      document.body.style.overflow = "auto"; // Restaura scroll// Sempre volta para a primeira página ao abrir
+    }
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -23,8 +29,16 @@ function HelpModal({ isOpen, onClose }) {
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 0));
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg relative">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-hidden={!isOpen}
+    >
+      <div
+        id="modal-content"
+        tabIndex="-1"
+        className="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg relative"
+      >
         {/* Botão de Fechar */}
         <button
           className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl"
