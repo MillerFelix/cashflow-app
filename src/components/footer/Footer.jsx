@@ -1,12 +1,23 @@
-import { useState } from "react";
+import React, { useState, useCallback } from "react";
 import HelpModal from "./HelpModal";
 import Calculator from "./Calculator";
 import { HiOutlineInformationCircle } from "react-icons/hi";
 import { BsCalculator } from "react-icons/bs";
 
+/**
+ * Componente Footer
+ * Rodapé principal do app. Também gerencia a abertura dos modais flutuantes (Ajuda e Calculadora).
+ */
 function Footer() {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
+  // useCallback evita recriação das funções ao re-renderizar
+  const toggleCalculator = useCallback(
+    () => setIsCalculatorOpen((prev) => !prev),
+    [],
+  );
+  const openHelp = useCallback(() => setIsHelpOpen(true), []);
 
   return (
     <>
@@ -19,28 +30,26 @@ function Footer() {
         </div>
       </footer>
 
-      {/* Botões Fixos (Ajuda e Calculadora) */}
-      <div className="fixed bottom-4 right-4 flex flex-col gap-3 z-50">
-        {/* Botão de Calculadora */}
+      {/* Botões Flutuantes (Fixos na tela) */}
+      <div className="fixed bottom-4 right-4 flex flex-col gap-3 z-40">
         <button
-          className="flex items-center justify-center bg-green-600 text-white rounded-full p-3 shadow-md hover:bg-green-700 transition-all"
-          onClick={() => setIsCalculatorOpen((prev) => !prev)}
+          className="flex items-center justify-center bg-green-600 text-white rounded-full p-3 shadow-lg hover:bg-green-700 transition-transform hover:scale-110 active:scale-95"
+          onClick={toggleCalculator}
+          title="Calculadora"
         >
           <BsCalculator size={24} />
         </button>
 
-        {/* Botão de Ajuda */}
         <button
-          className="flex items-center justify-center bg-green-600 text-white rounded-full p-3 shadow-md hover:bg-green-700 transition-all"
-          onClick={() => setIsHelpOpen(true)}
+          className="flex items-center justify-center bg-green-600 text-white rounded-full p-3 shadow-lg hover:bg-green-700 transition-transform hover:scale-110 active:scale-95"
+          onClick={openHelp}
+          title="Ajuda"
         >
           <HiOutlineInformationCircle size={24} />
         </button>
       </div>
 
-      {/* Modal de ajuda */}
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
-
       <Calculator
         isOpen={isCalculatorOpen}
         onClose={() => setIsCalculatorOpen(false)}
@@ -49,4 +58,4 @@ function Footer() {
   );
 }
 
-export default Footer;
+export default React.memo(Footer);

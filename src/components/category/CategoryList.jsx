@@ -1,3 +1,4 @@
+import React from "react";
 import {
   FaHome,
   FaUtensils,
@@ -19,7 +20,7 @@ import {
   FaPlusCircle,
 } from "react-icons/fa";
 
-// Adicionei a chave "type" para definir se é uma categoria de "despesa" ou "ganho"
+// Chave "type" para definir se é uma categoria de "despesa" ou "ganho"
 export const expenseCategories = [
   { name: "Moradia", icon: <FaHome />, type: "expense" },
   { name: "Alimentação", icon: <FaUtensils />, type: "expense" },
@@ -48,35 +49,39 @@ export const incomeCategories = [
   { name: "Outros Ganhos", icon: <FaPlusCircle />, type: "income" },
 ];
 
+/**
+ * Componente CategoryList
+ * Renderiza um Grid visual com todas as categorias disponíveis para o usuário selecionar.
+ * Utilizado principalmente nas telas de configuração de Metas ou Filtros avançados.
+ */
 function CategoryList({ selectedCategory, handleCategorySelect }) {
   return (
     <div className="space-y-6 mt-6">
-      {/* Despesas */}
+      {/* Seção: Despesas */}
       <div>
         <h3 className="text-lg font-semibold text-gray-700 mb-4">Despesas</h3>
+        {/* Grid responsivo: 3 colunas no celular, 4 em telas médias, 6 em telas grandes */}
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
           {expenseCategories.map((category, index) => (
             <div
               key={index}
               onClick={() => handleCategorySelect(category)}
-              className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out 
+              className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out transform hover:scale-105
                 ${
                   selectedCategory === category.name
-                    ? "bg-red-500 text-white"
+                    ? "bg-red-500 text-white" // Destaque para despesa selecionada
                     : "bg-gray-100 hover:bg-gray-200"
                 } 
-                transform hover:scale-105`}
+              `}
             >
               <div className="text-2xl">{category.icon}</div>
-              <p className="mt-2 text-xs text-center text-gray-700">
-                {category.name}
-              </p>
+              <p className="mt-2 text-xs text-center">{category.name}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Ganhos */}
+      {/* Seção: Ganhos */}
       <div>
         <h3 className="text-lg font-semibold text-gray-700 mb-4">Ganhos</h3>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
@@ -84,18 +89,16 @@ function CategoryList({ selectedCategory, handleCategorySelect }) {
             <div
               key={index}
               onClick={() => handleCategorySelect(category)}
-              className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out 
+              className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out transform hover:scale-105
                 ${
                   selectedCategory === category.name
-                    ? "bg-green-500 text-white"
+                    ? "bg-green-500 text-white" // Destaque para ganho selecionado
                     : "bg-gray-100 hover:bg-gray-200"
                 } 
-                transform hover:scale-105`}
+              `}
             >
               <div className="text-2xl">{category.icon}</div>
-              <p className="mt-2 text-xs text-center text-gray-700">
-                {category.name}
-              </p>
+              <p className="mt-2 text-xs text-center">{category.name}</p>
             </div>
           ))}
         </div>
@@ -104,4 +107,4 @@ function CategoryList({ selectedCategory, handleCategorySelect }) {
   );
 }
 
-export default CategoryList;
+export default React.memo(CategoryList);

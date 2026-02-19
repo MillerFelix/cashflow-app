@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Variáveis de Ambiente
+.env
+.env.*
+!.env.examples

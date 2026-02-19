@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import Button from "../components/common/Button";
 import TransactionItem from "../components/transactions/TransactionItem";
 import TransactionModal from "../components/transactions/TransactionModal";
@@ -16,7 +16,6 @@ import {
 import ConfirmationModal from "../components/common/ConfirmationModal";
 import NoData from "../components/common/NoData";
 
-// Estilos dos botões
 const buttonStyles = {
   credit: { bgColor: "bg-green-600", hoverColor: "hover:bg-green-700" },
   debit: { bgColor: "bg-red-500", hoverColor: "hover:bg-red-800" },
@@ -27,6 +26,7 @@ function Transactions() {
   const userId = user?.uid;
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [category, setCategory] = useState("");
+
   const { transactions, loading, message, addTransaction, removeTransaction } =
     useTransactions(userId);
 
@@ -37,76 +37,81 @@ function Transactions() {
     open: false,
     id: null,
   });
-  const [loadingRemove, setLoadingRemove] = useState(false); // Novo estado para controle de remoção
+  const [loadingRemove, setLoadingRemove] = useState(false);
 
-  // Função para buscar o saldo atual
-  async function fetchBalance() {
+  // 1. useCallback: Memoriza a busca do saldo
+  const fetchBalance = useCallback(async () => {
     if (!userId) return 0;
     const userDoc = doc(db, "users", userId);
     const userSnapshot = await getDoc(userDoc);
     return userSnapshot.exists() ? userSnapshot.data().balance || 0 : 0;
-  }
+  }, [userId]);
 
-  // Atualiza o saldo com a transação
-  async function updateBalance(transactionValue, type) {
-    if (!userId) return;
+  // 2. useCallback: Memoriza a atualização do saldo
+  const updateBalance = useCallback(
+    async (transactionValue, type) => {
+      if (!userId) return;
 
-    const currentBalance = await fetchBalance();
-    const newBalance =
-      type === "credit"
-        ? currentBalance + transactionValue
-        : currentBalance - transactionValue;
+      const currentBalance = await fetchBalance();
+      const newBalance =
+        type === "credit"
+          ? currentBalance + transactionValue
+          : currentBalance - transactionValue;
 
-    const userDoc = doc(db, "users", userId);
-    await setDoc(userDoc, { balance: newBalance }, { merge: true });
-  }
+      const userDoc = doc(db, "users", userId);
+      await setDoc(userDoc, { balance: newBalance }, { merge: true });
+    },
+    [userId, fetchBalance],
+  );
 
-  // Função para adicionar transação
-  async function handleAddTransaction(
-    type,
-    description,
-    value,
-    date,
-    category
-  ) {
-    await addTransaction(type, description, value, date, category);
-    await updateBalance(value, type);
-  }
+  // 3. useCallback: Memoriza a adição de transação
+  const handleAddTransaction = useCallback(
+    async (type, description, value, date, category) => {
+      await addTransaction(type, description, value, date, category);
+      await updateBalance(value, type);
+    },
+    [addTransaction, updateBalance],
+  );
 
-  // Função para remover transação
-  async function handleRemoveTransaction(id) {
-    setLoadingRemove(true); // Inicia o carregamento
-    await removeTransaction(id);
-    setLoadingRemove(false); // Finaliza o carregamento
-  }
+  // 4. useCallback: Memoriza a remoção de transação
+  const handleRemoveTransaction = useCallback(
+    async (id) => {
+      setLoadingRemove(true);
+      await removeTransaction(id);
+      setLoadingRemove(false);
+    },
+    [removeTransaction],
+  );
 
-  // Função para confirmar remoção
-  function confirmRemoveTransaction(id) {
+  // 5. useCallback: Memoriza a confirmação de remoção
+  const confirmRemoveTransaction = useCallback((id) => {
     setModalConfirmOpen({ open: true, id });
-  }
+  }, []);
 
-  // Função para alterar filtros
-  function handleFilterChange(e) {
+  // 6. useCallback: Memoriza as funções do filtro
+  const handleFilterChange = useCallback((e) => {
     const { name, value } = e.target;
     setFilters((prevFilters) => ({ ...prevFilters, [name]: value }));
-  }
+  }, []);
 
-  // Função para limpar filtros
-  function clearFilters() {
+  const clearFilters = useCallback(() => {
     setFilters({ date: "", type: "", category: "" });
-  }
+  }, []);
 
-  // Filtra transações com base nos filtros aplicados
-  const filteredTransactions = transactions.filter((transaction) => {
-    return (
-      (!filters.date || transaction.date === filters.date) &&
-      (!filters.type || transaction.type === filters.type) &&
-      (!filters.category ||
-        transaction.category
-          .toLowerCase()
-          .includes(filters.category.toLowerCase()))
-    );
-  });
+  // 7. useMemo: A MÁGICA DOS FILTROS.
+  // O React só vai rodar esse filtro se 'transactions' ou 'filters' mudarem.
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((transaction) => {
+      return (
+        (!filters.date || transaction.date === filters.date) &&
+        (!filters.type || transaction.type === filters.type) &&
+        (!filters.category ||
+          transaction.category
+            .toLowerCase()
+            .includes(filters.category.toLowerCase()))
+      );
+    });
+  }, [transactions, filters]);
 
   return (
     <div className="flex justify-center mt-4">

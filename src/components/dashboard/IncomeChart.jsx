@@ -1,31 +1,36 @@
+import React, { useEffect, useState, useMemo } from "react";
 import { ResponsivePie } from "@nivo/pie";
-import { useEffect, useState } from "react";
 
+/**
+ * Componente IncomeChart
+ * Gráfico de Pizza que agrupa os ganhos (créditos) por categoria.
+ */
 const IncomeChart = ({ transactions }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+  // Efeito responsivo: Adapta o gráfico se o usuário redimensionar a tela (ex: deitar o celular)
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const incomeData = transactions
-    .filter((transaction) => transaction.type === "credit")
-    .reduce((acc, transaction) => {
-      const existingCategory = acc.find(
-        (item) => item.id === transaction.category
-      );
-      if (existingCategory) {
-        existingCategory.value += transaction.value;
-      } else {
-        acc.push({ id: transaction.category, value: transaction.value });
-      }
-      return acc;
-    }, []);
+  // Só roda o loop de novo se o array 'transactions' mudar!
+  const incomeData = useMemo(() => {
+    return transactions
+      .filter((transaction) => transaction.type === "credit")
+      .reduce((acc, transaction) => {
+        const existingCategory = acc.find(
+          (item) => item.id === transaction.category,
+        );
+        if (existingCategory) {
+          existingCategory.value += transaction.value;
+        } else {
+          acc.push({ id: transaction.category, value: transaction.value });
+        }
+        return acc;
+      }, []);
+  }, [transactions]);
 
   return (
     <div
@@ -36,7 +41,7 @@ const IncomeChart = ({ transactions }) => {
       }}
     >
       {isMobile && (
-        <p className="text-sm text-gray-100">
+        <p className="text-sm text-gray-100 mb-2">
           Toque em um setor do gráfico para visualizar.
         </p>
       )}
@@ -57,12 +62,12 @@ const IncomeChart = ({ transactions }) => {
               ["opacity", 0.5],
             ],
           }}
-          colors={{ scheme: "category10" }}
+          colors={{ scheme: "category10" }} // Mantém as cores originais dos ganhos
           arcLinkLabelsThickness={4}
           arcLabelsTextColor="#fff"
           arcLinkLabelsTextColor="#fff"
           arcLinkLabelsColor={{ from: "color" }}
-          enableArcLinkLabels={!isMobile} // Desabilita labels em telas pequenas
+          enableArcLinkLabels={!isMobile} // Desabilita labels externos em telas pequenas
           arcLabel={(e) =>
             `${new Intl.NumberFormat("pt-BR", {
               style: "currency",
@@ -106,4 +111,4 @@ const IncomeChart = ({ transactions }) => {
   );
 };
 
-export default IncomeChart;
+export default React.memo(IncomeChart);

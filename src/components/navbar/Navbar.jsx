@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   FaBars,
@@ -12,26 +12,23 @@ import { signOut } from "firebase/auth";
 import NavItem from "./NavItem";
 import HamburgerMenu from "./HamburguerMenu";
 import ConfirmationModal from "../common/ConfirmationModal";
-import { useAuth } from "../../hooks/useAuth"; // Importa o hook de autenticação
+import { useAuth } from "../../hooks/useAuth";
 
+/**
+ * Componente Navbar
+ * Barra de navegação principal da aplicação.
+ * É responsiva: exibe links horizontais em telas grandes e um menu hambúrguer em celulares.
+ */
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const user = useAuth();
-  const userName = user?.displayName?.split(" ")[0] || "Usuário"; // Pega o primeiro nome
+  const userName = user?.displayName?.split(" ")[0] || "Usuário";
 
-  const toggleMenu = useCallback(() => {
-    setIsOpen((prevState) => !prevState);
-  }, []);
+  const toggleMenu = useCallback(() => setIsOpen((prev) => !prev), []);
 
   const handleLogout = useCallback(() => {
-    signOut(auth)
-      .then(() => {
-        console.log("Logout realizado com sucesso");
-      })
-      .catch((error) => {
-        console.error("Erro ao deslogar", error);
-      });
+    signOut(auth).catch((error) => console.error("Erro ao deslogar", error));
   }, []);
 
   const handleConfirmLogout = useCallback(() => {
@@ -39,21 +36,19 @@ function Navbar() {
     setShowModal(false);
   }, [handleLogout]);
 
+  // Efeito responsivo: Fecha o menu hambúrguer automaticamente se o usuário girar a tela do celular para modo paisagem
   useEffect(() => {
     function handleResize() {
-      if (window.innerWidth >= 768) {
-        setIsOpen(false);
-      }
+      if (window.innerWidth >= 768) setIsOpen(false);
     }
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
-    <nav className="bg-gradient-to-r from-green-700 via-green-800 to-green-950 text-white p-8 shadow-xl rounded-b-3xl">
+    <nav className="bg-gradient-to-r from-green-700 via-green-800 to-green-950 text-white p-8 shadow-xl rounded-b-3xl z-40 relative">
       <div className="container mx-auto flex justify-between items-center px-6">
-        {/* Nome do App */}
+        {/* Logo / Nome do App */}
         <Link
           to="/"
           className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-wider text-transparent bg-clip-text bg-gradient-to-l from-green-500 to-lime-400 hover:bg-gradient-to-r hover:from-yellow-300 hover:to-lime-500 transition-all duration-500"
@@ -62,7 +57,7 @@ function Navbar() {
           Cash$Flow
         </Link>
 
-        {/* Abas da Navbar */}
+        {/* Abas da Navbar (Escondidas no Mobile) */}
         <ul className="hidden md:flex flex-wrap gap-6 ml-10">
           <NavItem to="/" icon={<FaChartBar size={20} />} label="Dashboard" />
           <NavItem to="/goals" icon={<FaBullseye size={20} />} label="Metas" />
@@ -73,7 +68,7 @@ function Navbar() {
           />
         </ul>
 
-        {/* Botão "Sair" */}
+        {/* Botão Sair (Escondido no Mobile) */}
         <div className="ml-6 hidden md:block">
           <button
             onClick={() => setShowModal(true)}
@@ -83,7 +78,7 @@ function Navbar() {
           </button>
         </div>
 
-        {/* Ícone de menu hamburguer */}
+        {/* Botão do Menu Hambúrguer (Visível apenas no Mobile) */}
         <div className="md:hidden">
           <button
             onClick={toggleMenu}
@@ -94,27 +89,23 @@ function Navbar() {
         </div>
       </div>
 
-      {/* Menu Hambúrguer */}
       <HamburgerMenu
         isOpen={isOpen}
         toggleMenu={toggleMenu}
         onLogout={() => setShowModal(true)}
       />
 
-      {/* Modal de Confirmação de Logout */}
       <ConfirmationModal
         showModal={showModal}
         title={`Tem certeza que deseja sair, ${userName}?`}
-        description="Você pode continuar usando o aplicativo ou sair."
+        description="Você precisará fazer login novamente para acessar seus dados."
         onConfirm={handleConfirmLogout}
         onCancel={() => setShowModal(false)}
         confirmText="Sair"
         cancelText="Cancelar"
-        confirmButtonStyle="bg-red-600 hover:bg-red-800"
-        cancelButtonStyle="bg-gray-300 hover:bg-gray-400 text-gray-800"
       />
     </nav>
   );
 }
 
-export default Navbar;
+export default React.memo(Navbar);

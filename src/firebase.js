@@ -1,6 +1,10 @@
-// Importando as funções necessárias do SDK do Firebase
+/**
+ * Configuração Central do Firebase
+ * Inicializa o aplicativo e exporta as instâncias de Auth e Firestore
+ * utilizando variáveis de ambiente para maior segurança.
+ */
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // Adicione o onAuthStateChanged aqui
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   deleteDoc,
   doc,
@@ -15,27 +19,27 @@ import {
   writeBatch,
 } from "firebase/firestore";
 
-// Configuração do Firebase
+// A configuração agora busca os dados do arquivo .env (localmente)
+// ou do painel de hospedagem (em produção)
 const firebaseConfig = {
-  apiKey: "AIzaSyB2EmaUqHJncKOFCtA3D4rpCKEwPjmRRcA",
-  authDomain: "cashflow-cf.firebaseapp.com",
-  projectId: "cashflow-cf",
-  storageBucket: "cashflow-cf.firebasestorage.app",
-  messagingSenderId: "628799718760",
-  appId: "1:628799718760:web:120ad45c73b9439ca782dd",
-  measurementId: "G-M6ZRZHCGR2",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Inicializa o Firebase
+// Inicializa o aplicativo Firebase
 const app = initializeApp(firebaseConfig);
 
-// Inicializa o Firestore
+// Inicializa o banco de dados Firestore
 const db = getFirestore(app);
 
-// Inicializa a autenticação
+// Inicializa o serviço de Autenticação
 export const auth = getAuth(app);
 
-// Exportando funções úteis para outros arquivos
 export {
   db,
   addDoc,
@@ -48,5 +52,5 @@ export {
   getDocs,
   deleteDoc,
   doc,
-  onAuthStateChanged, // Exporte o onAuthStateChanged aqui
+  onAuthStateChanged,
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Loader from "../components/common/Loader";
 import TextInput from "../components/common/TextInput";
 import Button from "../components/common/Button";
-import StatusMessage from "../components/common/StatusMessage"; // Importado para mensagens
+import StatusMessage from "../components/common/StatusMessage";
 
 function Register() {
   const [email, setEmail] = useState("");
@@ -19,43 +19,51 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  async function handleRegister(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setPasswordError("");
-    setSuccessMessage("");
+  // useCallback: Memoriza a função de registro
+  const handleRegister = useCallback(
+    async (e) => {
+      e.preventDefault();
 
-    if (password.length < 6) {
-      setPasswordError("A senha deve ter no mínimo 6 caracteres.");
-      setLoading(false);
-      return;
-    }
+      // 1. Limpa os erros atuais
+      setError("");
+      setPasswordError("");
+      setSuccessMessage("");
 
-    if (password !== confirmPassword) {
-      setPasswordError("As senhas não coincidem.");
-      setLoading(false);
-      return;
-    }
+      // 2. Valida ANTES de chamar o Loader
+      if (password.length < 6) {
+        setPasswordError("A senha deve ter no mínimo 6 caracteres.");
+        return;
+      }
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
+      if (password !== confirmPassword) {
+        setPasswordError("As senhas não coincidem.");
+        return;
+      }
 
-      await setDoc(doc(db, "users", user.uid), { name });
+      // 3. Tudo válido? Agora sim, mostramos o Loader
+      setLoading(true);
 
-      setSuccessMessage("Conta criada com sucesso!");
-      setTimeout(() => navigate("/login"), 2000); // Redireciona após 2s
-    } catch (err) {
-      setError("Erro ao criar conta. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  }
+      try {
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password,
+        );
+        const user = userCredential.user;
+
+        // Salva o nome do usuário no banco de dados
+        await setDoc(doc(db, "users", user.uid), { name });
+
+        setSuccessMessage("Conta criada com sucesso!");
+        setTimeout(() => navigate("/login"), 2000);
+      } catch (err) {
+        setError("Erro ao criar conta. Tente novamente.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [email, password, confirmPassword, name, navigate],
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-800 flex justify-center items-center px-4 relative">

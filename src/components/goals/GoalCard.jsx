@@ -1,16 +1,24 @@
+import React, { useMemo, useCallback } from "react";
 import { expenseCategories, incomeCategories } from "../category/CategoryList";
 import ProgressBar from "./ProgressBar";
 import { FaTrashAlt } from "react-icons/fa";
 
+/**
+ * Componente GoalCard
+ * Exibe as informações detalhadas de uma meta específica (Categoria, Valores, Datas e Progresso).
+ */
 function GoalCard({ goal, onDelete }) {
-  function getCategoryDetails(categoryName) {
+  // useMemo: Busca as informações visuais (ícone e tipo) da categoria.
+  // Só refaz a busca se o nome da categoria da meta mudar.
+  const categoryDetails = useMemo(() => {
     const allCategories = [...expenseCategories, ...incomeCategories];
-    return allCategories.find((cat) => cat.name === categoryName);
-  }
+    return allCategories.find((cat) => cat.name === goal.category);
+  }, [goal.category]);
 
-  const categoryDetails = getCategoryDetails(goal.category);
+  const type = categoryDetails?.type;
 
-  function getCardStyle(type) {
+  // useMemo: Calcula o estilo do cartão baseado no tipo (ganho ou despesa)
+  const cardStyle = useMemo(() => {
     const baseStyle =
       "p-4 md:p-6 rounded-xl shadow-lg transition-all duration-300 ease-in-out text-white relative overflow-hidden";
     const typeColors = {
@@ -18,19 +26,23 @@ function GoalCard({ goal, onDelete }) {
       income: "bg-gradient-to-br from-emerald-800 via-lime-500 to-green-800",
     };
     return `${baseStyle} ${typeColors[type] || "bg-gray-500"}`;
-  }
+  }, [type]);
 
-  function formatDate(date) {
-    const d = new Date(date + "T00:00:00");
+  // useCallback: Formata a data garantindo que o fuso horário (T00:00:00) não altere o dia
+  const formatDate = useCallback((dateString) => {
+    if (!dateString) return "";
+    const d = new Date(dateString + "T00:00:00");
     return d.toLocaleDateString("pt-BR");
-  }
+  }, []);
 
   const achievementPercentage = (goal.currentValue / goal.goalValue) * 100;
 
   return (
-    <div className={`${getCardStyle(categoryDetails?.type)}`}>
-      <div className="absolute inset-0 opacity-10 bg-white rounded-xl blur-xl"></div>
+    <div className={cardStyle}>
+      <div className="absolute inset-0 opacity-10 bg-white rounded-xl blur-xl pointer-events-none"></div>
+
       <div className="relative z-10">
+        {/* Cabeçalho do Card: Ícone, Nome da Categoria e Botão de Excluir */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2 md:gap-4 w-full">
             {categoryDetails?.icon && (
@@ -44,33 +56,43 @@ function GoalCard({ goal, onDelete }) {
           </div>
           <button
             onClick={() => onDelete(goal.id)}
-            className="p-1 md:p-2 text-yellow-300 hover:text-yellow-400 transition-transform duration-200 active:scale-95 hover:scale-105"
+            className="p-1 md:p-2 text-yellow-300 hover:text-red-400 transition-transform duration-200 active:scale-95 hover:scale-110"
+            title="Excluir meta"
           >
             <FaTrashAlt className="text-sm md:text-base" />
           </button>
         </div>
+
+        {/* Informações Numéricas */}
         <p className="text-xs md:text-sm mb-1">
-          <strong>
-            {categoryDetails?.type === "expense" ? "Limite" : "Meta"}:
-          </strong>{" "}
-          R${goal.goalValue.toFixed(2)}
+          <strong>{type === "expense" ? "Limite" : "Meta"}:</strong>{" "}
+          {goal.goalValue.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
         </p>
-        <p className="text-xs md:text-sm mb-1">
-          <strong>Atual:</strong> R${goal.currentValue.toFixed(2)}
+        <p className="text-xs md:text-sm mb-3">
+          <strong>Atual:</strong>{" "}
+          {goal.currentValue.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
         </p>
+
+        {/* Barra Visual */}
         <ProgressBar
-          type={categoryDetails?.type}
+          type={type}
           currentValue={goal.currentValue}
           goalValue={goal.goalValue}
         />
-        <p className="text-xs md:text-sm">
+
+        {/* Rodapé: Datas e Porcentagem */}
+        <p className="text-xs md:text-sm mt-3">
           <strong>Período:</strong> {formatDate(goal.startDate)} -{" "}
           {formatDate(goal.endDate)}
         </p>
-        <p className="text-xs md:text-sm mt-2">
-          <strong>
-            {categoryDetails?.type === "expense" ? "Utilizado" : "Progresso"}:
-          </strong>{" "}
+        <p className="text-xs md:text-sm mt-1">
+          <strong>{type === "expense" ? "Utilizado" : "Progresso"}:</strong>{" "}
           {`${Math.round(achievementPercentage)}%`}
         </p>
       </div>
@@ -78,4 +100,4 @@ function GoalCard({ goal, onDelete }) {
   );
 }
 
-export default GoalCard;
+export default React.memo(GoalCard);

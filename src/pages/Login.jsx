@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { auth, db } from "../firebase";
+import React, { useState, useCallback } from "react";
+import { auth } from "../firebase"; // 'db' e 'doc' removidos, pois não são mais necessários aqui
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import Loader from "../components/common/Loader";
 import TextInput from "../components/common/TextInput";
@@ -12,34 +11,33 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userName, setUserName] = useState("");
+
+  // Estado 'userName' removido: ele era definido mas nunca usado antes da navegação
   const navigate = useNavigate();
 
-  async function handleLogin(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
+  // useCallback: Memoriza a função de login
+  const handleLogin = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setLoading(true);
+      setError("");
 
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setUserName(docSnap.data().name);
+      try {
+        // Fazemos o login
+        await signInWithEmailAndPassword(auth, email, password);
+
+        // Removida a busca desnecessária ao Firestore aqui. O useAuth cuidará disso.
+
+        // Redireciona imediatamente, tornando o login mais veloz
+        navigate("/");
+      } catch (err) {
+        setError("Erro ao fazer login. Verifique suas credenciais.");
+      } finally {
+        setLoading(false);
       }
-
-      navigate("/");
-    } catch (err) {
-      setError("Erro ao fazer login. Verifique suas credenciais.");
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+    [email, password, navigate],
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-800 flex justify-center items-center px-4 relative">

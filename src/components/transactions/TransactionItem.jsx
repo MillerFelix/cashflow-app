@@ -1,3 +1,4 @@
+import React from "react";
 import TransactionCard from "./TransactionCard";
 
 function TransactionItem({ transactions, removeTransaction }) {
@@ -14,4 +15,4 @@ function TransactionItem({ transactions, removeTransaction }) {
   );
 }
 
-export default TransactionItem;
+export default React.memo(TransactionItem);

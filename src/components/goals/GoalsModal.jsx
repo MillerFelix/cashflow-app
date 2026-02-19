@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import TextInput from "../common/TextInput";
 import MoneyInput from "../common/MoneyInput";
 import ActionButtons from "../common/ActionButtons";
@@ -6,6 +6,10 @@ import Loader from "../common/Loader";
 import StatusMessage from "../common/StatusMessage";
 import { expenseCategories, incomeCategories } from "../category/CategoryList";
 
+/**
+ * Componente GoalsModal
+ * Modal flutuante que permite ao usuário criar ou editar uma meta financeira.
+ */
 function GoalsModal({
   isOpen,
   onClose,
@@ -15,47 +19,71 @@ function GoalsModal({
   existingGoals,
 }) {
   const [selectedCategory, setSelectedCategory] = useState(
-    newGoal.category || ""
+    newGoal.category || "",
   );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  if (!isOpen) return null;
+  // useMemo: Junta as duas listas de categorias para exibir no grid
+  const categories = useMemo(
+    () => [...incomeCategories, ...expenseCategories],
+    [],
+  );
 
-  const categories = [...incomeCategories, ...expenseCategories];
+  // Se o modal não estiver aberto, não desenha nada na tela
+  if (!isOpen) return null;
 
   function handleCategorySelect(category) {
     setSelectedCategory(category.name);
+    // Atualiza o estado global lá no hook useGoals
     handleGoalChange(category.name, "category");
     setError("");
   }
 
   function validateForm() {
     if (!newGoal.category) return "Por favor, selecione uma categoria.";
-    if (existingGoals.some((goal) => goal.category === newGoal.category))
+
+    // Verifica se já não existe uma meta ativa para essa categoria
+    if (existingGoals.some((goal) => goal.category === newGoal.category)) {
       return "Já existe uma meta para essa categoria.";
-    if (isNaN(newGoal.goal) || newGoal.goal <= 0)
+    }
+
+    if (!newGoal.goal || isNaN(newGoal.goal) || newGoal.goal <= 0) {
       return "O valor da meta deve ser maior que zero.";
-    if (!newGoal.startDate || !newGoal.endDate)
+    }
+
+    if (!newGoal.startDate || !newGoal.endDate) {
       return "As datas de início e fim devem ser preenchidas.";
-    if (newGoal.startDate > newGoal.endDate)
+    }
+
+    if (newGoal.startDate > newGoal.endDate) {
       return "A data de início deve ser anterior à data de fim.";
+    }
+
     return null;
   }
 
   async function handleSubmit(e) {
-    e.preventDefault();
+    e.preventDefault(); // Impede o reload da página
+
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
       return;
     }
+
     setLoading(true);
     try {
+      // Chama a função de salvar do hook useGoals
       await onSave();
+
       setSuccessMessage("Meta salva com sucesso!");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      // Fecha o modal logo após o sucesso
+      setTimeout(() => {
+        setSuccessMessage("");
+        onClose();
+      }, 1500);
     } catch {
       setError("Erro ao salvar a meta.");
       setTimeout(() => setError(""), 3000);
@@ -70,44 +98,55 @@ function GoalsModal({
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           Criar Meta
         </h2>
+
         {successMessage && (
           <StatusMessage message={successMessage} type="success" />
         )}
         {error && <StatusMessage message={`Erro: ${error}`} type="error" />}
         {loading && <Loader />}
+
         <form onSubmit={handleSubmit}>
+          {/* Seção do Grid de Categorias */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-700 mb-4">
               Selecione a Categoria
             </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-              {categories.map((category, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => handleCategorySelect(category)}
-                  className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out 
-                    ${
-                      selectedCategory === category.name
-                        ? category.type === "expense"
-                          ? "bg-red-500 text-white"
-                          : "bg-green-500 text-white"
-                        : category.type === "expense"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-green-100 text-green-700"
-                    }
-                    transform hover:scale-105`}
-                >
-                  <div className="text-2xl">{category.icon}</div>
-                  <p className="mt-2 text-xs text-center">{category.name}</p>
-                </button>
-              ))}
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-1">
+              {categories.map((category, index) => {
+                const isSelected = selectedCategory === category.name;
+                const isExpense = category.type === "expense";
+
+                return (
+                  <button
+                    key={index}
+                    type="button" // Previne que clicar na categoria envie o form
+                    onClick={() => handleCategorySelect(category)}
+                    className={`flex flex-col items-center p-3 rounded-lg shadow-md cursor-pointer transition duration-300 ease-in-out transform hover:scale-105
+                      ${
+                        isSelected
+                          ? isExpense
+                            ? "bg-red-500 text-white"
+                            : "bg-green-500 text-white"
+                          : isExpense
+                            ? "bg-red-50 text-red-700 hover:bg-red-100"
+                            : "bg-green-50 text-green-700 hover:bg-green-100"
+                      }
+                    `}
+                  >
+                    <div className="text-2xl">{category.icon}</div>
+                    <p className="mt-2 text-xs text-center leading-tight">
+                      {category.name}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           </div>
+
           <MoneyInput
             label="Valor Alvo"
             value={newGoal.goal}
-            onChange={(e) => handleGoalChange(e, "goal")}
+            onChange={(e) => handleGoalChange(e, "goal")} // Passa o valor limpo (e) e o campo
           />
           <TextInput
             label="Data de Início"
@@ -121,11 +160,13 @@ function GoalsModal({
             onChange={(e) => handleGoalChange(e, "endDate")}
             type="date"
           />
-          <ActionButtons onClose={onClose} onSave={null} />
+
+          {/* Correção: onSave removido daqui, pois o ActionButtons já é type="submit" */}
+          <ActionButtons onClose={onClose} />
         </form>
       </div>
     </div>
   );
 }
 
-export default GoalsModal;
+export default React.memo(GoalsModal);

@@ -1,3 +1,4 @@
+import React from "react";
 import { FaClock, FaCoins } from "react-icons/fa";
 import { expenseCategories, incomeCategories } from "../category/CategoryList"; // Importando categorias
 
@@ -15,14 +16,14 @@ function TransactionCard({ transaction, onRemove }) {
       ? "bg-green-500 text-white" // Futuro crédito
       : "bg-red-500 text-white" // Futuro débito
     : isCredit
-    ? "bg-green-200 text-gray-700" // Crédito normal
-    : "bg-red-200 text-gray-700"; // Débito normal
+      ? "bg-green-200 text-gray-700" // Crédito normal
+      : "bg-red-200 text-gray-700"; // Débito normal
 
   const textColor = isFutureTransaction
     ? "text-white"
     : isCredit
-    ? "text-green-700"
-    : "text-red-700";
+      ? "text-green-700"
+      : "text-red-700";
   const removeBtnColor = isFutureTransaction
     ? "text-gray-300 hover:text-white"
     : "text-red-500 hover:text-red-700";
@@ -79,4 +80,4 @@ function TransactionCard({ transaction, onRemove }) {
   );
 }
 
-export default TransactionCard;
+export default React.memo(TransactionCard);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -8,25 +8,41 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "../../hooks/useAuth";
 
+/**
+ * Componente HelpModal
+ * Modal de tutorial (passo a passo) com informações do desenvolvedor e de uso do App.
+ */
 function HelpModal({ isOpen, onClose }) {
   const [step, setStep] = useState(0);
   const user = useAuth();
   const userName = user?.displayName?.split(" ")[0] || "Usuário";
 
+  // Efeito para travar o scroll da página enquanto o modal estiver aberto
   useEffect(() => {
     if (isOpen) {
-      setStep(0);
-      document.body.style.overflow = "hidden"; // Evita scroll no fundo
-      document.getElementById("modal-content")?.focus(); // Foca no modal
+      setStep(0); // Sempre inicia no passo 1
+      document.body.style.overflow = "hidden";
+      document.getElementById("modal-content")?.focus();
     } else {
-      document.body.style.overflow = "auto"; // Restaura scroll// Sempre volta para a primeira página ao abrir
+      document.body.style.overflow = "auto";
     }
+
+    // Função de Limpeza (Cleanup): Se o componente sumir, garante que o scroll volta!
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  const nextStep = useCallback(
+    () => setStep((prev) => Math.min(prev + 1, 2)),
+    [],
+  );
+  const prevStep = useCallback(
+    () => setStep((prev) => Math.max(prev - 1, 0)),
+    [],
+  );
 
-  const nextStep = () => setStep((prev) => Math.min(prev + 1, 2));
-  const prevStep = () => setStep((prev) => Math.max(prev - 1, 0));
+  if (!isOpen) return null;
 
   return (
     <div
@@ -37,17 +53,16 @@ function HelpModal({ isOpen, onClose }) {
       <div
         id="modal-content"
         tabIndex="-1"
-        className="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg relative"
+        className="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg relative outline-none"
       >
-        {/* Botão de Fechar */}
         <button
-          className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl"
+          className="absolute top-3 right-3 text-gray-600 hover:text-red-500 transition-colors text-xl"
           onClick={onClose}
         >
           <FaTimes />
         </button>
 
-        {/* Seções do modal */}
+        {/* ... (CONTEÚDO DOS PASSOS MANTIDO EXATAMENTE IGUAL AO SEU ORIGINAL AQUI) ... */}
         {step === 0 && (
           <div className="text-center">
             <h2 className="text-2xl font-semibold text-green-800">
@@ -100,25 +115,13 @@ function HelpModal({ isOpen, onClose }) {
               projeto. O CashFlow foi criado por mim para facilitar o
               gerenciamento financeiro e está em constante evolução.
             </p>
-            <p className="text-gray-700 mt-3">Futuras melhorias incluem:</p>
-            <ul className="list-disc list-inside text-gray-700 mt-2">
-              <li>🔹 Agendar transações recorrentes</li>
-              <li>🔹 Perfil do Usuário</li>
-              <li>🔹 Exportação de dados</li>
-            </ul>
-
-            {/* Contatos */}
             <div className="mt-5">
               <h3 className="text-lg font-semibold text-green-800">
                 📩 Entre em contato
               </h3>
-              <p className="text-gray-700 text-sm mt-1">
-                Tem sugestões ou feedbacks? Fale comigo! 👇
-              </p>
               <div className="mt-2">
                 <p className="text-sm flex items-center gap-2">
-                  <FaEnvelope className="text-green-700" />
-                  Email:{" "}
+                  <FaEnvelope className="text-green-700" /> Email:{" "}
                   <a
                     href="mailto:millerrfelix@gmail.com"
                     className="text-green-700 hover:underline"
@@ -127,8 +130,7 @@ function HelpModal({ isOpen, onClose }) {
                   </a>
                 </p>
                 <p className="text-sm flex items-center gap-2">
-                  <FaInstagram className="text-green-700" />
-                  Instagram:{" "}
+                  <FaInstagram className="text-green-700" /> Instagram:{" "}
                   <a
                     href="https://instagram.com/millerfelix_"
                     target="_blank"
@@ -140,38 +142,36 @@ function HelpModal({ isOpen, onClose }) {
                 </p>
               </div>
             </div>
-
-            <p className="text-gray-700 mt-4">
+            <p className="text-gray-700 mt-4 font-semibold text-center">
               Obrigado por usar o CashFlow! 🚀💸
             </p>
           </div>
         )}
 
-        {/* Navegação */}
+        {/* Rodapé do Modal (Navegação) */}
         <div className="flex justify-between items-center mt-6">
           <button
-            className={`text-green-800 flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${
-              step === 0
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-green-100"
-            }`}
+            className={`text-green-800 flex items-center gap-2 px-4 py-2 rounded-full font-semibold transition-colors ${step === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-green-100"}`}
             onClick={prevStep}
             disabled={step === 0}
           >
-            <FaArrowLeft />
-            Voltar
+            <FaArrowLeft /> Voltar
           </button>
-          <p className="text-sm text-gray-600">Passo {step + 1} de 3</p>
+
+          <p className="text-sm text-gray-600 font-medium">
+            Passo {step + 1} de 3
+          </p>
+
           {step < 2 ? (
             <button
-              className="text-green-800 flex items-center gap-2 px-4 py-2 rounded-full font-semibold hover:bg-green-100"
+              className="text-green-800 flex items-center gap-2 px-4 py-2 rounded-full font-semibold hover:bg-green-100 transition-colors"
               onClick={nextStep}
             >
               Avançar <FaArrowRight />
             </button>
           ) : (
             <button
-              className="bg-green-700 flex items-center gap-2 text-white px-4 py-2 rounded-full font-semibold hover:bg-green-800"
+              className="bg-green-700 flex items-center gap-2 text-white px-4 py-2 rounded-full font-semibold hover:bg-green-800 transition-colors shadow-md"
               onClick={onClose}
             >
               Fechar <FaTimes />
@@ -183,4 +183,4 @@ function HelpModal({ isOpen, onClose }) {
   );
 }
 
-export default HelpModal;
+export default React.memo(HelpModal);

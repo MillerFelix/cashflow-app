@@ -1,6 +1,13 @@
+import React from "react";
+
+/**
+ * Componente NoData
+ * Utilizado para exibir um visual amigável quando uma lista está vazia (ex: sem transações).
+ * Recebe uma imagem e uma mensagem que possuem valores padrão, mas podem ser sobrescritos.
+ */
 function NoData({
-  imageSrc = "/no-data-image.svg",
-  message = "Nenhum dado encontrado.",
+  imageSrc = "/no-data-image.svg", // Imagem padrão caso não seja informada
+  message = "Nenhum dado encontrado.", // Mensagem padrão caso não seja informada
 }) {
   return (
     <div className="flex flex-col items-center mt-8">
@@ -10,4 +17,4 @@ function NoData({
   );
 }
 
-export default NoData;
+export default React.memo(NoData);

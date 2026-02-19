@@ -1,45 +1,48 @@
+import React, { useEffect, useState, useMemo } from "react";
 import { ResponsivePie } from "@nivo/pie";
-import { useEffect, useState } from "react";
 
+/**
+ * Componente ExpenseChart
+ * Gráfico de Pizza que agrupa as despesas por categoria.
+ */
 const ExpenseChart = ({ transactions }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+  // Efeito responsivo: Adapta o gráfico se o usuário deitar o celular
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const expenseData = transactions
-    .filter((transaction) => transaction.type === "debit")
-    .reduce((acc, transaction) => {
-      const existingCategory = acc.find(
-        (item) => item.id === transaction.category
-      );
-      if (existingCategory) {
-        existingCategory.value += transaction.value;
-      } else {
-        acc.push({ id: transaction.category, value: transaction.value });
-      }
-      return acc;
-    }, []);
+  // Só roda o loop de novo se o array 'transactions' mudar!
+  const expenseData = useMemo(() => {
+    return transactions
+      .filter((transaction) => transaction.type === "debit")
+      .reduce((acc, transaction) => {
+        const existingCategory = acc.find(
+          (item) => item.id === transaction.category,
+        );
+        if (existingCategory) {
+          existingCategory.value += transaction.value;
+        } else {
+          acc.push({ id: transaction.category, value: transaction.value });
+        }
+        return acc;
+      }, []);
+  }, [transactions]);
 
   return (
     <div
       className="h-full w-full flex flex-col justify-center items-center"
-      style={{
-        minHeight: "350px",
-        maxHeight: "100%",
-      }}
+      style={{ minHeight: "350px", maxHeight: "100%" }}
     >
       {isMobile && (
-        <p className="text-sm text-gray-100">
+        <p className="text-sm text-gray-100 mb-2">
           Toque em um setor do gráfico para visualizar.
         </p>
       )}
+
       <div className="w-full h-full flex justify-center items-center overflow-hidden">
         <ResponsivePie
           data={expenseData}
@@ -62,12 +65,9 @@ const ExpenseChart = ({ transactions }) => {
           arcLabelsTextColor="#fff"
           arcLinkLabelsTextColor="#fff"
           arcLinkLabelsColor={{ from: "color" }}
-          enableArcLinkLabels={!isMobile} // Desabilita labels em telas pequenas
+          enableArcLinkLabels={!isMobile}
           arcLabel={(e) =>
-            `${new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(e.value)}`
+            `${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(e.value)}`
           }
           tooltip={({ datum }) => (
             <div
@@ -87,23 +87,11 @@ const ExpenseChart = ({ transactions }) => {
           )}
           enableRadialLabels={false}
           enableSlicesLabels={true}
-          theme={{
-            labels: {
-              text: {
-                fontSize: 12,
-                fontWeight: 500,
-              },
-            },
-          }}
-          style={{
-            minHeight: "300px",
-            width: "100%",
-            maxWidth: "100%",
-          }}
+          theme={{ labels: { text: { fontSize: 12, fontWeight: 500 } } }}
         />
       </div>
     </div>
   );
 };
 
-export default ExpenseChart;
+export default React.memo(ExpenseChart);

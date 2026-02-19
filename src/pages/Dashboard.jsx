@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Card from "../components/common/Card";
 import BalanceModal from "../components/dashboard/BalanceModal";
 import FreeBalanceModal from "../components/dashboard/FreeBalanceModal";
@@ -18,22 +18,27 @@ import TipsAverageCard from "../components/dashboard/TipsAverageCard";
 function Dashboard() {
   const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
   const [isFreeBalanceModalOpen, setIsFreeBalanceModalOpen] = useState(false);
+
   const { goals, fetchGoals } = useGoals();
-  const [balance, setBalance] = useState(0);
-  const [totalExpenses, setTotalExpenses] = useState(0); // Novo estado para o total de despesas
-  const storedVisibility = localStorage.getItem("balanceVisibility");
-  const [isVisible, setIsVisible] = useState(storedVisibility === "true");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
   const user = useAuth();
   const userId = user?.uid;
+
   const {
     transactions,
     loading: transactionsLoading,
     addTransaction,
   } = useTransactions(userId);
 
+  const [balance, setBalance] = useState(0);
+  // REMOVIDO: const [totalExpenses, setTotalExpenses] = useState(0); -> Usaremos useMemo agora
+
+  const storedVisibility = localStorage.getItem("balanceVisibility");
+  const [isVisible, setIsVisible] = useState(storedVisibility === "true");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // 1. Efeito para buscar os dados iniciais
   useEffect(() => {
     async function fetchBalance() {
       if (userId) {
@@ -53,27 +58,50 @@ function Dashboard() {
         setLoading(false);
       }
     }
-    fetchGoals();
 
-    fetchBalance();
-  }, [userId]);
+    if (userId) {
+      fetchGoals();
+      fetchBalance();
+    }
+  }, [userId, fetchGoals]);
 
   useEffect(() => {
     localStorage.setItem("balanceVisibility", isVisible);
   }, [isVisible]);
 
-  useEffect(() => {
-    // Atualiza o total de despesas ao alterar as metas
+  // 2. USEMEMO: Calcula as despesas totais baseado nas metas APENAS quando 'goals' mudar
+  const totalExpenses = useMemo(() => {
     const expenseCategoryNames = expenseCategories.map((c) => c.name);
-
-    const total = goals
+    return goals
       .filter((goal) => expenseCategoryNames.includes(goal.category))
       .reduce((sum, goal) => sum + goal.goalValue, 0);
-
-    setTotalExpenses(total);
   }, [goals]);
 
-  const freeBalance = balance - totalExpenses;
+  // 3. USEMEMO: Saldo livre calculado automaticamente sem precisar de useEffect
+  const freeBalance = useMemo(
+    () => balance - totalExpenses,
+    [balance, totalExpenses],
+  );
+
+  // 4. USEMEMO: Filtra as transações APENAS quando a lista de 'transactions' mudar
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(
+      (transaction) => transaction.category !== "Saldo",
+    );
+  }, [transactions]);
+
+  // 5. USEMEMO: Calcula as somas de crédito e débito de uma só vez
+  const { sumDebit, sumCredit } = useMemo(() => {
+    const debit = filteredTransactions
+      .filter((t) => t.type === "debit")
+      .reduce((acc, t) => acc + t.value, 0);
+
+    const credit = filteredTransactions
+      .filter((t) => t.type === "credit")
+      .reduce((acc, t) => acc + t.value, 0);
+
+    return { sumDebit: debit, sumCredit: credit };
+  }, [filteredTransactions]);
 
   async function handleSaveBalance(newBalance) {
     if (userId) {
@@ -89,7 +117,7 @@ function Dashboard() {
             "Ajuste de saldo",
             Math.abs(difference),
             new Date().toISOString().split("T")[0],
-            "Saldo"
+            "Saldo",
           );
         }
         setBalance(newBalance);
@@ -115,24 +143,6 @@ function Dashboard() {
       </div>
     );
   }
-
-  const filteredTransactions = transactions.filter(
-    (transaction) => transaction.category !== "Saldo"
-  );
-
-  function calculateSums(transactions) {
-    const sumDebit = transactions
-      .filter((transaction) => transaction.type === "debit")
-      .reduce((acc, transaction) => acc + transaction.value, 0);
-
-    const sumCredit = transactions
-      .filter((transaction) => transaction.type === "credit")
-      .reduce((acc, transaction) => acc + transaction.value, 0);
-
-    return { sumDebit, sumCredit };
-  }
-
-  const { sumDebit, sumCredit } = calculateSums(filteredTransactions);
 
   return (
     <div className="p-8 bg-gray-100">
@@ -270,6 +280,7 @@ function Dashboard() {
           onClose={() => setIsFreeBalanceModalOpen(false)}
           balance={balance}
           totalExpenses={totalExpenses}
+          goals={goals}
         />
       )}
 

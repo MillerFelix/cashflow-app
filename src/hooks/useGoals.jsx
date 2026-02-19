@@ -43,35 +43,36 @@ function useGoals() {
     }
   }, [userId]);
 
-  function toggleModal() {
-    setIsModalOpen((prevState) => !prevState);
-    if (!isModalOpen) resetNewGoal();
-  }
-
-  function resetNewGoal() {
+  const resetNewGoal = useCallback(() => {
     setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
     setSuccessMessage("");
-  }
+  }, []);
 
-  function handleGoalChange(value, field) {
+  const toggleModal = useCallback(() => {
+    setIsModalOpen((prevState) => {
+      const newState = !prevState;
+      if (!newState) resetNewGoal(); // Se estiver fechando, reseta os dados
+      return newState;
+    });
+  }, [resetNewGoal]);
+
+  const handleGoalChange = useCallback((value, field) => {
     setNewGoal((prevState) => ({ ...prevState, [field]: value }));
-  }
+  }, []);
 
-  async function addGoal() {
+  const addGoal = useCallback(async () => {
     if (!userId) return;
     setIsLoading(true);
     const parsedGoalValue = parseFloat(newGoal.goal) / 100;
 
     try {
-      // 1. Buscar transações relacionadas à categoria da meta
       const transactionsRef = collection(db, "users", userId, "transactions");
       const q = query(
         transactionsRef,
-        where("category", "==", newGoal.category)
+        where("category", "==", newGoal.category),
       );
       const querySnapshot = await getDocs(q);
 
-      // 2. Filtrar transações dentro do período da meta
       const startDate = new Date(newGoal.startDate);
       const endDate = new Date(newGoal.endDate);
       const filteredTransactions = querySnapshot.docs.filter((doc) => {
@@ -80,14 +81,12 @@ function useGoals() {
         return transactionDate >= startDate && transactionDate <= endDate;
       });
 
-      // 3. Calcular currentValue e achievement
       const currentValue = filteredTransactions.reduce(
         (sum, t) => sum + t.data().value,
-        0
+        0,
       );
       const achievement = (currentValue / parsedGoalValue) * 100;
 
-      // 4. Salvar a meta com os valores calculados
       await addDoc(collection(db, "users", userId, "goals"), {
         goalValue: parsedGoalValue,
         achievement: achievement > 100 ? 100 : achievement,
@@ -101,30 +100,32 @@ function useGoals() {
       setSuccessMessage("Meta salva com sucesso!");
       setTimeout(() => setSuccessMessage(""), 3000);
 
-      // Atualizar lista de metas
       fetchGoals();
     } catch (error) {
       console.error("Erro ao criar meta:", error);
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [userId, newGoal, toggleModal, fetchGoals]);
 
-  async function deleteGoal(goalId) {
-    if (!userId) return;
-    setIsLoading(true);
-    try {
-      const goalRef = doc(db, "users", userId, "goals", goalId);
-      await deleteDoc(goalRef);
-      setGoals((prevGoals) => prevGoals.filter((goal) => goal.id !== goalId));
-      setSuccessMessage("Meta removida com sucesso!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      console.error("Erro ao remover meta:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const deleteGoal = useCallback(
+    async (goalId) => {
+      if (!userId) return;
+      setIsLoading(true);
+      try {
+        const goalRef = doc(db, "users", userId, "goals", goalId);
+        await deleteDoc(goalRef);
+        setGoals((prevGoals) => prevGoals.filter((goal) => goal.id !== goalId));
+        setSuccessMessage("Meta removida com sucesso!");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } catch (error) {
+        console.error("Erro ao remover meta:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [userId],
+  );
 
   return {
     goals,
