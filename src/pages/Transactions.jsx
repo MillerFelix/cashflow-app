@@ -7,23 +7,20 @@ import Filters from "../components/transactions/Filters";
 import StatusMessage from "../components/common/StatusMessage";
 import { useTransactions } from "../hooks/useTransactions";
 import { useAuth } from "../hooks/useAuth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
 import {
   expenseCategories,
   incomeCategories,
 } from "../components/category/CategoryList";
-import { generateMonthlyReportPDF } from "../utils/pdfGenerator";
-import { FaFilePdf } from "react-icons/fa";
 import ConfirmationModal from "../components/common/ConfirmationModal";
 import NoData from "../components/common/NoData";
+import { generateMonthlyReportPDF } from "../utils/pdfGenerator";
+import { FaFilePdf } from "react-icons/fa";
 
 const buttonStyles = {
   credit: { bgColor: "bg-green-600", hoverColor: "hover:bg-green-700" },
   debit: { bgColor: "bg-red-500", hoverColor: "hover:bg-red-800" },
 };
 
-// Função auxiliar para pegar o mês atual no formato "YYYY-MM"
 const getCurrentMonthYear = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -37,7 +34,6 @@ function Transactions() {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [category, setCategory] = useState("");
 
-  // 1. Hook atualizado para receber também a função de editar
   const {
     transactions,
     loading,
@@ -49,7 +45,7 @@ function Transactions() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState("credit");
-  const [modalData, setModalData] = useState(null); // Guarda os dados para edição ou duplicação
+  const [modalData, setModalData] = useState(null);
 
   const [filters, setFilters] = useState({
     month: getCurrentMonthYear(),
@@ -63,69 +59,18 @@ function Transactions() {
   });
   const [loadingRemove, setLoadingRemove] = useState(false);
 
-  const fetchBalance = useCallback(async () => {
-    if (!userId) return 0;
-    const userDoc = doc(db, "users", userId);
-    const userSnapshot = await getDoc(userDoc);
-    return userSnapshot.exists() ? userSnapshot.data().balance || 0 : 0;
-  }, [userId]);
-
-  const updateBalance = useCallback(
-    async (transactionValue, type) => {
-      if (!userId) return;
-      const currentBalance = await fetchBalance();
-      const newBalance =
-        type === "credit"
-          ? currentBalance + transactionValue
-          : currentBalance - transactionValue;
-      const userDoc = doc(db, "users", userId);
-      await setDoc(userDoc, { balance: newBalance }, { merge: true });
-    },
-    [userId, fetchBalance],
-  );
-
-  // A Nova Função Mestra que lida com Criação, Edição e Duplicação
+  // Apenas delega a criação/edição para o Hook.
   const handleSaveTransaction = useCallback(
     async (data) => {
       const { id, type, description, value, date, category, isFixed } = data;
 
       if (id) {
-        const oldTransaction = transactions.find((t) => t.id === id);
-        if (!oldTransaction) return;
-
-        // Chama a função editTransaction do Hook
         await editTransaction(id, { type, description, value, date, category });
-
-        const oldSigned =
-          oldTransaction.type === "credit"
-            ? oldTransaction.value
-            : -oldTransaction.value;
-        const newSigned = type === "credit" ? value : -value;
-        const diff = newSigned - oldSigned;
-
-        if (diff !== 0) {
-          const currentBalance = await fetchBalance();
-          const userDoc = doc(db, "users", userId);
-          await setDoc(
-            userDoc,
-            { balance: currentBalance + diff },
-            { merge: true },
-          );
-        }
       } else {
-        // Chama a função addTransaction do Hook
         await addTransaction(type, description, value, date, category, isFixed);
-        await updateBalance(value, type);
       }
     },
-    [
-      transactions,
-      editTransaction,
-      addTransaction,
-      updateBalance,
-      fetchBalance,
-      userId,
-    ],
+    [editTransaction, addTransaction],
   );
 
   const handleRemoveTransaction = useCallback(
@@ -141,7 +86,6 @@ function Transactions() {
     setModalConfirmOpen({ open: true, id });
   }, []);
 
-  // 3. Funções para abrir o Modal em modos diferentes
   const handleEditClick = useCallback((transaction) => {
     setModalData(transaction);
     setModalType(transaction.type);
@@ -149,7 +93,7 @@ function Transactions() {
   }, []);
 
   const handleDuplicateClick = useCallback((transaction) => {
-    setModalData({ ...transaction, id: null }); // Removemos o ID para forçar a criação de uma nova
+    setModalData({ ...transaction, id: null });
     setModalType(transaction.type);
     setIsModalOpen(true);
   }, []);
@@ -199,7 +143,6 @@ function Transactions() {
           recorrentes.
         </p>
 
-        {/* Totais do Mês Selecionado */}
         <div className="flex justify-center gap-8 my-6">
           <div className="text-center">
             <p className="text-xs text-gray-500 uppercase font-bold">
@@ -223,44 +166,6 @@ function Transactions() {
           </div>
         </div>
 
-        <Filters
-          filters={filters}
-          handleFilterChange={handleFilterChange}
-          clearFilters={clearFilters}
-          showCategoryDropdown={showCategoryDropdown}
-          setShowCategoryDropdown={setShowCategoryDropdown}
-          category={category}
-          setCategory={setCategory}
-          expenseCategories={expenseCategories}
-          incomeCategories={incomeCategories}
-        />
-
-        <StatusMessage message={message} />
-
-        <div className="flex flex-col sm:flex-row justify-center gap-3 mb-4 w-full mt-2">
-          <Button
-            onClick={() => {
-              setModalData(null); // Garante que o modal abre limpo para uma nova transação
-              setModalType("credit");
-              setIsModalOpen(true);
-            }}
-            {...buttonStyles.credit}
-            className="text-gray-200 w-full sm:w-auto shadow-md"
-          >
-            Adicionar Receita
-          </Button>
-          <Button
-            onClick={() => {
-              setModalData(null);
-              setModalType("debit");
-              setIsModalOpen(true);
-            }}
-            {...buttonStyles.debit}
-            className="text-gray-200 w-full sm:w-auto shadow-md"
-          >
-            Adicionar Despesa
-          </Button>
-        </div>
         <div className="flex justify-center mb-6">
           <button
             onClick={() =>
@@ -284,6 +189,45 @@ function Transactions() {
           </button>
         </div>
 
+        <Filters
+          filters={filters}
+          handleFilterChange={handleFilterChange}
+          clearFilters={clearFilters}
+          showCategoryDropdown={showCategoryDropdown}
+          setShowCategoryDropdown={setShowCategoryDropdown}
+          category={category}
+          setCategory={setCategory}
+          expenseCategories={expenseCategories}
+          incomeCategories={incomeCategories}
+        />
+
+        <StatusMessage message={message} />
+
+        <div className="flex flex-col sm:flex-row justify-center gap-3 mb-4 w-full mt-2">
+          <Button
+            onClick={() => {
+              setModalData(null);
+              setModalType("credit");
+              setIsModalOpen(true);
+            }}
+            {...buttonStyles.credit}
+            className="text-gray-200 w-full sm:w-auto shadow-md"
+          >
+            Adicionar Receita
+          </Button>
+          <Button
+            onClick={() => {
+              setModalData(null);
+              setModalType("debit");
+              setIsModalOpen(true);
+            }}
+            {...buttonStyles.debit}
+            className="text-gray-200 w-full sm:w-auto shadow-md"
+          >
+            Adicionar Despesa
+          </Button>
+        </div>
+
         {loading && <Loader />}
         {loadingRemove && <Loader />}
 
@@ -300,7 +244,6 @@ function Transactions() {
           />
         )}
 
-        {/* Modal Dinâmico */}
         {isModalOpen && (
           <TransactionModal
             type={modalType}

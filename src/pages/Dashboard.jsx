@@ -21,8 +21,9 @@ import { expenseCategories } from "../components/category/CategoryList";
 import TipsAverageCard from "../components/dashboard/TipsAverageCard";
 
 function Dashboard() {
-  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
+  const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [isFreeBalanceModalOpen, setIsFreeBalanceModalOpen] = useState(false);
+  const [userName, setUserName] = useState("");
 
   const { goals, fetchGoals } = useGoals();
   const user = useAuth();
@@ -34,28 +35,31 @@ function Dashboard() {
     addTransaction,
   } = useTransactions(userId);
 
-  const [balance, setBalance] = useState(0);
-  // REMOVIDO: const [totalExpenses, setTotalExpenses] = useState(0); -> Usaremos useMemo agora
-
   const storedVisibility = localStorage.getItem("balanceVisibility");
   const [isVisible, setIsVisible] = useState(storedVisibility === "true");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
-  // 1. Efeito para buscar os dados iniciais
+  // 1. Efeito para buscar os dados do usuário e verificar o Setup Inicial
   useEffect(() => {
-    async function fetchBalance() {
+    async function fetchUserData() {
       if (userId) {
         try {
           setLoading(true);
           const userDoc = doc(db, "users", userId);
           const userSnapshot = await getDoc(userDoc);
+
           if (userSnapshot.exists()) {
-            setBalance(userSnapshot.data().balance || 0);
+            const userData = userSnapshot.data();
+            setUserName(userData.name || "Usuário");
+
+            // Verifica se o usuário já fez a configuração inicial do saldo
+            if (!userData.hasSetupInitialBalance) {
+              setShowBalanceModal(true);
+            }
           }
         } catch (error) {
-          console.error("Erro ao buscar saldo:", error);
+          console.error("Erro ao buscar dados do usuário:", error);
         } finally {
           setLoading(false);
         }
@@ -66,7 +70,7 @@ function Dashboard() {
 
     if (userId) {
       fetchGoals();
-      fetchBalance();
+      fetchUserData();
     }
   }, [userId, fetchGoals]);
 
@@ -74,7 +78,14 @@ function Dashboard() {
     localStorage.setItem("balanceVisibility", isVisible);
   }, [isVisible]);
 
-  // 2. USEMEMO: Calcula as despesas totais baseado nas metas APENAS quando 'goals' mudar
+  // 2. O Saldo Global agora é 100% dinâmico e calculado pelo histórico
+  const globalBalance = useMemo(() => {
+    return transactions.reduce((acc, t) => {
+      return t.type === "credit" ? acc + t.value : acc - t.value;
+    }, 0);
+  }, [transactions]);
+
+  // 3. Calcula as despesas totais (Metas)
   const totalExpenses = useMemo(() => {
     const expenseCategoryNames = expenseCategories.map((c) => c.name);
     return goals
@@ -82,20 +93,27 @@ function Dashboard() {
       .reduce((sum, goal) => sum + goal.goalValue, 0);
   }, [goals]);
 
-  // 3. USEMEMO: Saldo livre calculado automaticamente sem precisar de useEffect
+  // 4. Saldo livre baseado no Saldo Global calculado
   const freeBalance = useMemo(
-    () => balance - totalExpenses,
-    [balance, totalExpenses],
+    () => globalBalance - totalExpenses,
+    [globalBalance, totalExpenses],
   );
 
-  // 4. USEMEMO: Filtra as transações APENAS quando a lista de 'transactions' mudar
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter(
-      (transaction) => transaction.category !== "Saldo",
-    );
-  }, [transactions]);
+  // 5. Filtros para os componentes que mostram dados do Mês Atual
+  const currentMonthYear = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  }, []);
 
-  // 5. USEMEMO: Calcula as somas de crédito e débito de uma só vez
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((transaction) =>
+      transaction.date.startsWith(currentMonthYear),
+    );
+  }, [transactions, currentMonthYear]);
+
+  // 6. Calcula Somas de Crédito e Débito do mês atual
   const { sumDebit, sumCredit } = useMemo(() => {
     const debit = filteredTransactions
       .filter((t) => t.type === "debit")
@@ -108,38 +126,43 @@ function Dashboard() {
     return { sumDebit: debit, sumCredit: credit };
   }, [filteredTransactions]);
 
-  async function handleSaveBalance(newBalance) {
-    if (userId) {
-      setSaving(true);
-      try {
-        const userDoc = doc(db, "users", userId);
-        await setDoc(userDoc, { balance: newBalance }, { merge: true });
-
-        const difference = newBalance - balance;
-        if (difference !== 0) {
-          await addTransaction(
-            difference > 0 ? "credit" : "debit",
-            "Ajuste de saldo",
-            Math.abs(difference),
-            new Date().toISOString().split("T")[0],
-            "Saldo",
-          );
-        }
-        setBalance(newBalance);
-        setSuccessMessage("Saldo atualizado com sucesso!");
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } catch (error) {
-        console.error("Erro ao salvar saldo:", error);
-      } finally {
-        setSaving(false);
+  // 7. Salva a Transação do Setup Inicial e marca o usuário como configurado
+  const handleSaveInitialBalance = async (initialValue) => {
+    setSaving(true);
+    try {
+      if (initialValue > 0) {
+        const today = new Date().toISOString().split("T")[0];
+        // Registra o saldo como uma Entrada Inicial
+        await addTransaction(
+          "credit",
+          "Saldo Inicial em Conta",
+          initialValue,
+          today,
+          "Outros",
+          false,
+        );
       }
+
+      // Marca no Firebase que a configuração inicial foi feita
+      const userDocRef = doc(db, "users", userId);
+      await setDoc(
+        userDocRef,
+        { hasSetupInitialBalance: true },
+        { merge: true },
+      );
+
+      setShowBalanceModal(false);
+    } catch (error) {
+      console.error("Erro ao salvar saldo inicial:", error);
+    } finally {
+      setSaving(false);
     }
-  }
+  };
 
   const formattedBalance = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(balance);
+  }).format(globalBalance);
 
   if (loading || saving || transactionsLoading) {
     return (
@@ -150,15 +173,22 @@ function Dashboard() {
   }
 
   return (
-    <div className="p-8 bg-gray-100">
+    <div className="p-8 bg-gray-100 min-h-screen">
+      <div className="mb-8 pl-4">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Bem-vindo, {userName}
+        </h1>
+        <p className="text-gray-600">
+          Aqui está o resumo da sua vida financeira.
+        </p>
+      </div>
+
       <div className="flex flex-wrap gap-8 justify-center">
-        {/* Card: Saldo Atual */}
+        {/* Card: Saldo Atual (Sem botão de edição) */}
         <Card
           colorStart="from-green-500"
           colorEnd="to-green-800"
           title="Saldo Atual"
-          button="Atualizar Saldo"
-          onButtonClick={() => setIsBalanceModalOpen(true)}
           className="w-full sm:w-[45%] md:w-[30%]"
         >
           <div className="flex items-center justify-between">
@@ -194,7 +224,7 @@ function Dashboard() {
         {/* Card de Balanço Resumo e Dicas */}
         {filteredTransactions.length > 0 && (
           <TipsAverageCard
-            accountBalance={formattedBalance}
+            accountBalance={globalBalance}
             sumCredit={sumCredit}
             sumDebit={sumDebit}
             transactions={filteredTransactions}
@@ -202,12 +232,6 @@ function Dashboard() {
           />
         )}
       </div>
-
-      {successMessage && (
-        <div className="p-4 text-center rounded-lg my-4 bg-green-200 text-green-800 shadow-md">
-          {successMessage}
-        </div>
-      )}
 
       {filteredTransactions.length > 0 && (
         <div className="mt-6 flex justify-center">
@@ -228,8 +252,8 @@ function Dashboard() {
       <div className="mt-0 flex justify-center">
         <div className="w-full sm:w-[95%] lg:w-[80%]">
           <FutureBalanceCard
-            currentBalance={balance}
-            transactions={transactions} // Passamos todas as transações, e o card filtra as futuras
+            currentBalance={globalBalance}
+            transactions={transactions}
           />
         </div>
       </div>
@@ -310,8 +334,6 @@ function Dashboard() {
         <div className="mt-6 flex justify-center">
           <div className="w-full sm:w-[95%] lg:w-[80%] grid grid-cols-1 lg:grid-cols-2 gap-6">
             <TopExpensesRanking transactions={filteredTransactions} />
-
-            {/* O Gráfico de Evolução precisa de TODAS as transações para ver o passado, não apenas as filtradas do mês */}
             <BalanceEvolution transactions={transactions} />
           </div>
         </div>
@@ -320,17 +342,17 @@ function Dashboard() {
       {isFreeBalanceModalOpen && (
         <FreeBalanceModal
           onClose={() => setIsFreeBalanceModalOpen(false)}
-          balance={balance}
+          balance={globalBalance}
           totalExpenses={totalExpenses}
           goals={goals}
         />
       )}
 
-      {isBalanceModalOpen && (
+      {/* Modal de Setup Inicial */}
+      {showBalanceModal && (
         <BalanceModal
-          onClose={() => setIsBalanceModalOpen(false)}
-          onSave={handleSaveBalance}
-          initialBalance={(balance * 100).toString()}
+          onClose={() => setShowBalanceModal(false)}
+          onSave={handleSaveInitialBalance}
         />
       )}
     </div>
