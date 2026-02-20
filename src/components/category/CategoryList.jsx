@@ -3,50 +3,50 @@ import {
   FaHome,
   FaUtensils,
   FaCar,
-  FaHeartbeat,
-  FaBook,
-  FaTheaterMasks,
+  FaMedkit,
+  FaGraduationCap,
+  FaTicketAlt,
   FaTshirt,
   FaShieldAlt,
-  FaPiggyBank,
   FaFileInvoiceDollar,
-  FaEllipsisH,
+  FaShoppingBag,
   FaMoneyBillWave,
   FaBriefcase,
-  FaChartLine,
-  FaHandHoldingUsd,
   FaBuilding,
+  FaChartLine,
   FaGift,
-  FaPlusCircle,
+  FaCoins,
 } from "react-icons/fa";
 
-// Chave "type" para definir se é uma categoria de "despesa" ou "ganho"
+/**
+ * Lista Central de Categorias (Macro Categorias)
+ * A partir daqui, o utilizador pode criar as suas próprias subcategorias detalhadas.
+ */
+
 export const expenseCategories = [
   { name: "Moradia", icon: <FaHome />, type: "expense" },
   { name: "Alimentação", icon: <FaUtensils />, type: "expense" },
   { name: "Transporte", icon: <FaCar />, type: "expense" },
-  { name: "Saúde", icon: <FaHeartbeat />, type: "expense" },
-  { name: "Educação", icon: <FaBook />, type: "expense" },
-  { name: "Lazer e Entretenimento", icon: <FaTheaterMasks />, type: "expense" },
+  { name: "Saúde", icon: <FaMedkit />, type: "expense" },
+  { name: "Educação", icon: <FaGraduationCap />, type: "expense" },
+  { name: "Lazer e Entretenimento", icon: <FaTicketAlt />, type: "expense" },
   { name: "Roupas e Acessórios", icon: <FaTshirt />, type: "expense" },
   { name: "Seguros", icon: <FaShieldAlt />, type: "expense" },
-  { name: "Finanças e Investimentos", icon: <FaPiggyBank />, type: "expense" },
   { name: "Impostos e Taxas", icon: <FaFileInvoiceDollar />, type: "expense" },
-  { name: "Outras Despesas", icon: <FaEllipsisH />, type: "expense" },
+  { name: "Outras Despesas", icon: <FaShoppingBag />, type: "expense" },
 ];
 
 export const incomeCategories = [
   { name: "Salário", icon: <FaMoneyBillWave />, type: "income" },
   { name: "Freelance e Renda Extra", icon: <FaBriefcase />, type: "income" },
-  { name: "Investimentos", icon: <FaChartLine />, type: "income" },
+  { name: "Renda de Aluguéis", icon: <FaBuilding />, type: "income" },
   {
-    name: "Recebimento de Empréstimos",
-    icon: <FaHandHoldingUsd />,
+    name: "Rendimentos de Investimentos",
+    icon: <FaChartLine />,
     type: "income",
   },
-  { name: "Renda de Aluguéis", icon: <FaBuilding />, type: "income" },
   { name: "Doações e Presentes", icon: <FaGift />, type: "income" },
-  { name: "Outros Ganhos", icon: <FaPlusCircle />, type: "income" },
+  { name: "Outros Ganhos", icon: <FaCoins />, type: "income" },
 ];
 
 /**

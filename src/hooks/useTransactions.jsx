@@ -33,8 +33,8 @@ export function useTransactions(userId) {
       value,
       date,
       category,
+      subcategory,
       isFixed = false,
-      observation = "",
     ) => {
       if (!userId) return;
       setLoading(true);
@@ -46,7 +46,7 @@ export function useTransactions(userId) {
           value,
           date,
           category,
-          observation,
+          subcategory,
           isFixed,
         };
 
