@@ -1,15 +1,14 @@
 import React, { useMemo, useCallback } from "react";
 import { expenseCategories, incomeCategories } from "../category/CategoryList";
 import ProgressBar from "./ProgressBar";
-import { FaTrashAlt } from "react-icons/fa";
+import { FaTrashAlt, FaClock, FaBullseye } from "react-icons/fa";
 
 /**
  * Componente GoalCard
- * Exibe as informações detalhadas de uma meta específica (Categoria, Valores, Datas e Progresso).
+ * Agora com Inteligência de Metas (Fase 3 do Roadmap):
+ * Calcula o ritmo necessário e a previsão de conclusão automaticamente.
  */
 function GoalCard({ goal, onDelete }) {
-  // useMemo: Busca as informações visuais (ícone e tipo) da categoria.
-  // Só refaz a busca se o nome da categoria da meta mudar.
   const categoryDetails = useMemo(() => {
     const allCategories = [...expenseCategories, ...incomeCategories];
     return allCategories.find((cat) => cat.name === goal.category);
@@ -17,10 +16,9 @@ function GoalCard({ goal, onDelete }) {
 
   const type = categoryDetails?.type;
 
-  // useMemo: Calcula o estilo do cartão baseado no tipo (ganho ou despesa)
   const cardStyle = useMemo(() => {
     const baseStyle =
-      "p-4 md:p-6 rounded-xl shadow-lg transition-all duration-300 ease-in-out text-white relative overflow-hidden";
+      "p-4 md:p-6 rounded-xl shadow-lg transition-all duration-300 ease-in-out text-white relative overflow-hidden flex flex-col justify-between";
     const typeColors = {
       expense: "bg-gradient-to-br from-red-600 via-orange-600 to-red-800",
       income: "bg-gradient-to-br from-emerald-800 via-lime-500 to-green-800",
@@ -28,21 +26,64 @@ function GoalCard({ goal, onDelete }) {
     return `${baseStyle} ${typeColors[type] || "bg-gray-500"}`;
   }, [type]);
 
-  // useCallback: Formata a data garantindo que o fuso horário (T00:00:00) não altere o dia
   const formatDate = useCallback((dateString) => {
     if (!dateString) return "";
     const d = new Date(dateString + "T00:00:00");
-    return d.toLocaleDateString("pt-BR");
+    return d.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
   }, []);
+
+  // ==========================================
+  // 🧠 MOTOR DE INTELIGÊNCIA DA META (Passos 7 e 8)
+  // ==========================================
+  const goalInsights = useMemo(() => {
+    // Só calculamos estes insights para metas de "Ganhos/Poupança" que ainda não foram batidas
+    if (type !== "income" || goal.currentValue >= goal.goalValue) return null;
+
+    const today = new Date();
+    const start = new Date(goal.startDate + "T00:00:00");
+    const end = new Date(goal.endDate + "T00:00:00");
+
+    // Função que calcula a diferença de meses entre duas datas
+    const getMonthsDiff = (d1, d2) => {
+      let months = (d2.getFullYear() - d1.getFullYear()) * 12;
+      months -= d1.getMonth();
+      months += d2.getMonth();
+      return months <= 0 ? 1 : months; // Evita divisão por zero (assume no mínimo 1 mês)
+    };
+
+    const remainingValue = goal.goalValue - goal.currentValue;
+
+    // Passo 8: Simulador de Ritmo Necessário
+    const monthsLeft = getMonthsDiff(today, end);
+    const requiredPerMonth = remainingValue / monthsLeft;
+
+    // Passo 7: Previsão de Conclusão de Meta
+    const elapsedMonths = getMonthsDiff(start, today);
+    const averageSavedPerMonth = goal.currentValue / elapsedMonths;
+
+    let estimatedMonthsToFinish = Infinity;
+    if (averageSavedPerMonth > 0) {
+      estimatedMonthsToFinish = Math.ceil(
+        remainingValue / averageSavedPerMonth,
+      );
+    }
+
+    return {
+      requiredPerMonth,
+      monthsLeft,
+      estimatedMonthsToFinish,
+      averageSavedPerMonth,
+    };
+  }, [goal, type]);
 
   const achievementPercentage = (goal.currentValue / goal.goalValue) * 100;
 
   return (
-    <div className={cardStyle}>
+    <div className={cardStyle} style={{ minHeight: "320px" }}>
       <div className="absolute inset-0 opacity-10 bg-white rounded-xl blur-xl pointer-events-none"></div>
 
-      <div className="relative z-10">
-        {/* Cabeçalho do Card: Ícone, Nome da Categoria e Botão de Excluir */}
+      <div className="relative z-10 flex-grow">
+        {/* Cabeçalho */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2 md:gap-4 w-full">
             {categoryDetails?.icon && (
@@ -63,21 +104,31 @@ function GoalCard({ goal, onDelete }) {
           </button>
         </div>
 
-        {/* Informações Numéricas */}
-        <p className="text-xs md:text-sm mb-1">
-          <strong>{type === "expense" ? "Limite" : "Meta"}:</strong>{" "}
-          {goal.goalValue.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
-        </p>
-        <p className="text-xs md:text-sm mb-3">
-          <strong>Atual:</strong>{" "}
-          {goal.currentValue.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
-        </p>
+        {/* Valores Principais */}
+        <div className="flex justify-between items-end mb-3 border-b border-white border-opacity-20 pb-2">
+          <div>
+            <p className="text-xs opacity-80 uppercase tracking-wider">
+              {type === "expense" ? "Orçamento Máximo" : "Objetivo"}
+            </p>
+            <p className="text-lg font-bold">
+              {goal.goalValue.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs opacity-80 uppercase tracking-wider">
+              {type === "expense" ? "Já Gasto" : "Poupado"}
+            </p>
+            <p className="text-lg font-bold text-yellow-300">
+              {goal.currentValue.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </p>
+          </div>
+        </div>
 
         {/* Barra Visual */}
         <ProgressBar
@@ -86,16 +137,51 @@ function GoalCard({ goal, onDelete }) {
           goalValue={goal.goalValue}
         />
 
-        {/* Rodapé: Datas e Porcentagem */}
-        <p className="text-xs md:text-sm mt-3">
-          <strong>Período:</strong> {formatDate(goal.startDate)} -{" "}
-          {formatDate(goal.endDate)}
-        </p>
-        <p className="text-xs md:text-sm mt-1">
-          <strong>{type === "expense" ? "Utilizado" : "Progresso"}:</strong>{" "}
-          {`${Math.round(achievementPercentage)}%`}
+        <p className="text-xs text-center mt-1 opacity-90">
+          Prazo: {formatDate(goal.startDate)} até {formatDate(goal.endDate)}
         </p>
       </div>
+
+      {/* 🔮 PAINEL DE INTELIGÊNCIA (Visível apenas para metas de poupança em andamento) */}
+      {goalInsights && (
+        <div className="relative z-10 mt-4 bg-black bg-opacity-20 rounded-lg p-3 backdrop-blur-sm border border-white border-opacity-10">
+          {/* Ritmo Necessário */}
+          <div className="flex items-start gap-2 mb-2">
+            <FaBullseye className="text-yellow-400 mt-1 flex-shrink-0" />
+            <p className="text-xs leading-tight">
+              Para atingir até <strong>{formatDate(goal.endDate)}</strong>,
+              guarde{" "}
+              <strong className="text-yellow-300">
+                {goalInsights.requiredPerMonth.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
+                /mês
+              </strong>
+              .
+            </p>
+          </div>
+
+          {/* Previsão de Conclusão */}
+          <div className="flex items-start gap-2">
+            <FaClock className="text-blue-300 mt-1 flex-shrink-0" />
+            <p className="text-xs leading-tight">
+              {goalInsights.averageSavedPerMonth > 0 ? (
+                <span>
+                  No seu ritmo atual, vai demorar mais{" "}
+                  <strong>{goalInsights.estimatedMonthsToFinish} meses</strong>{" "}
+                  para bater a meta.
+                </span>
+              ) : (
+                <span className="opacity-80">
+                  Comece a guardar dinheiro para ver a sua previsão de
+                  conclusão!
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

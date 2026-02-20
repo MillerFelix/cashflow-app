@@ -4,7 +4,7 @@ import { FaChevronDown, FaChevronUp, FaRedoAlt } from "react-icons/fa";
 /**
  * Componente Filters
  * Barra de filtros utilizada na página de Transações.
- * Permite filtrar por Data, Tipo (Entrada/Saída) e Categoria.
+ * Agora com filtro mensal (mês/ano) para visão global!
  */
 function Filters({
   filters,
@@ -20,13 +20,14 @@ function Filters({
   return (
     <div className="mb-4 p-4 bg-white rounded-lg shadow-md">
       <div className="flex flex-wrap gap-7 items-center justify-center">
-        {/* Filtro por Data */}
+        {/* Filtro por Mês (A nossa Máquina do Tempo!) */}
         <input
-          type="date"
-          name="date"
-          value={filters.date}
+          type="month"
+          name="month"
+          value={filters.month}
           onChange={handleFilterChange}
-          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-800 transition-shadow"
+          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-800 transition-shadow cursor-pointer"
+          title="Filtrar por mês"
         />
 
         {/* Filtro por Tipo */}
@@ -34,7 +35,7 @@ function Filters({
           name="type"
           value={filters.type}
           onChange={handleFilterChange}
-          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-800 transition-shadow"
+          className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-800 transition-shadow cursor-pointer"
         >
           <option value="">Todos os Tipos</option>
           <option value="credit">Entrada</option>
@@ -63,7 +64,6 @@ function Filters({
 
           {showCategoryDropdown && (
             <div className="absolute w-full bg-white border rounded-lg mt-1 max-h-40 overflow-y-auto shadow-xl z-20">
-              {/* Opção para limpar apenas a categoria */}
               <div
                 className="flex items-center p-2 hover:bg-gray-100 cursor-pointer text-gray-500 italic border-b"
                 onClick={() => {

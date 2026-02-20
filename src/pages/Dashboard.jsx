@@ -12,6 +12,11 @@ import ExpenseChart from "../components/dashboard/ExpenseChart";
 import IncomeChart from "../components/dashboard/IncomeChart";
 import GraphCard from "../components/dashboard/GraphCard";
 import useGoals from "../hooks/useGoals";
+import MonthlyComparison from "../components/dashboard/MonthlyComparison";
+import BudgetUsage from "../components/dashboard/BudgetUsage";
+import FutureBalanceCard from "../components/dashboard/FutureBalanceCard";
+import TopExpensesRanking from "../components/dashboard/TopExpensesRanking";
+import BalanceEvolution from "../components/dashboard/BalanceEvolution";
 import { expenseCategories } from "../components/category/CategoryList";
 import TipsAverageCard from "../components/dashboard/TipsAverageCard";
 
@@ -186,12 +191,13 @@ function Dashboard() {
           </div>
         </Card>
 
-        {/* Card de Balanço Resumo */}
+        {/* Card de Balanço Resumo e Dicas */}
         {filteredTransactions.length > 0 && (
           <TipsAverageCard
             accountBalance={formattedBalance}
             sumCredit={sumCredit}
             sumDebit={sumDebit}
+            transactions={filteredTransactions}
             className="w-full sm:w-[45%] md:w-[30%]"
           />
         )}
@@ -202,6 +208,31 @@ function Dashboard() {
           {successMessage}
         </div>
       )}
+
+      {filteredTransactions.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <div className="w-full sm:w-[95%] lg:w-[80%]">
+            <MonthlyComparison transactions={filteredTransactions} />
+          </div>
+        </div>
+      )}
+
+      {goals.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <div className="w-full sm:w-[95%] lg:w-[80%]">
+            <BudgetUsage goals={goals} />
+          </div>
+        </div>
+      )}
+
+      <div className="mt-0 flex justify-center">
+        <div className="w-full sm:w-[95%] lg:w-[80%]">
+          <FutureBalanceCard
+            currentBalance={balance}
+            transactions={transactions} // Passamos todas as transações, e o card filtra as futuras
+          />
+        </div>
+      </div>
 
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex flex-col gap-4">
@@ -274,6 +305,17 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      {filteredTransactions.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <div className="w-full sm:w-[95%] lg:w-[80%] grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TopExpensesRanking transactions={filteredTransactions} />
+
+            {/* O Gráfico de Evolução precisa de TODAS as transações para ver o passado, não apenas as filtradas do mês */}
+            <BalanceEvolution transactions={transactions} />
+          </div>
+        </div>
+      )}
 
       {isFreeBalanceModalOpen && (
         <FreeBalanceModal

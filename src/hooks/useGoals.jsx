@@ -1,17 +1,8 @@
 import { useState, useCallback } from "react";
-import {
-  db,
-  addDoc,
-  collection,
-  query,
-  getDocs,
-  doc,
-  deleteDoc,
-  where,
-} from "../firebase";
+import { GoalService } from "../services/goalService";
 import { useAuth } from "../hooks/useAuth";
 
-function useGoals() {
+export function useGoals() {
   const [goals, setGoals] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,6 +13,7 @@ function useGoals() {
     endDate: "",
   });
   const [successMessage, setSuccessMessage] = useState("");
+
   const user = useAuth();
   const userId = user?.uid;
 
@@ -29,12 +21,7 @@ function useGoals() {
     if (!userId) return;
     setIsLoading(true);
     try {
-      const q = query(collection(db, "users", userId, "goals"));
-      const querySnapshot = await getDocs(q);
-      const goalsList = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const goalsList = await GoalService.getAll(userId);
       setGoals(goalsList);
     } catch (error) {
       console.error("Erro ao buscar metas:", error);
@@ -51,7 +38,7 @@ function useGoals() {
   const toggleModal = useCallback(() => {
     setIsModalOpen((prevState) => {
       const newState = !prevState;
-      if (!newState) resetNewGoal(); // Se estiver fechando, reseta os dados
+      if (!newState) resetNewGoal();
       return newState;
     });
   }, [resetNewGoal]);
@@ -66,30 +53,30 @@ function useGoals() {
     const parsedGoalValue = parseFloat(newGoal.goal) / 100;
 
     try {
-      const transactionsRef = collection(db, "users", userId, "transactions");
-      const q = query(
-        transactionsRef,
-        where("category", "==", newGoal.category),
+      // 1. Busca as transações usando a Service
+      const transactions = await GoalService.getTransactionsByCategory(
+        userId,
+        newGoal.category,
       );
-      const querySnapshot = await getDocs(q);
 
-      const startDate = new Date(newGoal.startDate);
-      const endDate = new Date(newGoal.endDate);
-      const filteredTransactions = querySnapshot.docs.filter((doc) => {
-        const transaction = doc.data();
-        const transactionDate = new Date(transaction.date);
-        return transactionDate >= startDate && transactionDate <= endDate;
-      });
+      // 2. Filtra pelas datas para calcular o valor inicial
+      const startDate = new Date(newGoal.startDate + "T00:00:00");
+      const endDate = new Date(newGoal.endDate + "T00:00:00");
 
-      const currentValue = filteredTransactions.reduce(
-        (sum, t) => sum + t.data().value,
-        0,
-      );
+      const currentValue = transactions.reduce((sum, t) => {
+        const tDate = new Date(t.date + "T00:00:00");
+        if (tDate >= startDate && tDate <= endDate) {
+          return sum + t.value;
+        }
+        return sum;
+      }, 0);
+
       const achievement = (currentValue / parsedGoalValue) * 100;
 
-      await addDoc(collection(db, "users", userId, "goals"), {
+      // 3. Salva a meta usando a Service
+      await GoalService.add(userId, {
         goalValue: parsedGoalValue,
-        achievement: achievement > 100 ? 100 : achievement,
+        achievement: Math.min(achievement, 100),
         currentValue,
         category: newGoal.category,
         startDate: newGoal.startDate,
@@ -113,9 +100,8 @@ function useGoals() {
       if (!userId) return;
       setIsLoading(true);
       try {
-        const goalRef = doc(db, "users", userId, "goals", goalId);
-        await deleteDoc(goalRef);
-        setGoals((prevGoals) => prevGoals.filter((goal) => goal.id !== goalId));
+        await GoalService.remove(userId, goalId);
+        setGoals((prev) => prev.filter((goal) => goal.id !== goalId));
         setSuccessMessage("Meta removida com sucesso!");
         setTimeout(() => setSuccessMessage(""), 3000);
       } catch (error) {
@@ -125,6 +111,45 @@ function useGoals() {
       }
     },
     [userId],
+  );
+
+  // Esta função é chamada pelo useTransactions!
+  // Ela descobre se a transação nova afeta alguma meta existente e atualiza o progresso.
+  const updateGoalsAchievement = useCallback(
+    async (uid, category, value, date) => {
+      try {
+        const allGoals = await GoalService.getAll(uid);
+        const transactionDate = new Date(date + "T00:00:00");
+
+        for (const goal of allGoals) {
+          if (goal.category === category) {
+            const startDate = new Date(goal.startDate + "T00:00:00");
+            const endDate = new Date(goal.endDate + "T00:00:00");
+
+            // Se a transação estiver dentro do período da meta, atualiza a meta!
+            if (transactionDate >= startDate && transactionDate <= endDate) {
+              const newCurrentValue = goal.currentValue + value;
+              const newAchievement = Math.min(
+                (newCurrentValue / goal.goalValue) * 100,
+                100,
+              );
+
+              // Atualiza no banco usando a Service
+              await GoalService.update(uid, goal.id, {
+                currentValue: newCurrentValue,
+                achievement: newAchievement,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Erro ao atualizar progresso da meta em background:",
+          error,
+        );
+      }
+    },
+    [],
   );
 
   return {
@@ -138,6 +163,7 @@ function useGoals() {
     handleGoalChange,
     successMessage,
     isLoading,
+    updateGoalsAchievement, // Exportamos para o useTransactions poder usar
   };
 }
 
