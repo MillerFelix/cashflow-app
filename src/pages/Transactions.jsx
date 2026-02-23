@@ -5,6 +5,7 @@ import TransactionModal from "../components/transactions/TransactionModal";
 import Loader from "../components/common/Loader";
 import Filters from "../components/transactions/Filters";
 import StatusMessage from "../components/common/StatusMessage";
+import RecurringSection from "../components/transactions/RecurringSection";
 import { useTransactions } from "../hooks/useTransactions";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -14,12 +15,14 @@ import {
 import ConfirmationModal from "../components/common/ConfirmationModal";
 import NoData from "../components/common/NoData";
 import { generateMonthlyReportPDF } from "../utils/pdfGenerator";
-import { FaFilePdf } from "react-icons/fa";
-
-const buttonStyles = {
-  credit: { bgColor: "bg-green-600", hoverColor: "hover:bg-green-700" },
-  debit: { bgColor: "bg-red-500", hoverColor: "hover:bg-red-800" },
-};
+import {
+  FaFilePdf,
+  FaSyncAlt,
+  FaArrowUp,
+  FaArrowDown,
+  FaPlus,
+  FaMinus,
+} from "react-icons/fa";
 
 const getCurrentMonthYear = () => {
   const now = new Date();
@@ -41,6 +44,8 @@ function Transactions() {
     addTransaction,
     removeTransaction,
     editTransaction,
+    confirmTransactionValue,
+    cancelFutureFixedTransactions,
   } = useTransactions(userId);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,21 +58,24 @@ function Transactions() {
     category: "",
   });
 
-  const [modalConfirmOpen, setModalConfirmOpen] = useState({
-    open: false,
-    id: null,
-  });
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [loadingRemove, setLoadingRemove] = useState(false);
 
-  // Apenas delega a criação/edição para o Hook.
   const handleSaveTransaction = useCallback(
     async (data) => {
       const { id, type, description, value, date, category, isFixed } = data;
-
       if (id) {
         await editTransaction(id, { type, description, value, date, category });
       } else {
-        await addTransaction(type, description, value, date, category, isFixed);
+        await addTransaction(
+          type,
+          description,
+          value,
+          date,
+          category,
+          "",
+          isFixed,
+        );
       }
     },
     [editTransaction, addTransaction],
@@ -82,9 +90,13 @@ function Transactions() {
     [removeTransaction],
   );
 
-  const confirmRemoveTransaction = useCallback((id) => {
-    setModalConfirmOpen({ open: true, id });
-  }, []);
+  const confirmRemoveTransaction = useCallback(
+    (id) => {
+      const t = transactions.find((tx) => tx.id === id);
+      setTransactionToDelete(t);
+    },
+    [transactions],
+  );
 
   const handleEditClick = useCallback((transaction) => {
     setModalData(transaction);
@@ -93,14 +105,14 @@ function Transactions() {
   }, []);
 
   const handleDuplicateClick = useCallback((transaction) => {
-    setModalData({ ...transaction, id: null });
+    setModalData({ ...transaction, id: null, isFixed: false });
     setModalType(transaction.type);
     setIsModalOpen(true);
   }, []);
 
   const handleFilterChange = useCallback((e) => {
     const { name, value } = e.target;
-    setFilters((prevFilters) => ({ ...prevFilters, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   }, []);
 
   const clearFilters = useCallback(() => {
@@ -109,15 +121,12 @@ function Transactions() {
   }, []);
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((transaction) => {
-      const matchMonth =
-        !filters.month || transaction.date.startsWith(filters.month);
-      const matchType = !filters.type || transaction.type === filters.type;
+    return transactions.filter((t) => {
+      const matchMonth = !filters.month || t.date.startsWith(filters.month);
+      const matchType = !filters.type || t.type === filters.type;
       const matchCategory =
         !filters.category ||
-        transaction.category
-          .toLowerCase()
-          .includes(filters.category.toLowerCase());
+        t.category.toLowerCase().includes(filters.category.toLowerCase());
       return matchMonth && matchType && matchCategory;
     });
   }, [transactions, filters]);
@@ -132,118 +141,180 @@ function Transactions() {
     return { totalIncomes: inc, totalExpenses: exp };
   }, [filteredTransactions]);
 
+  const displayMonth = useMemo(() => {
+    if (!filters.month) return "Todo o Período";
+    const [year, month] = filters.month.split("-");
+    const date = new Date(year, month - 1);
+    return date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  }, [filters.month]);
+
   return (
-    <div className="flex justify-center mt-4 mb-10">
-      <div className="m-4 p-4 sm:m-6 sm:p-6 bg-gray-100 rounded-lg shadow-lg w-full max-w-3xl">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 text-center">
-          Transações Financeiras
-        </h1>
-        <p className="text-gray-600 mt-2 text-center text-sm sm:text-base">
-          Consulte o seu histórico, faça edições rápidas ou duplique gastos
-          recorrentes.
-        </p>
+    <div className="p-4 sm:p-6 bg-gray-100 min-h-screen font-sans text-gray-800 pb-20">
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
+        {/* =======================
+            CABEÇALHO E AÇÕES
+           ======================= */}
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 capitalize">
+                {displayMonth}
+              </h1>
+              <p className="text-gray-500 text-sm mt-1">
+                Gestão completa de entradas e saídas.
+              </p>
+            </div>
 
-        <div className="flex justify-center gap-8 my-6">
-          <div className="text-center">
-            <p className="text-xs text-gray-500 uppercase font-bold">
-              Entradas
-            </p>
-            <p className="text-green-600 font-bold text-lg">
-              {totalIncomes.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
-            </p>
+            {/* Botões de Ação PRINCIPAIS - Cores Intuitivas */}
+            <div className="flex gap-3 w-full md:w-auto shadow-sm p-1 bg-white rounded-2xl border border-gray-100">
+              <button
+                onClick={() => {
+                  setModalData(null);
+                  setModalType("credit");
+                  setIsModalOpen(true);
+                }}
+                className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all active:scale-95 flex justify-center items-center gap-2 shadow-green-200 shadow-md"
+              >
+                <FaPlus size={12} className="text-white" /> Nova Receita
+              </button>
+              <button
+                onClick={() => {
+                  setModalData(null);
+                  setModalType("debit");
+                  setIsModalOpen(true);
+                }}
+                className="flex-1 md:flex-none bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all active:scale-95 flex justify-center items-center gap-2 shadow-red-200 shadow-md"
+              >
+                <FaMinus size={12} className="text-white" /> Nova Despesa
+              </button>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-xs text-gray-500 uppercase font-bold">Saídas</p>
-            <p className="text-red-500 font-bold text-lg">
-              {totalExpenses.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
-            </p>
+
+          {/* Cards de Totais */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center group hover:border-green-200 transition-colors">
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                  Entradas
+                </p>
+                <p className="text-2xl font-black text-green-600 group-hover:scale-105 transition-transform origin-left">
+                  {totalIncomes.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </p>
+              </div>
+              <div className="bg-green-50 p-3 rounded-full text-green-600 group-hover:bg-green-100 transition-colors">
+                <FaArrowUp />
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center group hover:border-red-200 transition-colors">
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                  Saídas
+                </p>
+                <p className="text-2xl font-black text-red-600 group-hover:scale-105 transition-transform origin-left">
+                  {totalExpenses.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </p>
+              </div>
+              <div className="bg-red-50 p-3 rounded-full text-red-600 group-hover:bg-red-100 transition-colors">
+                <FaArrowDown />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-center mb-6">
-          <button
-            onClick={() =>
-              generateMonthlyReportPDF(
-                filteredTransactions,
-                filters.month,
-                totalIncomes,
-                totalExpenses,
-              )
-            }
-            disabled={filteredTransactions.length === 0}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm
-              ${
-                filteredTransactions.length === 0
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-800 text-white hover:bg-gray-900 active:scale-95"
-              }`}
-          >
-            <FaFilePdf />
-            Exportar Relatório Mensal
-          </button>
-        </div>
+        {/* =======================
+            FILTROS E RELATÓRIO
+           ======================= */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-end">
+            <div className="w-full">
+              <Filters
+                filters={filters}
+                handleFilterChange={handleFilterChange}
+                clearFilters={clearFilters}
+                showCategoryDropdown={showCategoryDropdown}
+                setShowCategoryDropdown={setShowCategoryDropdown}
+                category={category}
+                setCategory={setCategory}
+                expenseCategories={expenseCategories}
+                incomeCategories={incomeCategories}
+              />
+            </div>
 
-        <Filters
-          filters={filters}
-          handleFilterChange={handleFilterChange}
-          clearFilters={clearFilters}
-          showCategoryDropdown={showCategoryDropdown}
-          setShowCategoryDropdown={setShowCategoryDropdown}
-          category={category}
-          setCategory={setCategory}
-          expenseCategories={expenseCategories}
-          incomeCategories={incomeCategories}
-        />
+            <button
+              onClick={() =>
+                generateMonthlyReportPDF(
+                  filteredTransactions,
+                  filters.month,
+                  totalIncomes,
+                  totalExpenses,
+                )
+              }
+              disabled={filteredTransactions.length === 0}
+              className={`w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all
+                ${
+                  filteredTransactions.length === 0
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-900 text-white hover:bg-black"
+                }`}
+            >
+              <FaFilePdf /> Relatório
+            </button>
+          </div>
+        </div>
 
         <StatusMessage message={message} />
 
-        <div className="flex flex-col sm:flex-row justify-center gap-3 mb-4 w-full mt-2">
-          <Button
-            onClick={() => {
-              setModalData(null);
-              setModalType("credit");
-              setIsModalOpen(true);
-            }}
-            {...buttonStyles.credit}
-            className="text-gray-200 w-full sm:w-auto shadow-md"
-          >
-            Adicionar Receita
-          </Button>
-          <Button
-            onClick={() => {
-              setModalData(null);
-              setModalType("debit");
-              setIsModalOpen(true);
-            }}
-            {...buttonStyles.debit}
-            className="text-gray-200 w-full sm:w-auto shadow-md"
-          >
-            Adicionar Despesa
-          </Button>
-        </div>
+        {/* =======================
+            LISTAGEM E RECORRÊNCIAS
+           ======================= */}
 
-        {loading && <Loader />}
-        {loadingRemove && <Loader />}
-
-        {filteredTransactions.length === 0 && !loading && (
-          <NoData message="Nenhuma transação encontrada para este mês ou filtro." />
+        {loading && (
+          <div className="py-10">
+            <Loader />
+          </div>
+        )}
+        {loadingRemove && (
+          <div className="py-10">
+            <Loader />
+          </div>
         )}
 
-        {filteredTransactions.length > 0 && (
-          <TransactionItem
-            transactions={filteredTransactions}
-            removeTransaction={confirmRemoveTransaction}
-            onEdit={handleEditClick}
-            onDuplicate={handleDuplicateClick}
-          />
+        {!loading && filteredTransactions.length === 0 && (
+          <NoData message="Nenhuma transação encontrada." />
         )}
 
+        {!loading && filteredTransactions.length > 0 && (
+          <div className="flex flex-col gap-6 animate-fadeIn">
+            <RecurringSection
+              transactions={filteredTransactions}
+              onConfirmValue={confirmTransactionValue}
+            />
+
+            <div>
+              <h3 className="text-gray-900 font-bold text-lg mb-4 flex items-center gap-2 px-1">
+                Extrato Detalhado{" "}
+                <span className="text-gray-400 text-sm font-normal">
+                  ({filteredTransactions.length})
+                </span>
+              </h3>
+              <TransactionItem
+                transactions={filteredTransactions}
+                removeTransaction={confirmRemoveTransaction}
+                onEdit={handleEditClick}
+                onDuplicate={handleDuplicateClick}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* MODAIS */}
         {isModalOpen && (
           <TransactionModal
             type={modalType}
@@ -256,19 +327,66 @@ function Transactions() {
           />
         )}
 
-        {modalConfirmOpen.open && (
+        {transactionToDelete && !transactionToDelete.isFixed && (
           <ConfirmationModal
-            showModal={modalConfirmOpen.open}
-            title="Confirmar Exclusão"
-            description="Tem certeza que deseja remover esta transação de forma permanente?"
+            showModal={!!transactionToDelete}
+            title="Excluir Transação"
+            description="Tem certeza que deseja apagar este item?"
             onConfirm={() => {
-              handleRemoveTransaction(modalConfirmOpen.id);
-              setModalConfirmOpen({ open: false, id: null });
+              handleRemoveTransaction(transactionToDelete.id);
+              setTransactionToDelete(null);
             }}
-            onCancel={() => setModalConfirmOpen({ open: false, id: null })}
+            onCancel={() => setTransactionToDelete(null)}
             confirmText="Excluir"
             cancelText="Cancelar"
           />
+        )}
+
+        {transactionToDelete && transactionToDelete.isFixed && (
+          <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
+              <div className="flex items-center gap-3 mb-4 text-blue-600">
+                <div className="bg-blue-50 p-3 rounded-full">
+                  <FaSyncAlt size={20} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Gerir Transação
+                </h3>
+              </div>
+              <p className="text-gray-600 mb-6 font-medium">
+                A transação <strong>"{transactionToDelete.description}"</strong>{" "}
+                é recorrente. Como quer proceder?
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    handleRemoveTransaction(transactionToDelete.id);
+                    setTransactionToDelete(null);
+                  }}
+                  className="w-full py-3 bg-gray-50 text-gray-800 font-bold rounded-xl hover:bg-gray-100 border border-gray-200 transition-colors"
+                >
+                  Apagar só deste mês
+                </button>
+                <button
+                  onClick={async () => {
+                    setLoadingRemove(true);
+                    await cancelFutureFixedTransactions(transactionToDelete);
+                    setLoadingRemove(false);
+                    setTransactionToDelete(null);
+                  }}
+                  className="w-full py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-md"
+                >
+                  Cancelar Transações (Todas)
+                </button>
+                <button
+                  onClick={() => setTransactionToDelete(null)}
+                  className="w-full py-2 text-gray-400 font-bold hover:text-gray-600"
+                >
+                  Voltar
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

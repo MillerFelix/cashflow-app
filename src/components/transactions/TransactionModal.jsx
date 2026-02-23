@@ -152,22 +152,31 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
               type="date"
             />
           </div>
-
           {!isEditing && (
-            <div className="flex items-center gap-2 mb-4 mt-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-              <input
-                type="checkbox"
-                id="isFixed"
-                checked={isFixed}
-                onChange={(e) => setIsFixed(e.target.checked)}
-                className="w-5 h-5 text-green-600 bg-white border-gray-300 rounded cursor-pointer"
-              />
-              <label
-                htmlFor="isFixed"
-                className="text-sm font-medium text-gray-700 cursor-pointer select-none leading-tight"
-              >
-                Transação Fixa (Repetir nos próximos 12 meses)
-              </label>
+            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="isFixed"
+                  checked={isFixed}
+                  onChange={(e) => setIsFixed(e.target.checked)}
+                  className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <label
+                  htmlFor="isFixed"
+                  className="font-bold text-blue-900 cursor-pointer"
+                >
+                  É uma conta fixa/assinatura?
+                </label>
+              </div>
+              {isFixed && (
+                <p className="text-xs text-blue-700 mt-2 ml-8 leading-relaxed">
+                  Criaremos essa transação automaticamente para os próximos 12
+                  meses.
+                  <strong>Valor variável?</strong> Cadastre uma média e confirme
+                  o valor exato mês a mês no painel de recorrências.
+                </p>
+              )}
             </div>
           )}
 
