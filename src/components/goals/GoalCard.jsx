@@ -1,30 +1,67 @@
 import React, { useMemo, useCallback } from "react";
 import { expenseCategories, incomeCategories } from "../category/CategoryList";
 import ProgressBar from "./ProgressBar";
-import { FaTrashAlt, FaClock, FaBullseye } from "react-icons/fa";
+import { FaTrashAlt, FaClock, FaBullseye, FaRocket } from "react-icons/fa";
 
 /**
- * Componente GoalCard
- * Agora com Inteligência de Metas (Fase 3 do Roadmap):
- * Calcula o ritmo necessário e a previsão de conclusão automaticamente.
+ * Componente GoalCard (Versão Sonhos Vibrantes 🚀)
+ * Agora diferencia visualmente grandes sonhos (longo prazo) de objetivos próximos (curto prazo).
  */
 function GoalCard({ goal, onDelete }) {
+  // 1. Determina o Tipo de forma robusta (para evitar o card cinza)
+  const type = useMemo(() => {
+    if (goal.type) return goal.type; // Se já tiver o tipo salvo, usa.
+
+    // Fallback para metas antigas: se está na lista de despesas, é 'expense', senão é 'life'
+    const isExpenseCat = expenseCategories.some(
+      (c) => c.name === goal.category,
+    );
+    return isExpenseCat ? "expense" : "life";
+  }, [goal]);
+
+  // 2. Busca detalhes da categoria se existirem
   const categoryDetails = useMemo(() => {
     const allCategories = [...expenseCategories, ...incomeCategories];
     return allCategories.find((cat) => cat.name === goal.category);
   }, [goal.category]);
 
-  const type = categoryDetails?.type;
+  // 3. Calcula se é um "Grande Sonho" (Longo Prazo > 6 meses/180 dias)
+  const isLongTermDream = useMemo(() => {
+    if (type === "expense") return false;
+    const start = new Date(goal.startDate);
+    const end = new Date(goal.endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 180;
+  }, [type, goal.startDate, goal.endDate]);
 
+  // 4. Define os Estilos e Cores Vibrantes
   const cardStyle = useMemo(() => {
     const baseStyle =
-      "p-4 md:p-6 rounded-xl shadow-lg transition-all duration-300 ease-in-out text-white relative overflow-hidden flex flex-col justify-between";
+      "p-4 md:p-6 rounded-2xl shadow-xl transition-all duration-300 ease-in-out text-white relative overflow-hidden flex flex-col justify-between border-t-2 border-white border-opacity-20";
+
     const typeColors = {
-      expense: "bg-gradient-to-br from-red-600 via-orange-600 to-red-800",
-      income: "bg-gradient-to-br from-emerald-800 via-lime-500 to-green-800",
+      expense:
+        "bg-gradient-to-br from-red-700 via-orange-600 to-red-900 shadow-red-900/30",
+      // Verde para objetivos curtos
+      lifeShort:
+        "bg-gradient-to-br from-emerald-700 via-green-500 to-teal-800 shadow-green-900/30",
+      // Roxo/Azul vibrante para Grandes Sonhos
+      lifeLong:
+        "bg-gradient-to-tl from-indigo-900 via-purple-800 to-blue-700 shadow-indigo-900/30",
     };
-    return `${baseStyle} ${typeColors[type] || "bg-gray-500"}`;
-  }, [type]);
+
+    let colorKey = type;
+    if (type === "life" || type === "income") {
+      colorKey = isLongTermDream ? "lifeLong" : "lifeShort";
+    }
+
+    // Garante que nunca cai no cinza se tiver um tipo válido
+    const finalColor =
+      typeColors[colorKey] || typeColors[type] || "bg-gray-500";
+
+    return `${baseStyle} ${finalColor}`;
+  }, [type, isLongTermDream]);
 
   const formatDate = useCallback((dateString) => {
     if (!dateString) return "";
@@ -32,32 +69,28 @@ function GoalCard({ goal, onDelete }) {
     return d.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
   }, []);
 
-  // ==========================================
-  // 🧠 MOTOR DE INTELIGÊNCIA DA META (Passos 7 e 8)
-  // ==========================================
+  // 5. Motor de Inteligência (Mantido e ajustado para 'life')
   const goalInsights = useMemo(() => {
-    // Só calculamos estes insights para metas de "Ganhos/Poupança" que ainda não foram batidas
-    if (type !== "income" || goal.currentValue >= goal.goalValue) return null;
+    if (
+      (type !== "income" && type !== "life") ||
+      goal.currentValue >= goal.goalValue
+    )
+      return null;
 
     const today = new Date();
     const start = new Date(goal.startDate + "T00:00:00");
     const end = new Date(goal.endDate + "T00:00:00");
 
-    // Função que calcula a diferença de meses entre duas datas
     const getMonthsDiff = (d1, d2) => {
       let months = (d2.getFullYear() - d1.getFullYear()) * 12;
       months -= d1.getMonth();
       months += d2.getMonth();
-      return months <= 0 ? 1 : months; // Evita divisão por zero (assume no mínimo 1 mês)
+      return months <= 0 ? 1 : months;
     };
 
     const remainingValue = goal.goalValue - goal.currentValue;
-
-    // Passo 8: Simulador de Ritmo Necessário
     const monthsLeft = getMonthsDiff(today, end);
     const requiredPerMonth = remainingValue / monthsLeft;
-
-    // Passo 7: Previsão de Conclusão de Meta
     const elapsedMonths = getMonthsDiff(start, today);
     const averageSavedPerMonth = goal.currentValue / elapsedMonths;
 
@@ -68,65 +101,64 @@ function GoalCard({ goal, onDelete }) {
       );
     }
 
-    return {
-      requiredPerMonth,
-      monthsLeft,
-      estimatedMonthsToFinish,
-      averageSavedPerMonth,
-    };
+    return { requiredPerMonth, estimatedMonthsToFinish, averageSavedPerMonth };
   }, [goal, type]);
 
-  const achievementPercentage = (goal.currentValue / goal.goalValue) * 100;
+  // Ícone Dinâmico (Foguete ou Alvo)
+  const DreamIcon = isLongTermDream ? FaRocket : FaBullseye;
+  const displayIcon = categoryDetails?.icon || (
+    <DreamIcon className="text-white text-xl" />
+  );
 
   return (
-    <div className={cardStyle} style={{ minHeight: "320px" }}>
-      <div className="absolute inset-0 opacity-10 bg-white rounded-xl blur-xl pointer-events-none"></div>
+    <div className={cardStyle} style={{ minHeight: "340px" }}>
+      {/* Efeito de Brilho no Fundo */}
+      <div className="absolute top-0 left-0 w-full h-full bg-white opacity-5 bg-no-repeat bg-cover mix-blend-overlay pointer-events-none filter blur-3xl transform scale-150 animate-pulse-slow"></div>
 
-      <div className="relative z-10 flex-grow">
+      <div className="relative z-10 flex-grow flex flex-col">
         {/* Cabeçalho */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 md:gap-4 w-full">
-            {categoryDetails?.icon && (
-              <div className="w-10 h-10 md:w-12 md:h-12 text-xl flex items-center justify-center bg-yellow-400 bg-opacity-60 rounded-full p-2 shadow-md">
-                {categoryDetails.icon}
-              </div>
-            )}
-            <h3 className="text-sm md:text-lg font-semibold tracking-wide uppercase truncate w-full">
-              {goal.category}
-            </h3>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3 sm:gap-4 w-full">
+            <div
+              className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-2xl p-3 shadow-lg backdrop-blur-md border border-white border-opacity-30 ${type === "expense" ? "bg-red-900 bg-opacity-40 text-red-100" : isLongTermDream ? "bg-indigo-900 bg-opacity-40 text-indigo-100" : "bg-green-900 bg-opacity-40 text-green-100"}`}
+            >
+              {displayIcon}
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider opacity-80 font-bold">
+                {type === "expense"
+                  ? "Orçamento"
+                  : isLongTermDream
+                    ? "Grande Sonho"
+                    : "Objetivo"}
+              </p>
+              <h3 className="text-lg sm:text-xl font-bold tracking-tight truncate w-full leading-tight">
+                {goal.category}
+              </h3>
+            </div>
           </div>
           <button
             onClick={() => onDelete(goal.id)}
-            className="p-1 md:p-2 text-yellow-300 hover:text-red-400 transition-transform duration-200 active:scale-95 hover:scale-110"
-            title="Excluir meta"
+            className="p-2 text-white opacity-60 hover:opacity-100 hover:text-red-300 transition-all duration-200 bg-black bg-opacity-20 rounded-full hover:bg-opacity-40"
+            title="Excluir planejamento"
           >
-            <FaTrashAlt className="text-sm md:text-base" />
+            <FaTrashAlt />
           </button>
         </div>
 
         {/* Valores Principais */}
-        <div className="flex justify-between items-end mb-3 border-b border-white border-opacity-20 pb-2">
-          <div>
-            <p className="text-xs opacity-80 uppercase tracking-wider">
-              {type === "expense" ? "Orçamento Máximo" : "Objetivo"}
-            </p>
-            <p className="text-lg font-bold">
+        <div className="flex flex-col gap-1 mb-6 mt-auto">
+          <p className="text-xs opacity-80 uppercase tracking-wider">
+            {type === "expense" ? "Disponível" : "Alvo"}
+          </p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               {goal.goalValue.toLocaleString("pt-BR", {
                 style: "currency",
                 currency: "BRL",
               })}
             </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs opacity-80 uppercase tracking-wider">
-              {type === "expense" ? "Já Gasto" : "Poupado"}
-            </p>
-            <p className="text-lg font-bold text-yellow-300">
-              {goal.currentValue.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
-            </p>
+            <p className="text-sm opacity-80 font-medium">/ total</p>
           </div>
         </div>
 
@@ -135,23 +167,40 @@ function GoalCard({ goal, onDelete }) {
           type={type}
           currentValue={goal.currentValue}
           goalValue={goal.goalValue}
+          isDream={isLongTermDream}
         />
 
-        <p className="text-xs text-center mt-1 opacity-90">
-          Prazo: {formatDate(goal.startDate)} até {formatDate(goal.endDate)}
-        </p>
+        <div className="flex justify-between items-center mt-3 text-xs font-medium opacity-90 bg-black bg-opacity-20 p-2 rounded-lg md:rounded-full">
+          <span className="flex items-center gap-1">
+            <FaClock opacity={0.7} /> Início: {formatDate(goal.startDate)}
+          </span>
+          <span>Fim: {formatDate(goal.endDate)}</span>
+        </div>
       </div>
 
-      {/* 🔮 PAINEL DE INTELIGÊNCIA (Visível apenas para metas de poupança em andamento) */}
+      {/* 🔮 PAINEL DE INTELIGÊNCIA */}
       {goalInsights && (
-        <div className="relative z-10 mt-4 bg-black bg-opacity-20 rounded-lg p-3 backdrop-blur-sm border border-white border-opacity-10">
+        <div className="relative z-10 mt-4 bg-black bg-opacity-30 rounded-xl p-4 backdrop-blur-md border border-white border-opacity-10 shadow-inner">
           {/* Ritmo Necessário */}
-          <div className="flex items-start gap-2 mb-2">
-            <FaBullseye className="text-yellow-400 mt-1 flex-shrink-0" />
-            <p className="text-xs leading-tight">
-              Para atingir até <strong>{formatDate(goal.endDate)}</strong>,
-              guarde{" "}
-              <strong className="text-yellow-300">
+          <div className="flex items-start gap-3 mb-3">
+            <div
+              className={`mt-1 p-1.5 rounded-full ${isLongTermDream ? "bg-indigo-500" : "bg-green-500"} bg-opacity-30`}
+            >
+              <DreamIcon
+                className={
+                  isLongTermDream ? "text-indigo-200" : "text-green-200"
+                }
+                size={14}
+              />
+            </div>
+            <p className="text-sm leading-snug font-medium">
+              Para realizar até <strong>{formatDate(goal.endDate)}</strong>,
+              você precisa guardar{" "}
+              <strong
+                className={
+                  isLongTermDream ? "text-indigo-300" : "text-green-300"
+                }
+              >
                 {goalInsights.requiredPerMonth.toLocaleString("pt-BR", {
                   style: "currency",
                   currency: "BRL",
@@ -163,20 +212,18 @@ function GoalCard({ goal, onDelete }) {
           </div>
 
           {/* Previsão de Conclusão */}
-          <div className="flex items-start gap-2">
-            <FaClock className="text-blue-300 mt-1 flex-shrink-0" />
-            <p className="text-xs leading-tight">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 p-1.5 rounded-full bg-blue-500 bg-opacity-30">
+              <FaClock className="text-blue-200" size={14} />
+            </div>
+            <p className="text-sm leading-snug font-medium opacity-90">
               {goalInsights.averageSavedPerMonth > 0 ? (
                 <span>
-                  No seu ritmo atual, vai demorar mais{" "}
-                  <strong>{goalInsights.estimatedMonthsToFinish} meses</strong>{" "}
-                  para bater a meta.
+                  No seu ritmo atual, o sonho se realiza em{" "}
+                  <strong>{goalInsights.estimatedMonthsToFinish} meses</strong>.
                 </span>
               ) : (
-                <span className="opacity-80">
-                  Comece a guardar dinheiro para ver a sua previsão de
-                  conclusão!
-                </span>
+                <span>Comece a guardar para ver a previsão!</span>
               )}
             </p>
           </div>

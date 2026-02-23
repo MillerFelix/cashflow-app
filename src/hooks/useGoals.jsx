@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { GoalService } from "../services/goalService";
 import { useAuth } from "../hooks/useAuth";
 
@@ -8,6 +8,8 @@ export function useGoals() {
   const [isLoading, setIsLoading] = useState(false);
   const [newGoal, setNewGoal] = useState({
     category: "",
+    customName: "", // Garante que o nome livre exista no estado inicial
+    type: "expense", // Garante que tenha um tipo inicial
     goal: "",
     startDate: "",
     endDate: "",
@@ -30,8 +32,20 @@ export function useGoals() {
     }
   }, [userId]);
 
+  // 🔥 CORREÇÃO DO BUG 1: Faz as metas carregarem automaticamente assim que a tela abre
+  useEffect(() => {
+    fetchGoals();
+  }, [fetchGoals]);
+
   const resetNewGoal = useCallback(() => {
-    setNewGoal({ category: "", goal: "", startDate: "", endDate: "" });
+    setNewGoal({
+      category: "",
+      customName: "",
+      type: "expense",
+      goal: "",
+      startDate: "",
+      endDate: "",
+    });
     setSuccessMessage("");
   }, []);
 
@@ -53,13 +67,15 @@ export function useGoals() {
     const parsedGoalValue = parseFloat(newGoal.goal) / 100;
 
     try {
-      // 1. Busca as transações usando a Service
+      // Define o nome da categoria com base no tipo (Se for vida, usa o que o usuário digitou)
+      const finalCategoryName =
+        newGoal.type === "life" ? newGoal.customName : newGoal.category;
+
       const transactions = await GoalService.getTransactionsByCategory(
         userId,
-        newGoal.category,
+        finalCategoryName,
       );
 
-      // 2. Filtra pelas datas para calcular o valor inicial
       const startDate = new Date(newGoal.startDate + "T00:00:00");
       const endDate = new Date(newGoal.endDate + "T00:00:00");
 
@@ -73,18 +89,19 @@ export function useGoals() {
 
       const achievement = (currentValue / parsedGoalValue) * 100;
 
-      // 3. Salva a meta usando a Service
+      // 🔥 CORREÇÃO DO BUG 2: Agora salva no Firebase exatamente o tipo e o nome personalizado!
       await GoalService.add(userId, {
+        type: newGoal.type || "expense",
         goalValue: parsedGoalValue,
         achievement: Math.min(achievement, 100),
         currentValue,
-        category: newGoal.category,
+        category: finalCategoryName,
         startDate: newGoal.startDate,
         endDate: newGoal.endDate,
       });
 
       toggleModal();
-      setSuccessMessage("Meta salva com sucesso!");
+      setSuccessMessage("Planejamento salvo com sucesso!");
       setTimeout(() => setSuccessMessage(""), 3000);
 
       fetchGoals();
@@ -102,7 +119,7 @@ export function useGoals() {
       try {
         await GoalService.remove(userId, goalId);
         setGoals((prev) => prev.filter((goal) => goal.id !== goalId));
-        setSuccessMessage("Meta removida com sucesso!");
+        setSuccessMessage("Planejamento removido com sucesso!");
         setTimeout(() => setSuccessMessage(""), 3000);
       } catch (error) {
         console.error("Erro ao remover meta:", error);
@@ -113,8 +130,6 @@ export function useGoals() {
     [userId],
   );
 
-  // Esta função é chamada pelo useTransactions!
-  // Ela descobre se a transação nova afeta alguma meta existente e atualiza o progresso.
   const updateGoalsAchievement = useCallback(
     async (uid, category, value, date) => {
       try {
@@ -126,7 +141,6 @@ export function useGoals() {
             const startDate = new Date(goal.startDate + "T00:00:00");
             const endDate = new Date(goal.endDate + "T00:00:00");
 
-            // Se a transação estiver dentro do período da meta, atualiza a meta!
             if (transactionDate >= startDate && transactionDate <= endDate) {
               const newCurrentValue = goal.currentValue + value;
               const newAchievement = Math.min(
@@ -134,7 +148,6 @@ export function useGoals() {
                 100,
               );
 
-              // Atualiza no banco usando a Service
               await GoalService.update(uid, goal.id, {
                 currentValue: newCurrentValue,
                 achievement: newAchievement,
@@ -163,7 +176,7 @@ export function useGoals() {
     handleGoalChange,
     successMessage,
     isLoading,
-    updateGoalsAchievement, // Exportamos para o useTransactions poder usar
+    updateGoalsAchievement,
   };
 }
 
