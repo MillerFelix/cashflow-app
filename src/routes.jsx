@@ -4,19 +4,17 @@ import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Loader from "./components/common/Loader";
 
-// 1. Code Splitting: Importando as páginas de forma preguiçosa (Lazy Load)
+// 1. Code Splitting (Lazy Load)
 const Login = React.lazy(() => import("./pages/Login"));
 const Register = React.lazy(() => import("./pages/Register"));
 const BasePage = React.lazy(() => import("./pages/BasePage"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Transactions = React.lazy(() => import("./pages/Transactions"));
 const Goals = React.lazy(() => import("./pages/Goals"));
+const Cards = React.lazy(() => import("./pages/Cards"));
 const PageNotFound = React.lazy(() => import("./pages/PageNotFound"));
 
-// 2. Movendo o ProtectedRoute para FORA do componente principal.
-// Agora recebemos 'user' e 'isLoading' como propriedades (props).
 const ProtectedRoute = ({ user, isLoading, children }) => {
-  // Enquanto o Firebase decide se tem usuário ou não, evitamos redirecionar.
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -25,25 +23,22 @@ const ProtectedRoute = ({ user, isLoading, children }) => {
     );
   }
 
-  // Se terminou de carregar e não tem usuário, manda pro login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Se tem usuário, renderiza a página normalmente
   return children;
 };
 
 function AppRoutes() {
   const [user, setUser] = useState(null);
-  // 3. Adicionando estado de carregamento inicial
   const [isLoading, setIsLoading] = useState(true);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setIsLoading(false); // Assim que o Firebase responder, tiramos o loading
+      setIsLoading(false);
 
       if (currentUser) {
         const hasSeenHelp = localStorage.getItem("hasSeenHelp");
@@ -59,11 +54,10 @@ function AppRoutes() {
 
   return (
     <BrowserRouter>
-      {/* 4. O Suspense "segura" a renderização enquanto a tela (via lazy load) está sendo baixada */}
       <Suspense
         fallback={
           <div className="flex items-center justify-center min-h-screen">
-            <p>Carregando página...</p>
+            <Loader />
           </div>
         }
       >
@@ -71,39 +65,25 @@ function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
+          {/* Rotas Protegidas (Dentro do BasePage) */}
           <Route
             path="/"
             element={
-              <BasePage
-                showHelpModal={showHelpModal}
-                setShowHelpModal={setShowHelpModal}
-              />
+              <ProtectedRoute user={user} isLoading={isLoading}>
+                <BasePage
+                  showHelpModal={showHelpModal}
+                  setShowHelpModal={setShowHelpModal}
+                />
+              </ProtectedRoute>
             }
           >
-            <Route
-              index
-              element={
-                <ProtectedRoute user={user} isLoading={isLoading}>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="transactions"
-              element={
-                <ProtectedRoute user={user} isLoading={isLoading}>
-                  <Transactions />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="goals"
-              element={
-                <ProtectedRoute user={user} isLoading={isLoading}>
-                  <Goals />
-                </ProtectedRoute>
-              }
-            />
+            {/* Redireciona / para /dashboard */}
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="transactions" element={<Transactions />} />
+            <Route path="goals" element={<Goals />} />
+            <Route path="cards" element={<Cards />} />{" "}
+            {/* Agora dentro do layout! */}
           </Route>
 
           <Route path="*" element={<PageNotFound />} />

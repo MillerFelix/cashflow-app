@@ -27,20 +27,24 @@ export function useTransactions(userId) {
   }, [fetchTransactions]);
 
   const addTransaction = useCallback(
-    async (
-      type,
-      description,
-      value,
-      date,
-      category,
-      subcategory,
-      isFixed = false,
-    ) => {
+    async (transactionData) => {
       if (!userId) return;
       setLoading(true);
       setMessage("");
       try {
-        // Se for Fixa, nasce como "Não Confirmada" (Estimativa). Se for normal, já nasce confirmada.
+        // Desestruturação segura incluindo cardId
+        const {
+          type,
+          description,
+          value,
+          date,
+          category,
+          subcategory = "",
+          isFixed = false,
+          paymentMethod = "debit",
+          cardId = null,
+        } = transactionData;
+
         const tData = {
           type,
           description,
@@ -49,7 +53,9 @@ export function useTransactions(userId) {
           category,
           subcategory,
           isFixed,
-          isConfirmed: !isFixed, // Lógica Inteligente: Fixas nascem precisando de confirmação
+          paymentMethod,
+          cardId,
+          isConfirmed: !isFixed,
         };
 
         if (isFixed) {
@@ -73,14 +79,12 @@ export function useTransactions(userId) {
 
         await updateGoalsAchievement(userId, category, value, date);
         setMessage(
-          isFixed
-            ? "Transações fixas agendadas para os próximos 12 meses!"
-            : "Transação salva com sucesso!",
+          isFixed ? "Série de pagamentos agendada!" : "Transação registrada!",
         );
         setTimeout(() => setMessage(""), 3000);
       } catch (error) {
         console.error(error);
-        setMessage("Erro ao salvar a transação.");
+        setMessage("Erro ao salvar.");
       } finally {
         setLoading(false);
       }
@@ -97,11 +101,11 @@ export function useTransactions(userId) {
         setTransactions((prev) =>
           prev.map((t) => (t.id === id ? { ...t, ...updatedData } : t)),
         );
-        setMessage("Transação atualizada com sucesso!");
+        setMessage("Atualizado com sucesso!");
         setTimeout(() => setMessage(""), 3000);
       } catch (error) {
         console.error(error);
-        setMessage("Erro ao atualizar transação.");
+        setMessage("Erro ao atualizar.");
       } finally {
         setLoading(false);
       }
@@ -109,7 +113,6 @@ export function useTransactions(userId) {
     [userId],
   );
 
-  // 🔥 CONFIRMAR VALOR (Para faturas variáveis)
   const confirmTransactionValue = useCallback(
     async (id, confirmedValue) => {
       if (!userId) return;
@@ -117,7 +120,6 @@ export function useTransactions(userId) {
       try {
         const updates = { value: confirmedValue, isConfirmed: true };
         await TransactionService.update(userId, id, updates);
-
         setTransactions((prev) =>
           prev.map((t) => (t.id === id ? { ...t, ...updates } : t)),
         );
@@ -139,39 +141,33 @@ export function useTransactions(userId) {
       try {
         await TransactionService.remove(userId, id);
         setTransactions((prev) => prev.filter((t) => t.id !== id));
-        setMessage("Transação removida com sucesso!");
+        setMessage("Removido com sucesso!");
         setTimeout(() => setMessage(""), 3000);
       } catch (error) {
-        console.error("Erro ao remover transação:", error);
-        setMessage("Erro ao remover a transação.");
+        console.error("Erro ao remover:", error);
       }
     },
     [userId],
   );
 
-  // 🔥 CANCELAR ASSINATURA (Remove esta e futuras)
   const cancelFutureFixedTransactions = useCallback(
     async (transaction) => {
       if (!userId) return;
       setLoading(true);
       try {
-        // Encontra todas que são Fixas, têm o mesmo nome, e data >= da selecionada
         const futureTxs = transactions.filter(
           (t) =>
             t.isFixed === true &&
             t.description === transaction.description &&
             t.date >= transaction.date,
         );
-
         await Promise.all(
           futureTxs.map((t) => TransactionService.remove(userId, t.id)),
         );
-
         const idsToRemove = futureTxs.map((t) => t.id);
         setTransactions((prev) =>
           prev.filter((t) => !idsToRemove.includes(t.id)),
         );
-
         setMessage("Assinatura cancelada! Cobranças futuras removidas.");
         setTimeout(() => setMessage(""), 4000);
       } catch (error) {
@@ -192,7 +188,7 @@ export function useTransactions(userId) {
     addTransaction,
     removeTransaction,
     editTransaction,
-    confirmTransactionValue, // Nova
-    cancelFutureFixedTransactions, // Nova
+    confirmTransactionValue,
+    cancelFutureFixedTransactions,
   };
 }

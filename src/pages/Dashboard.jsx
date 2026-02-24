@@ -11,15 +11,16 @@ import useGoals from "../hooks/useGoals";
 import {
   FaPlus,
   FaLightbulb,
+  FaCheckCircle,
+  FaExclamationCircle,
   FaEye,
   FaEyeSlash,
-  FaExclamationCircle,
-  FaCheckCircle,
 } from "react-icons/fa";
 
 function Dashboard() {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [transactionModalType, setTransactionModalType] = useState("debit"); // Controle do tipo no dashboard
   const [userName, setUserName] = useState("");
 
   const { goals, fetchGoals } = useGoals();
@@ -36,7 +37,6 @@ function Dashboard() {
   const storedVisibility = localStorage.getItem("balanceVisibility");
   const [isVisible, setIsVisible] = useState(storedVisibility === "true");
 
-  // --- SETUP INICIAL ---
   useEffect(() => {
     async function fetchUserData() {
       if (userId) {
@@ -67,7 +67,6 @@ function Dashboard() {
     [isVisible],
   );
 
-  // --- MATEMÁTICA DA TELA ---
   const formatCurrency = (val) =>
     new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -79,7 +78,7 @@ function Dashboard() {
     month: "long",
   });
 
-  // 1. Saldos e Filtros de Data
+  // Saldos e Filtros de Data
   const globalBalance = useMemo(
     () =>
       transactions.reduce(
@@ -99,7 +98,6 @@ function Dashboard() {
     [transactions, currentMonthYear],
   );
 
-  // 2. Resumo do Mês (Entrou, Saiu, Sobrou)
   const monthIncome = useMemo(
     () =>
       currentTrans
@@ -116,18 +114,13 @@ function Dashboard() {
   );
   const monthBalance = monthIncome - monthExpense;
 
-  // 3. Orçamentos
   const budgetGoals = useMemo(
     () => goals.filter((g) => g.type === "expense"),
     [goals],
   );
-  const totalBudget = useMemo(
-    () => budgetGoals.reduce((sum, g) => sum + g.goalValue, 0),
-    [budgetGoals],
-  );
-  const freeBalance = globalBalance - totalBudget;
+  const freeBalance =
+    globalBalance - budgetGoals.reduce((sum, g) => sum + g.goalValue, 0);
 
-  // 4. Ranking de Categorias (Onde mais gastou)
   const categoryRanking = useMemo(() => {
     const expenses = currentTrans.filter((t) => t.type === "debit");
     const grouped = expenses.reduce((acc, t) => {
@@ -142,14 +135,11 @@ function Dashboard() {
         percentage: (value / (monthExpense || 1)) * 100,
       }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5); // Top 5 categorias
+      .slice(0, 5);
   }, [currentTrans, monthExpense]);
 
-  // 5. Inteligência de Dados (Insights Reais)
   const smartInsights = useMemo(() => {
     const alerts = [];
-
-    // Alerta de Fluxo de Caixa
     if (monthExpense > monthIncome && monthIncome > 0) {
       alerts.push({
         text: `Alerta: Você já gastou ${formatCurrency(monthExpense - monthIncome)} a mais do que ganhou este mês.`,
@@ -161,8 +151,6 @@ function Dashboard() {
         type: "success",
       });
     }
-
-    // Alerta de Categoria (Ralo Financeiro)
     if (categoryRanking.length > 0) {
       const topCat = categoryRanking[0];
       if (topCat.percentage > 40) {
@@ -172,39 +160,35 @@ function Dashboard() {
         });
       }
     }
-
-    // Alerta de Orçamento Estourado
     budgetGoals.forEach((g) => {
       const pct = (g.currentValue / g.goalValue) * 100;
-      if (pct >= 90) {
+      if (pct >= 90)
         alerts.push({
           text: `O limite de "${g.category}" está quase no fim (${Math.round(pct)}% consumido).`,
           type: "danger",
         });
-      }
     });
-
-    if (alerts.length === 0) {
+    if (alerts.length === 0)
       alerts.push({
         text: "Tudo sob controle! Continue a registar os seus movimentos.",
         type: "info",
       });
-    }
-
-    return alerts.slice(0, 3); // Mostra no máximo os 3 mais importantes
+    return alerts.slice(0, 3);
   }, [monthIncome, monthExpense, monthBalance, categoryRanking, budgetGoals]);
 
-  // --- AÇÕES ---
   const handleSaveInitialBalance = async (initialValue) => {
-    if (initialValue > 0)
-      await addTransaction(
-        "credit",
-        "Saldo Inicial",
-        initialValue,
-        new Date().toISOString().split("T")[0],
-        "Outros Ganhos",
-        false,
-      );
+    if (initialValue > 0) {
+      // Atualizado para passar objeto
+      await addTransaction({
+        type: "credit",
+        description: "Saldo Inicial",
+        value: initialValue,
+        date: new Date().toISOString().split("T")[0],
+        category: "Outros Ganhos",
+        paymentMethod: "money",
+        isFixed: false,
+      });
+    }
     await setDoc(
       doc(db, "users", userId),
       { hasSetupInitialBalance: true },
@@ -214,15 +198,8 @@ function Dashboard() {
   };
 
   const handleSaveTransaction = async (data) => {
-    await addTransaction(
-      data.type,
-      data.description,
-      data.value,
-      data.date,
-      data.category,
-      data.subcategory,
-      data.isFixed,
-    );
+    // Atualizado para passar objeto
+    await addTransaction(data);
     setIsTransactionModalOpen(false);
   };
 
@@ -254,9 +231,8 @@ function Dashboard() {
           </button>
         </div>
 
-        {/* 1️⃣ RESUMO FINANCEIRO (TOPO) - Agora com 3 Cards */}
+        {/* CARDS TOPO */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1: Saldo Atual (Verde) */}
           <div className="p-5 rounded-2xl shadow-sm text-white bg-gradient-to-br from-emerald-500 to-green-700 flex flex-col justify-center min-h-[110px]">
             <p className="text-white/80 font-bold text-xs uppercase tracking-wider mb-1">
               Saldo Atual
@@ -265,8 +241,6 @@ function Dashboard() {
               {isVisible ? formatCurrency(globalBalance) : "••••••"}
             </h2>
           </div>
-
-          {/* Card 2: Disponível no Mês (Amarelo/Roxo) */}
           <div className="p-5 rounded-2xl shadow-sm text-white bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-700 flex flex-col justify-center min-h-[110px]">
             <p className="text-white/90 font-bold text-xs uppercase tracking-wider mb-1">
               Disponível (Pós-Orçamento)
@@ -275,8 +249,6 @@ function Dashboard() {
               {isVisible ? formatCurrency(freeBalance) : "••••••"}
             </h2>
           </div>
-
-          {/* Card 3: Resumo do Mês (Entrou/Saiu/Sobrou) */}
           <div className="p-5 rounded-2xl shadow-sm bg-white border border-gray-200 flex flex-col justify-center min-h-[110px]">
             <p className="text-gray-500 font-bold text-xs uppercase tracking-wider mb-2">
               Balanço deste Mês
@@ -309,11 +281,9 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* GRID INFERIOR (Mais largo e compacto) */}
+        {/* CONTEÚDO PRINCIPAL */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* COLUNA ESQUERDA (Maior, focada nos gastos) */}
           <div className="lg:col-span-2 flex flex-col gap-4">
-            {/* 2️⃣ USO DO ORÇAMENTO (Múltiplas Categorias) */}
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
               <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider">
                 Uso do Orçamento
@@ -335,7 +305,6 @@ function Dashboard() {
                         : pct >= 75
                           ? "bg-yellow-400"
                           : "bg-blue-500";
-
                     return (
                       <div key={goal.id} className="w-full">
                         <div className="flex justify-between items-end mb-1">
@@ -367,7 +336,6 @@ function Dashboard() {
               )}
             </div>
 
-            {/* 3️⃣ ONDE VOCÊ MAIS GASTOU (Ranking) */}
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex-grow">
               <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider">
                 Onde você mais gastou
@@ -391,7 +359,6 @@ function Dashboard() {
                           {item.category}
                         </span>
                       </div>
-
                       <div className="flex-grow mx-4 hidden sm:block">
                         <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div
@@ -400,7 +367,6 @@ function Dashboard() {
                           ></div>
                         </div>
                       </div>
-
                       <div className="text-right w-1/3">
                         <span className="text-sm font-bold text-gray-900">
                           {isVisible ? formatCurrency(item.value) : "••••"}
@@ -416,9 +382,7 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* COLUNA DIREITA (Insights e Contexto) */}
           <div className="flex flex-col gap-4">
-            {/* 4️⃣ FIQUE DE OLHO (Dicas Baseadas em Dados) */}
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
               <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
                 <FaLightbulb className="text-yellow-500" /> Fique de Olho
@@ -453,7 +417,6 @@ function Dashboard() {
               </div>
             </div>
 
-            {/* 5️⃣ ÚLTIMAS MOVIMENTAÇÕES */}
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex-grow">
               <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">
                 Recentes
@@ -487,15 +450,16 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* BOTÃO FLUTUANTE */}
       <button
-        onClick={() => setIsTransactionModalOpen(true)}
+        onClick={() => {
+          setTransactionModalType("debit");
+          setIsTransactionModalOpen(true);
+        }}
         className="fixed bottom-6 right-6 w-14 h-14 bg-gray-900 text-white rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-black transition-all z-40"
       >
         <FaPlus />
       </button>
 
-      {/* MODAIS */}
       {showBalanceModal && (
         <BalanceModal
           onClose={() => setShowBalanceModal(false)}
@@ -504,7 +468,7 @@ function Dashboard() {
       )}
       {isTransactionModalOpen && (
         <TransactionModal
-          type="debit"
+          type={transactionModalType}
           onClose={() => setIsTransactionModalOpen(false)}
           onSave={handleSaveTransaction}
         />

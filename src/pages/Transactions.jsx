@@ -61,21 +61,16 @@ function Transactions() {
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [loadingRemove, setLoadingRemove] = useState(false);
 
+  // --- CORREÇÃO AQUI ---
   const handleSaveTransaction = useCallback(
     async (data) => {
-      const { id, type, description, value, date, category, isFixed } = data;
-      if (id) {
-        await editTransaction(id, { type, description, value, date, category });
+      // Agora passamos o objeto inteiro 'data' que contém { ... , paymentMethod }
+      if (data.id) {
+        // Para edição, também passamos tudo
+        await editTransaction(data.id, data);
       } else {
-        await addTransaction(
-          type,
-          description,
-          value,
-          date,
-          category,
-          "",
-          isFixed,
-        );
+        // Para criação, passamos o objeto direto
+        await addTransaction(data);
       }
     },
     [editTransaction, addTransaction],
@@ -151,9 +146,7 @@ function Transactions() {
   return (
     <div className="p-4 sm:p-6 bg-gray-100 min-h-screen font-sans text-gray-800 pb-20">
       <div className="max-w-7xl mx-auto flex flex-col gap-6">
-        {/* =======================
-            CABEÇALHO E AÇÕES
-           ======================= */}
+        {/* CABEÇALHO */}
         <div className="flex flex-col gap-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -165,7 +158,6 @@ function Transactions() {
               </p>
             </div>
 
-            {/* Botões de Ação PRINCIPAIS - Cores Intuitivas */}
             <div className="flex gap-3 w-full md:w-auto shadow-sm p-1 bg-white rounded-2xl border border-gray-100">
               <button
                 onClick={() => {
@@ -190,7 +182,6 @@ function Transactions() {
             </div>
           </div>
 
-          {/* Cards de Totais */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center group hover:border-green-200 transition-colors">
               <div>
@@ -228,9 +219,7 @@ function Transactions() {
           </div>
         </div>
 
-        {/* =======================
-            FILTROS E RELATÓRIO
-           ======================= */}
+        {/* FILTROS */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex flex-col md:flex-row gap-4 justify-between items-end">
             <div className="w-full">
@@ -271,10 +260,7 @@ function Transactions() {
 
         <StatusMessage message={message} />
 
-        {/* =======================
-            LISTAGEM E RECORRÊNCIAS
-           ======================= */}
-
+        {/* LISTA */}
         {loading && (
           <div className="py-10">
             <Loader />
@@ -350,12 +336,12 @@ function Transactions() {
                   <FaSyncAlt size={20} />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">
-                  Gerir Transação
+                  Gerir Assinatura
                 </h3>
               </div>
               <p className="text-gray-600 mb-6 font-medium">
-                A transação <strong>"{transactionToDelete.description}"</strong>{" "}
-                é recorrente. Como quer proceder?
+                A conta <strong>"{transactionToDelete.description}"</strong> é
+                recorrente. Como quer proceder?
               </p>
               <div className="space-y-3">
                 <button
@@ -376,7 +362,7 @@ function Transactions() {
                   }}
                   className="w-full py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-md"
                 >
-                  Cancelar Transações (Todas)
+                  Cancelar Assinatura (Tudo)
                 </button>
                 <button
                   onClick={() => setTransactionToDelete(null)}

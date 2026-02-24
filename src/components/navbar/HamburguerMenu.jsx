@@ -1,18 +1,20 @@
 import React from "react";
-import { FaChartBar, FaWallet, FaBullseye, FaSignOutAlt } from "react-icons/fa";
+import {
+  FaChartBar,
+  FaWallet,
+  FaBullseye,
+  FaSignOutAlt,
+  FaCreditCard,
+} from "react-icons/fa";
 import NavItem from "./NavItem";
 
-/**
- * Componente HamburgerMenu
- * O menu suspenso que aparece apenas em telas pequenas (celulares).
- */
 function HamburgerMenu({ isOpen, toggleMenu, onLogout }) {
   if (!isOpen) return null;
 
   return (
-    <ul className="absolute right-6 top-20 bg-green-800 p-2 rounded-lg shadow-lg w-40 z-50 transition-all ease-in-out">
+    <ul className="absolute right-6 top-20 bg-green-800 p-2 rounded-lg shadow-lg w-48 z-50 transition-all ease-in-out border border-green-700">
       <NavItem
-        to="/"
+        to="/dashboard"
         icon={<FaChartBar size={20} />}
         label="Dashboard"
         onClick={toggleMenu}
@@ -29,17 +31,22 @@ function HamburgerMenu({ isOpen, toggleMenu, onLogout }) {
         label="Metas"
         onClick={toggleMenu}
       />
+      <NavItem
+        to="/cards"
+        icon={<FaCreditCard size={20} />}
+        label="Cartões"
+        onClick={toggleMenu}
+      />
 
-      {/* Linha divisória simples para separar o botão de sair */}
       <hr className="border-green-700 my-1" />
 
       <li>
         <button
           onClick={() => {
             onLogout();
-            toggleMenu(); // Fecha o menu ao clicar em sair
+            toggleMenu();
           }}
-          className="flex w-full items-center gap-2 py-2 text-green-300 hover:text-lime-400 transition-transform duration-200 active:scale-95 hover:scale-105"
+          className="flex w-full items-center gap-2 py-2 px-4 rounded-lg text-green-300 hover:text-lime-400 hover:bg-green-900/50 transition-all duration-200 active:scale-95"
         >
           <FaSignOutAlt size={20} /> Sair
         </button>

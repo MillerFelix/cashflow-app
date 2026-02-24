@@ -6,6 +6,7 @@ import {
   FaChartBar,
   FaBullseye,
   FaWallet,
+  FaCreditCard, // Importado
 } from "react-icons/fa";
 import { auth } from "../../firebase";
 import { signOut } from "firebase/auth";
@@ -14,11 +15,6 @@ import HamburgerMenu from "./HamburguerMenu";
 import ConfirmationModal from "../common/ConfirmationModal";
 import { useAuth } from "../../hooks/useAuth";
 
-/**
- * Componente Navbar
- * Barra de navegação principal da aplicação.
- * É responsiva: exibe links horizontais em telas grandes e um menu hambúrguer em celulares.
- */
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -36,7 +32,6 @@ function Navbar() {
     setShowModal(false);
   }, [handleLogout]);
 
-  // Efeito responsivo: Fecha o menu hambúrguer automaticamente se o usuário girar a tela do celular para modo paisagem
   useEffect(() => {
     function handleResize() {
       if (window.innerWidth >= 768) setIsOpen(false);
@@ -48,7 +43,6 @@ function Navbar() {
   return (
     <nav className="bg-gradient-to-r from-green-700 via-green-800 to-green-950 text-white p-8 shadow-xl rounded-b-3xl z-40 relative">
       <div className="container mx-auto flex justify-between items-center px-6">
-        {/* Logo / Nome do App */}
         <Link
           to="/"
           className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-wider text-transparent bg-clip-text bg-gradient-to-l from-green-500 to-lime-400 hover:bg-gradient-to-r hover:from-yellow-300 hover:to-lime-500 transition-all duration-500"
@@ -57,18 +51,27 @@ function Navbar() {
           Cash$Flow
         </Link>
 
-        {/* Abas da Navbar (Escondidas no Mobile) */}
+        {/* Menu Desktop */}
         <ul className="hidden md:flex flex-wrap gap-6 ml-10">
-          <NavItem to="/" icon={<FaChartBar size={20} />} label="Dashboard" />
-          <NavItem to="/goals" icon={<FaBullseye size={20} />} label="Metas" />
+          <NavItem
+            to="/dashboard"
+            icon={<FaChartBar size={20} />}
+            label="Dashboard"
+          />
           <NavItem
             to="/transactions"
             icon={<FaWallet size={20} />}
             label="Transações"
           />
+          <NavItem to="/goals" icon={<FaBullseye size={20} />} label="Metas" />
+          <NavItem
+            to="/cards"
+            icon={<FaCreditCard size={20} />}
+            label="Cartões"
+          />{" "}
+          {/* Novo Link */}
         </ul>
 
-        {/* Botão Sair (Escondido no Mobile) */}
         <div className="ml-6 hidden md:block">
           <button
             onClick={() => setShowModal(true)}
@@ -78,7 +81,6 @@ function Navbar() {
           </button>
         </div>
 
-        {/* Botão do Menu Hambúrguer (Visível apenas no Mobile) */}
         <div className="md:hidden">
           <button
             onClick={toggleMenu}
