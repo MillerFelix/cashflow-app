@@ -221,7 +221,8 @@ function Goals() {
           {lifeGoals.length === 0 ? (
             <div className="bg-white p-8 rounded-2xl border border-dashed border-gray-300 text-center">
               <p className="text-gray-400 text-sm">
-                Qual o seu próximo sonho? Carro novo? Viagem? Comece a planejar.
+                Qual o seu próximo objetivo ou sonho? Carro novo? Viagem? Comece
+                a planejar.
               </p>
               <button
                 onClick={() => setIsModalOpen(true)}

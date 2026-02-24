@@ -272,10 +272,6 @@ function Transactions() {
           </div>
         )}
 
-        {!loading && filteredTransactions.length === 0 && (
-          <NoData message="Nenhuma transação encontrada." />
-        )}
-
         {!loading && filteredTransactions.length > 0 && (
           <div className="flex flex-col gap-6 animate-fadeIn">
             <RecurringSection

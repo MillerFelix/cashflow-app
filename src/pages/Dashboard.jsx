@@ -2,28 +2,28 @@ import React, { useEffect, useState, useMemo } from "react";
 import BalanceModal from "../components/dashboard/BalanceModal";
 import Loader from "../components/common/Loader";
 import TransactionModal from "../components/transactions/TransactionModal";
-import BalanceVisibilityToggle from "../components/dashboard/BalanceVisibilityToggle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { useTransactions } from "../hooks/useTransactions";
 import useGoals from "../hooks/useGoals";
 import {
-  FaPlus,
-  FaLightbulb,
-  FaCheckCircle,
-  FaExclamationCircle,
   FaEye,
   FaEyeSlash,
+  FaWallet,
+  FaChartLine,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaFireAlt,
+  FaCalendarCheck,
+  FaTrophy,
 } from "react-icons/fa";
 
 function Dashboard() {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
-  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
-  const [transactionModalType, setTransactionModalType] = useState("debit"); // Controle do tipo no dashboard
   const [userName, setUserName] = useState("");
 
-  const { goals, fetchGoals } = useGoals();
+  const { fetchGoals } = useGoals();
   const user = useAuth();
   const userId = user?.uid;
 
@@ -72,13 +72,15 @@ function Dashboard() {
       style: "currency",
       currency: "BRL",
     }).format(val);
-  const todayFormatted = new Date().toLocaleDateString("pt-BR", {
+  const todayDate = new Date();
+  const todayFormatted = todayDate.toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
 
-  // Saldos e Filtros de Data
+  // --- LÓGICA DE INTELIGÊNCIA FINANCEIRA ---
+
   const globalBalance = useMemo(
     () =>
       transactions.reduce(
@@ -88,104 +90,125 @@ function Dashboard() {
     [transactions],
   );
 
-  const currentMonthYear = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  }, []);
+  const currentMonthYear = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, "0")}`;
 
-  const currentTrans = useMemo(
+  const monthTransactions = useMemo(
     () => transactions.filter((t) => t.date.startsWith(currentMonthYear)),
     [transactions, currentMonthYear],
   );
 
-  const monthIncome = useMemo(
-    () =>
-      currentTrans
-        .filter((t) => t.type === "credit")
-        .reduce((acc, t) => acc + t.value, 0),
-    [currentTrans],
-  );
-  const monthExpense = useMemo(
-    () =>
-      currentTrans
-        .filter((t) => t.type === "debit")
-        .reduce((acc, t) => acc + t.value, 0),
-    [currentTrans],
-  );
-  const monthBalance = monthIncome - monthExpense;
+  const { realizedIncome, realizedExpense, futureIncome, futureExpense } =
+    useMemo(() => {
+      const todayStr = todayDate.toISOString().split("T")[0];
+      let rInc = 0,
+        rExp = 0,
+        fInc = 0,
+        fExp = 0;
 
-  const budgetGoals = useMemo(
-    () => goals.filter((g) => g.type === "expense"),
-    [goals],
-  );
-  const freeBalance =
-    globalBalance - budgetGoals.reduce((sum, g) => sum + g.goalValue, 0);
+      monthTransactions.forEach((t) => {
+        if (t.date > todayStr) {
+          if (t.type === "credit") fInc += t.value;
+          else fExp += t.value;
+        } else {
+          if (t.type === "credit") rInc += t.value;
+          else rExp += t.value;
+        }
+      });
+      return {
+        realizedIncome: rInc,
+        realizedExpense: rExp,
+        futureIncome: fInc,
+        futureExpense: fExp,
+      };
+    }, [monthTransactions]);
 
+  const totalMonthIncome = realizedIncome + futureIncome;
+  const totalMonthExpenseSoFar = realizedExpense;
+
+  const projectedBalance = globalBalance + futureIncome - futureExpense;
+
+  const financialPace = useMemo(() => {
+    if (totalMonthIncome === 0)
+      return { status: "neutral", message: "Sem receitas este mês." };
+
+    const daysInMonth = new Date(
+      todayDate.getFullYear(),
+      todayDate.getMonth() + 1,
+      0,
+    ).getDate();
+    const dayOfMonth = todayDate.getDate();
+
+    const monthProgress = dayOfMonth / daysInMonth;
+    const spendingProgress = totalMonthExpenseSoFar / totalMonthIncome;
+
+    const difference = spendingProgress - monthProgress;
+
+    if (spendingProgress > 0.95) {
+      return {
+        status: "danger",
+        icon: <FaFireAlt />,
+        color: "red",
+        title: "Ritmo Perigoso",
+        message: "Você já consumiu quase toda sua renda mensal.",
+      };
+    }
+    if (difference > 0.15) {
+      return {
+        status: "danger",
+        icon: <FaFireAlt />,
+        color: "red",
+        title: "Ritmo Acelerado",
+        message:
+          "Cuidado! Você está gastando mais rápido do que os dias passam.",
+      };
+    }
+    if (difference > 0.05) {
+      return {
+        status: "warning",
+        icon: <FaExclamationTriangle />,
+        color: "yellow",
+        title: "Atenção",
+        message: "Seus gastos estão um pouco acima do ideal para hoje.",
+      };
+    }
+    return {
+      status: "success",
+      icon: <FaCheckCircle />,
+      color: "green",
+      title: "Dentro do Planejado",
+      message: "Parabéns! Seu ritmo de gastos está saudável e controlado.",
+    };
+  }, [totalMonthIncome, totalMonthExpenseSoFar]);
+
+  // --- RANKING POR SUBCATEGORIA (Inteligência Granular) ---
   const categoryRanking = useMemo(() => {
-    const expenses = currentTrans.filter((t) => t.type === "debit");
+    const expenses = monthTransactions.filter((t) => t.type === "debit");
     const grouped = expenses.reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.value;
+      // Prioridade: Subcategoria > Categoria
+      const key = t.subcategory || t.category;
+      acc[key] = (acc[key] || 0) + t.value;
       return acc;
     }, {});
 
     return Object.entries(grouped)
-      .map(([category, value]) => ({
-        category,
+      .map(([name, value]) => ({
+        name,
         value,
-        percentage: (value / (monthExpense || 1)) * 100,
+        percentage: (value / (realizedExpense || 1)) * 100,
       }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
-  }, [currentTrans, monthExpense]);
-
-  const smartInsights = useMemo(() => {
-    const alerts = [];
-    if (monthExpense > monthIncome && monthIncome > 0) {
-      alerts.push({
-        text: `Alerta: Você já gastou ${formatCurrency(monthExpense - monthIncome)} a mais do que ganhou este mês.`,
-        type: "danger",
-      });
-    } else if (monthIncome > 0 && monthBalance > 0) {
-      alerts.push({
-        text: `Muito bem! Você já garantiu ${formatCurrency(monthBalance)} de sobra este mês.`,
-        type: "success",
-      });
-    }
-    if (categoryRanking.length > 0) {
-      const topCat = categoryRanking[0];
-      if (topCat.percentage > 40) {
-        alerts.push({
-          text: `Atenção: "${topCat.category}" representa ${Math.round(topCat.percentage)}% de todas as suas despesas.`,
-          type: "warning",
-        });
-      }
-    }
-    budgetGoals.forEach((g) => {
-      const pct = (g.currentValue / g.goalValue) * 100;
-      if (pct >= 90)
-        alerts.push({
-          text: `O limite de "${g.category}" está quase no fim (${Math.round(pct)}% consumido).`,
-          type: "danger",
-        });
-    });
-    if (alerts.length === 0)
-      alerts.push({
-        text: "Tudo sob controle! Continue a registar os seus movimentos.",
-        type: "info",
-      });
-    return alerts.slice(0, 3);
-  }, [monthIncome, monthExpense, monthBalance, categoryRanking, budgetGoals]);
+      .slice(0, 5); // Top 5
+  }, [monthTransactions, realizedExpense]);
 
   const handleSaveInitialBalance = async (initialValue) => {
     if (initialValue > 0) {
-      // Atualizado para passar objeto
       await addTransaction({
         type: "credit",
         description: "Saldo Inicial",
         value: initialValue,
         date: new Date().toISOString().split("T")[0],
         category: "Outros Ganhos",
-        paymentMethod: "money",
+        paymentMethod: "transfer",
         isFixed: false,
       });
     }
@@ -197,12 +220,6 @@ function Dashboard() {
     setShowBalanceModal(false);
   };
 
-  const handleSaveTransaction = async (data) => {
-    // Atualizado para passar objeto
-    await addTransaction(data);
-    setIsTransactionModalOpen(false);
-  };
-
   if (loading || transactionsLoading)
     return (
       <div className="flex justify-center items-center h-screen">
@@ -211,266 +228,207 @@ function Dashboard() {
     );
 
   return (
-    <div className="p-4 sm:p-5 bg-gray-100 min-h-screen relative font-sans text-gray-800 pb-20">
-      <div className="max-w-7xl mx-auto flex flex-col gap-4">
+    <div className="p-4 sm:p-6 bg-gray-100 min-h-screen relative font-sans text-gray-800 pb-10">
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
         {/* CABEÇALHO */}
         <div className="flex justify-between items-center px-1">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
               Olá, {userName}
             </h1>
-            <p className="text-gray-500 text-xs capitalize mt-0.5">
-              {todayFormatted}
+            <p className="text-gray-500 text-xs capitalize mt-1 flex items-center gap-1">
+              <FaCalendarCheck size={10} /> {todayFormatted}
             </p>
           </div>
           <button
             onClick={() => setIsVisible(!isVisible)}
-            className="p-2 bg-white rounded-full shadow-sm border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+            className="p-2.5 bg-white rounded-xl shadow-sm border border-gray-200 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-95"
           >
-            {isVisible ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+            {isVisible ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
           </button>
         </div>
 
-        {/* CARDS TOPO */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-5 rounded-2xl shadow-sm text-white bg-gradient-to-br from-emerald-500 to-green-700 flex flex-col justify-center min-h-[110px]">
-            <p className="text-white/80 font-bold text-xs uppercase tracking-wider mb-1">
-              Saldo Atual
-            </p>
-            <h2 className="text-3xl font-extrabold tracking-tight">
-              {isVisible ? formatCurrency(globalBalance) : "••••••"}
-            </h2>
-          </div>
-          <div className="p-5 rounded-2xl shadow-sm text-white bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-700 flex flex-col justify-center min-h-[110px]">
-            <p className="text-white/90 font-bold text-xs uppercase tracking-wider mb-1">
-              Disponível (Pós-Orçamento)
-            </p>
-            <h2 className="text-3xl font-extrabold tracking-tight">
-              {isVisible ? formatCurrency(freeBalance) : "••••••"}
-            </h2>
-          </div>
-          <div className="p-5 rounded-2xl shadow-sm bg-white border border-gray-200 flex flex-col justify-center min-h-[110px]">
-            <p className="text-gray-500 font-bold text-xs uppercase tracking-wider mb-2">
-              Balanço deste Mês
-            </p>
-            <div className="flex flex-col gap-1.5 text-sm">
-              <div className="flex justify-between items-center font-medium">
-                <span className="text-gray-600">Entrou</span>
-                <span className="text-green-600">
-                  +{isVisible ? formatCurrency(monthIncome) : "••••"}
-                </span>
+        {/* --- GRID DE CARDS INTELIGENTES --- */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* 1. SALDO ATUAL */}
+          <div className="p-6 rounded-3xl shadow-lg text-white bg-gradient-to-br from-emerald-600 to-teal-900 flex flex-col justify-between relative overflow-hidden h-40 group hover:scale-[1.01] transition-transform">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+            <div>
+              <div className="flex items-center gap-2 opacity-90 mb-1">
+                <FaWallet className="text-emerald-200" />
+                <p className="text-xs font-bold uppercase tracking-widest">
+                  Saldo Atual
+                </p>
               </div>
-              <div className="flex justify-between items-center font-medium">
-                <span className="text-gray-600">Saiu</span>
-                <span className="text-red-500">
-                  -{isVisible ? formatCurrency(monthExpense) : "••••"}
-                </span>
-              </div>
-              <div className="w-full h-[1px] bg-gray-100 my-0.5"></div>
-              <div className="flex justify-between items-center font-bold">
-                <span className="text-gray-800">Sobrou</span>
-                <span
-                  className={
-                    monthBalance >= 0 ? "text-blue-600" : "text-orange-500"
-                  }
-                >
-                  {isVisible ? formatCurrency(monthBalance) : "••••"}
-                </span>
-              </div>
+              <h2 className="text-3xl font-black tracking-tight mt-2">
+                {isVisible ? formatCurrency(globalBalance) : "••••••"}
+              </h2>
             </div>
+            <p className="text-[10px] text-emerald-100/70 font-medium">
+              Dinheiro disponível agora em todas as contas.
+            </p>
+          </div>
+
+          {/* 2. PREVISÃO DE FECHAMENTO */}
+          <div className="p-6 rounded-3xl shadow-lg text-white bg-gradient-to-br from-blue-600 to-indigo-900 flex flex-col justify-between relative overflow-hidden h-40 group hover:scale-[1.01] transition-transform">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+            <div>
+              <div className="flex items-center gap-2 opacity-90 mb-1">
+                <FaChartLine className="text-blue-200" />
+                <p className="text-xs font-bold uppercase tracking-widest">
+                  Previsão Final do Mês
+                </p>
+              </div>
+              <h2 className="text-3xl font-black tracking-tight mt-2">
+                {isVisible ? formatCurrency(projectedBalance) : "••••••"}
+              </h2>
+            </div>
+            <p className="text-[10px] text-blue-100/70 font-medium">
+              Considerando o que você tem hoje + o que está agendado.
+            </p>
+          </div>
+
+          {/* 3. RITMO FINANCEIRO */}
+          <div
+            className={`p-6 rounded-3xl shadow-lg text-white flex flex-col justify-between relative overflow-hidden h-40 transition-colors duration-500
+            ${
+              financialPace.color === "red"
+                ? "bg-gradient-to-br from-red-600 to-rose-900"
+                : financialPace.color === "yellow"
+                  ? "bg-gradient-to-br from-orange-400 to-orange-600"
+                  : "bg-gradient-to-br from-green-600 to-emerald-800"
+            }`}
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                  Ritmo Atual
+                </p>
+                <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+                  {financialPace.icon}
+                </div>
+              </div>
+              <h2 className="text-xl font-black tracking-tight leading-none">
+                {financialPace.title}
+              </h2>
+            </div>
+            <p className="text-xs font-medium opacity-90 leading-snug mt-2">
+              {financialPace.message}
+            </p>
           </div>
         </div>
 
-        {/* CONTEÚDO PRINCIPAL */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 flex flex-col gap-4">
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider">
-                Uso do Orçamento
-              </h3>
-              {budgetGoals.length === 0 ? (
-                <p className="text-gray-500 text-sm italic">
-                  Você ainda não definiu limites para suas categorias.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                  {budgetGoals.map((goal) => {
-                    const pct = Math.min(
-                      (goal.currentValue / goal.goalValue) * 100,
-                      100,
-                    );
-                    const barColor =
-                      pct >= 90
-                        ? "bg-red-500"
-                        : pct >= 75
-                          ? "bg-yellow-400"
-                          : "bg-blue-500";
-                    return (
-                      <div key={goal.id} className="w-full">
-                        <div className="flex justify-between items-end mb-1">
-                          <span className="font-semibold text-gray-700 text-sm">
-                            {goal.category}
-                          </span>
-                          <span className="font-bold text-gray-900 text-sm">
-                            {isVisible
-                              ? formatCurrency(goal.currentValue)
-                              : "••••"}{" "}
-                            <span className="text-gray-400 text-xs font-normal">
-                              /{" "}
-                              {isVisible
-                                ? formatCurrency(goal.goalValue)
-                                : "••••"}
-                            </span>
-                          </span>
-                        </div>
-                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${barColor}`}
-                            style={{ width: `${pct}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+        {/* --- CONTEÚDO PRINCIPAL --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* RANKING DE GASTOS (Atualizado com Subcategorias e Cores Unificadas) */}
+          <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+            <h3 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
+              <FaTrophy className="text-red-500" /> Vilões do Orçamento (Top 5)
+            </h3>
 
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex-grow">
-              <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider">
-                Onde você mais gastou
-              </h3>
-              {categoryRanking.length === 0 ? (
-                <p className="text-gray-500 text-sm italic">
+            {categoryRanking.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                <p className="text-gray-400 text-sm italic">
                   Nenhum gasto registrado neste mês.
                 </p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {categoryRanking.map((item, index) => (
-                    <div
-                      key={item.category}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3 w-1/2 md:w-1/3">
-                        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
-                          {index + 1}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-5">
+                {categoryRanking.map((item, index) => {
+                  // Gradiente de cores: Do vermelho escuro para o laranja claro
+                  let colorClass = "bg-gray-400"; // Fallback
+                  if (index === 0) colorClass = "bg-red-700";
+                  else if (index === 1) colorClass = "bg-red-600";
+                  else if (index === 2) colorClass = "bg-red-500";
+                  else if (index === 3) colorClass = "bg-orange-500";
+                  else if (index === 4) colorClass = "bg-orange-400";
+
+                  return (
+                    <div key={item.name} className="relative group">
+                      <div className="flex justify-between items-end mb-1">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${colorClass}`}
+                          >
+                            {index + 1}
+                          </span>
+                          <span className="font-bold text-gray-800 text-sm truncate">
+                            {item.name}
+                          </span>
                         </div>
-                        <span className="text-sm font-semibold text-gray-700 truncate">
-                          {item.category}
-                        </span>
-                      </div>
-                      <div className="flex-grow mx-4 hidden sm:block">
-                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gray-400 rounded-full"
-                            style={{ width: `${item.percentage}%` }}
-                          ></div>
+                        <div className="text-right">
+                          <span className="font-black text-gray-900 text-sm">
+                            {isVisible ? formatCurrency(item.value) : "••••"}
+                          </span>
                         </div>
                       </div>
-                      <div className="text-right w-1/3">
-                        <span className="text-sm font-bold text-gray-900">
-                          {isVisible ? formatCurrency(item.value) : "••••"}
-                        </span>
-                        <span className="text-xs text-gray-400 font-medium ml-2">
-                          {Math.round(item.percentage)}%
-                        </span>
+
+                      {/* Barra de Progresso Unificada */}
+                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-1000 ease-out ${colorClass}`}
+                          style={{ width: `${item.percentage}%` }}
+                        ></div>
                       </div>
+                      <p className="text-[10px] text-gray-400 text-right mt-1 font-medium">
+                        {Math.round(item.percentage)}% dos gastos
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
-                <FaLightbulb className="text-yellow-500" /> Fique de Olho
-              </h3>
-              <div className="flex flex-col gap-3">
-                {smartInsights.map((insight, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-3 rounded-xl flex gap-3 text-sm font-medium items-start
-                    ${
-                      insight.type === "danger"
-                        ? "bg-red-50 text-red-800 border border-red-100"
-                        : insight.type === "success"
-                          ? "bg-green-50 text-green-800 border border-green-100"
-                          : insight.type === "warning"
-                            ? "bg-yellow-50 text-yellow-800 border border-yellow-100"
-                            : "bg-blue-50 text-blue-800 border border-blue-100"
-                    }`}
-                  >
-                    <div className="mt-0.5 opacity-80">
-                      {insight.type === "danger" ? (
-                        <FaExclamationCircle />
-                      ) : insight.type === "success" ? (
-                        <FaCheckCircle />
-                      ) : (
-                        <FaLightbulb />
-                      )}
-                    </div>
-                    <p className="leading-snug">{insight.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* FIQUE DE OLHO (Direita - Menor) */}
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 flex flex-col">
+            <h3 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
+              <FaFireAlt className="text-orange-500" /> Insights Rápidos
+            </h3>
 
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex-grow">
-              <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">
-                Recentes
-              </h3>
-              <div className="flex flex-col gap-2.5">
-                {[...currentTrans]
-                  .sort((a, b) => new Date(b.date) - new Date(a.date))
-                  .slice(0, 4)
-                  .map((t) => (
-                    <div
-                      key={t.id}
-                      className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0"
-                    >
-                      <span className="text-sm font-medium text-gray-700 truncate pr-2 w-2/3">
-                        {t.description}
-                      </span>
-                      <span
-                        className={`text-sm font-bold whitespace-nowrap ${t.type === "credit" ? "text-green-600" : "text-gray-900"}`}
-                      >
-                        {t.type === "credit" ? "+" : "-"}
-                        {isVisible ? formatCurrency(t.value) : "••••"}
-                      </span>
-                    </div>
-                  ))}
-                {currentTrans.length === 0 && (
-                  <p className="text-sm text-gray-400 italic">Sem registros.</p>
-                )}
+            <div className="flex flex-col gap-4 flex-grow">
+              <div
+                className={`p-4 rounded-2xl border-l-4 ${realizedExpense > realizedIncome ? "bg-red-50 border-red-500" : "bg-green-50 border-green-500"}`}
+              >
+                <h4
+                  className={`text-xs font-bold uppercase mb-1 ${realizedExpense > realizedIncome ? "text-red-700" : "text-green-700"}`}
+                >
+                  Balanço Atual
+                </h4>
+                <p className="text-sm text-gray-700 leading-snug">
+                  {realizedExpense > realizedIncome
+                    ? `Cuidado! Você já gastou ${formatCurrency(realizedExpense - realizedIncome)} a mais do que ganhou.`
+                    : `Ótimo! Você está positivo em ${formatCurrency(realizedIncome - realizedExpense)}.`}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-blue-50 border-l-4 border-blue-500">
+                <h4 className="text-xs font-bold text-blue-700 uppercase mb-1">
+                  Vem por aí
+                </h4>
+                <p className="text-sm text-gray-700 leading-snug">
+                  Você ainda tem{" "}
+                  <strong>{formatCurrency(futureExpense)}</strong> agendados
+                  para sair da conta este mês.
+                </p>
+              </div>
+
+              <div className="mt-auto pt-4 border-t border-gray-100 text-center">
+                <p className="text-xs text-gray-400 italic">
+                  "O segredo não é quanto você ganha, mas como você gasta."
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <button
-        onClick={() => {
-          setTransactionModalType("debit");
-          setIsTransactionModalOpen(true);
-        }}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gray-900 text-white rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-black transition-all z-40"
-      >
-        <FaPlus />
-      </button>
-
       {showBalanceModal && (
         <BalanceModal
           onClose={() => setShowBalanceModal(false)}
           onSave={handleSaveInitialBalance}
-        />
-      )}
-      {isTransactionModalOpen && (
-        <TransactionModal
-          type={transactionModalType}
-          onClose={() => setIsTransactionModalOpen(false)}
-          onSave={handleSaveTransaction}
         />
       )}
     </div>

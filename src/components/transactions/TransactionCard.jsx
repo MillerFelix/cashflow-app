@@ -1,4 +1,5 @@
 import React from "react";
+// Adicionado FaUniversity
 import {
   FaEdit,
   FaTrash,
@@ -9,12 +10,12 @@ import {
   FaMoneyBillWave,
   FaQrcode,
   FaRegCreditCard,
+  FaUniversity,
 } from "react-icons/fa";
 
 function TransactionCard({ transaction, onRemove, onEdit, onDuplicate }) {
   const isCredit = transaction.type === "credit";
 
-  // Cores de fundo suaves
   const cardStyle = isCredit
     ? "bg-green-50 border-green-100 hover:bg-green-100/50"
     : "bg-red-50 border-red-100 hover:bg-red-100/50";
@@ -33,7 +34,7 @@ function TransactionCard({ transaction, onRemove, onEdit, onDuplicate }) {
   const today = new Date().toISOString().split("T")[0];
   const isFuture = transaction.date > today;
 
-  // Lógica para escolher o ícone do método de pagamento
+  // Lógica atualizada
   const getPaymentIcon = (method) => {
     switch (method) {
       case "credit":
@@ -44,6 +45,8 @@ function TransactionCard({ transaction, onRemove, onEdit, onDuplicate }) {
         return <FaMoneyBillWave className="text-green-600" />;
       case "pix":
         return <FaQrcode className="text-teal-600" />;
+      case "transfer":
+        return <FaUniversity className="text-indigo-600" />; // Ícone de Transferência
       default:
         return null;
     }
@@ -59,6 +62,8 @@ function TransactionCard({ transaction, onRemove, onEdit, onDuplicate }) {
         return "Dinheiro";
       case "pix":
         return "Pix";
+      case "transfer":
+        return "Transf."; // Label Transferência
       default:
         return null;
     }
@@ -68,7 +73,6 @@ function TransactionCard({ transaction, onRemove, onEdit, onDuplicate }) {
     <div
       className={`group p-5 rounded-2xl shadow-sm border transition-all duration-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden ${cardStyle}`}
     >
-      {/* Barra lateral colorida */}
       <div
         className={`absolute left-0 top-0 bottom-0 w-1.5 ${isCredit ? "bg-green-500" : "bg-red-500"}`}
       ></div>
@@ -79,14 +83,12 @@ function TransactionCard({ transaction, onRemove, onEdit, onDuplicate }) {
             {transaction.description}
           </h4>
 
-          {/* Badge: Fixa / Recorrente */}
           {transaction.isFixed && (
             <span className="flex items-center gap-1 bg-white text-blue-600 border border-blue-100 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shadow-sm">
               <FaSyncAlt size={9} /> Fixa
             </span>
           )}
 
-          {/* Badge: Futura / Agendada */}
           {isFuture && (
             <span className="flex items-center gap-1 bg-white text-orange-600 border border-orange-100 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shadow-sm">
               <FaClock size={9} /> Agendado
@@ -95,12 +97,11 @@ function TransactionCard({ transaction, onRemove, onEdit, onDuplicate }) {
         </div>
 
         <div className="flex items-center gap-3 text-xs font-medium text-gray-500 flex-wrap">
-          {/* Categoria */}
           <span className="bg-white/60 px-2 py-1 rounded-md text-gray-600 border border-gray-200/50">
             {transaction.category}
           </span>
 
-          {/* Ícone e Nome do Método de Pagamento (Só aparece se tiver sido salvo) */}
+          {/* Exibe o método de pagamento se existir */}
           {transaction.paymentMethod &&
             getPaymentLabel(transaction.paymentMethod) && (
               <div
@@ -116,7 +117,6 @@ function TransactionCard({ transaction, onRemove, onEdit, onDuplicate }) {
 
           <span className="opacity-40 hidden sm:inline">•</span>
 
-          {/* Data (Laranja se for futura) */}
           <span className={isFuture ? "text-orange-700 font-bold" : ""}>
             {formattedDate}
           </span>

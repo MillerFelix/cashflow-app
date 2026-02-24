@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Para redirecionar caso não tenha cartão
+import { useNavigate } from "react-router-dom";
 import TextInput from "../common/TextInput";
 import MoneyInput from "../common/MoneyInput";
 import ActionButtons from "../common/ActionButtons";
@@ -7,13 +7,14 @@ import CategoryDropdown from "../category/CategoryDropdown";
 import { expenseCategories, incomeCategories } from "../category/CategoryList";
 import { CategoryService } from "../../services/categoryService";
 import { useAuth } from "../../hooks/useAuth";
-import { useCards } from "../../hooks/useCards"; // Importamos os cartões
+import { useCards } from "../../hooks/useCards";
+// Adicionado FaUniversity abaixo
 import {
   FaMoneyBillWave,
   FaCreditCard,
   FaRegCreditCard,
   FaQrcode,
-  FaPlusCircle,
+  FaUniversity,
 } from "react-icons/fa";
 
 function TransactionModal({ type, onClose, onSave, initialData }) {
@@ -21,7 +22,6 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
   const userId = user?.uid;
   const navigate = useNavigate();
 
-  // Buscando cartões do usuário
   const { cards } = useCards(userId);
 
   const [description, setDescription] = useState("");
@@ -34,18 +34,17 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
 
   const [isFixed, setIsFixed] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("debit");
-
-  // Novo Estado: Cartão Selecionado
   const [selectedCardId, setSelectedCardId] = useState("");
-
   const [error, setError] = useState("");
 
   const categories = type === "credit" ? incomeCategories : expenseCategories;
   const isEditing = !!(initialData && initialData.id);
 
+  // --- NOVA LISTA DE MÉTODOS ---
   const paymentMethods = [
     { id: "money", label: "Dinheiro", icon: <FaMoneyBillWave /> },
     { id: "pix", label: "Pix", icon: <FaQrcode /> },
+    { id: "transfer", label: "Transf.", icon: <FaUniversity /> }, // Nova opção
     { id: "debit", label: "Débito", icon: <FaRegCreditCard /> },
     { id: "credit", label: "Crédito", icon: <FaCreditCard /> },
   ];
@@ -71,7 +70,7 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
       setSelectedSubcategory(initialData.subcategory || "");
       setIsFixed(initialData.isFixed || false);
       setPaymentMethod(initialData.paymentMethod || "debit");
-      setSelectedCardId(initialData.cardId || ""); // Carrega o cartão se existir
+      setSelectedCardId(initialData.cardId || "");
     }
   }, [initialData]);
 
@@ -98,7 +97,6 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
       setError("Por favor, preencha todos os campos obrigatórios.");
       return false;
     }
-    // Validação de Cartão: Se for Crédito ou Débito, TEM que ter cartão selecionado
     if (
       (paymentMethod === "credit" || paymentMethod === "debit") &&
       !selectedCardId
@@ -135,7 +133,7 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
           cardId:
             paymentMethod === "credit" || paymentMethod === "debit"
               ? selectedCardId
-              : null, // Salva o ID do cartão
+              : null,
         });
         onClose();
       }
@@ -157,7 +155,6 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
     ],
   );
 
-  // Verifica se precisa mostrar o seletor de cartões
   const needsCardSelection =
     paymentMethod === "credit" || paymentMethod === "debit";
 
@@ -181,7 +178,7 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
             label="Descrição *"
             value={description}
             onChange={setDescription}
-            placeholder="Ex: Mercado, Uber..."
+            placeholder="Ex: Salário, Mercado..."
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -205,12 +202,13 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
             onAddNewSubcategory={handleAddNewSubcategory}
           />
 
-          {/* SELETOR DE MÉTODO DE PAGAMENTO */}
+          {/* SELETOR DE MÉTODO DE PAGAMENTO (AGORA COM 5 OPÇÕES EM GRID) */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
               Forma de Pagamento
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            {/* Ajustei o grid para grid-cols-5 para caber todos, ou quebra em telas pequenas */}
+            <div className="grid grid-cols-5 gap-1.5">
               {paymentMethods.map((method) => (
                 <button
                   key={method.id}
@@ -230,7 +228,7 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
                     }`}
                 >
                   <div className="text-lg mb-1">{method.icon}</div>
-                  <span className="text-[10px] font-bold uppercase">
+                  <span className="text-[9px] font-bold uppercase truncate w-full text-center">
                     {method.label}
                   </span>
                 </button>
@@ -238,7 +236,6 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
             </div>
           </div>
 
-          {/* SELETOR DE CARTÃO (Só aparece se for Crédito/Débito) */}
           {needsCardSelection && (
             <div className="animate-fadeIn">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1 mb-2 block">
