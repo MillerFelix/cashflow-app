@@ -124,7 +124,7 @@ function GoalsModal({
               1.{" "}
               {isExpense
                 ? "Selecione a Categoria de Gasto"
-                : "Qual é o seu Sonho?"}
+                : "Qual é o seu Objetivo?"}
             </h3>
 
             {isExpense ? (

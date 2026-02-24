@@ -7,23 +7,20 @@ import StatusMessage from "../components/common/StatusMessage";
 import { useGoals } from "../hooks/useGoals";
 import { useTransactions } from "../hooks/useTransactions";
 import { useAuth } from "../hooks/useAuth";
-import {
-  expenseCategories,
-  incomeCategories,
-} from "../components/category/CategoryList";
+import { expenseCategories } from "../components/category/CategoryList";
 import {
   FaHeartbeat,
   FaShieldAlt,
   FaBullseye,
   FaChartPie,
   FaPlus,
+  FaInfoCircle,
 } from "react-icons/fa";
 
 function Goals() {
   const user = useAuth();
   const userId = user?.uid;
 
-  // Trazemos as metas e as transações para cruzar os dados de inteligência
   const {
     goals,
     isLoading,
@@ -36,7 +33,7 @@ function Goals() {
   const { transactions } = useTransactions(userId);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 1. Definição do que é "Custo de Vida Essencial" (Sobrevivência)
+  // 1. Definição do que é "Custo de Vida Essencial"
   const essentialCategories = useMemo(
     () => [
       "Moradia",
@@ -49,15 +46,14 @@ function Goals() {
     [],
   );
 
-  // 2. O Cérebro do Raio-X Financeiro (Pilares 1 e 2)
+  // 2. O Cérebro do Raio-X Financeiro
   const { costOfLiving, emergencyFund, totalIncome } = useMemo(() => {
-    const currentMonthPrefix = new Date().toISOString().slice(0, 7); // Ex: "2026-05"
+    const currentMonthPrefix = new Date().toISOString().slice(0, 7);
 
     let cost = 0;
     let income = 0;
 
     transactions.forEach((t) => {
-      // Analisa apenas o mês corrente
       if (t.date.startsWith(currentMonthPrefix)) {
         if (t.type === "debit" && essentialCategories.includes(t.category)) {
           cost += t.value;
@@ -70,23 +66,21 @@ function Goals() {
 
     return {
       costOfLiving: cost,
-      emergencyFund: cost * 6, // 6 meses do custo de vida atual
+      emergencyFund: cost * 6, // 6 meses do custo de vida
       totalIncome: income,
     };
   }, [transactions, essentialCategories]);
 
-  // 3. Separa as Metas em "Orçamento de Gastos" e "Objetivos de Vida"
+  // 3. Separa as Metas
   const { budgets, lifeGoals } = useMemo(() => {
     const expenseNames = expenseCategories.map((c) => c.name);
 
     return {
-      // É orçamento se tiver o tipo "expense", ou se for antigo e o nome for de uma despesa
       budgets: goals.filter(
         (g) =>
           g.type === "expense" ||
           (!g.type && expenseNames.includes(g.category)),
       ),
-      // É objetivo de vida se tiver o tipo "life", ou se for antigo e não for despesa
       lifeGoals: goals.filter(
         (g) =>
           g.type === "life" || (!g.type && !expenseNames.includes(g.category)),
@@ -101,119 +95,160 @@ function Goals() {
     }).format(val);
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-100 min-h-screen">
-      {/* Cabeçalho */}
-      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-800 flex items-center gap-3">
-            <FaBullseye className="text-blue-600" />
-            Planejamento Inteligente
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Seu GPS financeiro para organizar o presente e garantir o futuro.
-          </p>
-        </div>
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          bgColor="bg-blue-600"
-          hoverColor="hover:bg-blue-700"
-          className="text-white font-bold flex items-center gap-2 shadow-lg"
-        >
-          <FaPlus /> Novo Planejamento
-        </Button>
-      </div>
-      <StatusMessage message={successMessage} />
-      {/* ==========================================
-          PILARES 1 E 2: RAIO-X FINANCEIRO
-      ========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        {/* Card: Custo de Vida */}
-        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-red-500 relative overflow-hidden transition-transform hover:scale-[1.01]">
-          <FaHeartbeat className="absolute -right-4 -bottom-4 text-8xl text-red-50 opacity-50" />
-          <h3 className="text-gray-500 uppercase font-bold text-xs tracking-wider mb-1">
-            Custo de Vida Essencial (Mês Atual)
-          </h3>
-          <p className="text-3xl font-extrabold text-gray-800">
-            {formatCurrency(costOfLiving)}
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Valor mínimo para manter Moradia, Alimentação, Saúde e Transporte.
-            {totalIncome > 0 && (
-              <span className="block mt-1 text-xs font-semibold text-gray-400">
-                Compromete {Math.round((costOfLiving / totalIncome) * 100)}% das
-                suas receitas atuais.
-              </span>
-            )}
-          </p>
+    <div className="p-4 sm:p-6 bg-gray-100 min-h-screen font-sans text-gray-800 pb-20">
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
+        {/* CABEÇALHO */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
+              Planejamento
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Organize suas despesas e conquiste seus sonhos.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95"
+          >
+            <FaPlus size={12} /> Novo Planejamento
+          </button>
         </div>
 
-        {/* Card: Reserva Mestra */}
-        <div className="bg-gradient-to-br from-gray-800 to-black p-6 rounded-2xl shadow-md border-l-4 border-yellow-400 relative overflow-hidden transition-transform hover:scale-[1.01]">
-          <FaShieldAlt className="absolute -right-4 -bottom-4 text-8xl text-gray-700 opacity-30" />
-          <h3 className="text-gray-400 uppercase font-bold text-xs tracking-wider mb-1">
-            Reserva de Emergência Ideal (6 Meses)
-          </h3>
-          <p className="text-3xl font-extrabold text-yellow-400">
-            {formatCurrency(emergencyFund)}
-          </p>
-          <p className="text-sm text-gray-300 mt-2">
-            Baseado no seu custo de vida atual, este é o valor que você deve ter
-            guardado para imprevistos.
-          </p>
+        <StatusMessage message={successMessage} />
+
+        {/* ==========================================
+            PILARES 1 E 2: RAIO-X FINANCEIRO
+           ========================================== */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Card: Custo de Vida (Clean Style) */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 relative overflow-hidden group hover:border-red-200 transition-colors">
+            {/* Icone de Fundo */}
+            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+              <FaHeartbeat className="text-8xl text-red-600" />
+            </div>
+
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <FaHeartbeat className="text-red-500" /> Custo de Vida Essencial
+            </h3>
+
+            <p className="text-3xl font-black text-gray-900 mb-1 relative z-10">
+              {formatCurrency(costOfLiving)}
+            </p>
+
+            <div className="text-sm text-gray-500 leading-snug relative z-10">
+              Valor gasto este mês com itens básicos (Moradia, Saúde, etc).
+              {totalIncome > 0 && (
+                <div className="mt-3 inline-flex items-center gap-2 bg-red-50 text-red-700 px-3 py-1 rounded-lg text-xs font-bold">
+                  <FaInfoCircle />
+                  Compromete {Math.round((costOfLiving / totalIncome) * 100)}%
+                  da renda
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card: Reserva de Emergência (Estilo Escudo Azulado) */}
+          <div className="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 p-6 rounded-2xl shadow-lg text-white relative overflow-hidden flex flex-col justify-between group">
+            {/* O Escudinho de Fundo (Grande e Translúcido) */}
+            <div className="absolute -right-6 -bottom-8 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none transform rotate-12">
+              <FaShieldAlt className="text-9xl text-white" />
+            </div>
+
+            <div className="relative z-10">
+              <h3 className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <FaShieldAlt className="text-blue-300" /> Reserva Ideal (6
+                Meses)
+              </h3>
+              <p className="text-3xl font-black text-white tracking-tight">
+                {formatCurrency(emergencyFund)}
+              </p>
+            </div>
+
+            <p className="text-xs text-blue-100/80 mt-4 leading-relaxed max-w-sm relative z-10 font-medium">
+              Este é o valor recomendado para guardar e ter segurança total
+              baseada no seu custo de vida atual.
+            </p>
+          </div>
         </div>
-      </div>
-      {isLoading && <Loader />}
-      {/* ==========================================
-          PILAR 3: ORÇAMENTO (Controle de Gastos)
-      ========================================== */}
-      <div className="mb-10">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
-          <FaChartPie className="text-red-500" />
-          Orçamento Mensal (Freio de Gastos)
-        </h2>
-        {budgets.length === 0 ? (
-          <p className="text-gray-500 italic bg-white p-4 rounded-lg border border-dashed border-gray-300">
-            Você ainda não definiu limites para suas despesas variáveis. Crie um
-            planejamento para controlar seus gastos.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {budgets.map((goal) => (
-              <GoalCard key={goal.id} goal={goal} onDelete={deleteGoal} />
-            ))}
+
+        {isLoading && (
+          <div className="py-10 flex justify-center">
+            <Loader />
           </div>
         )}
+
+        {/* ==========================================
+            PILAR 3: ORÇAMENTO (Controle)
+           ========================================== */}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 border-b border-gray-200 pb-2 mt-4">
+            <FaChartPie className="text-blue-500" />
+            Orçamento Mensal
+          </h2>
+
+          {budgets.length === 0 ? (
+            <div className="bg-white p-8 rounded-2xl border border-dashed border-gray-300 text-center">
+              <p className="text-gray-400 text-sm">
+                Defina limites para suas categorias (ex: Lazer, Mercado) para
+                controlar gastos.
+              </p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="mt-2 text-blue-600 font-bold text-sm hover:underline"
+              >
+                Criar Limite
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {budgets.map((goal) => (
+                <GoalCard key={goal.id} goal={goal} onDelete={deleteGoal} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ==========================================
+            PILAR 4: OBJETIVOS DE VIDA (Sonhos)
+           ========================================== */}
+        <div className="flex flex-col gap-4 mb-8">
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 border-b border-gray-200 pb-2 mt-4">
+            <FaBullseye className="text-purple-500" />
+            Objetivos de Vida
+          </h2>
+
+          {lifeGoals.length === 0 ? (
+            <div className="bg-white p-8 rounded-2xl border border-dashed border-gray-300 text-center">
+              <p className="text-gray-400 text-sm">
+                Qual o seu próximo sonho? Carro novo? Viagem? Comece a planejar.
+              </p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="mt-2 text-purple-600 font-bold text-sm hover:underline"
+              >
+                Criar Objetivo
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {lifeGoals.map((goal) => (
+                <GoalCard key={goal.id} goal={goal} onDelete={deleteGoal} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Modal */}
+        <GoalsModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={addGoal}
+          newGoal={newGoal}
+          handleGoalChange={handleGoalChange}
+          existingGoals={goals}
+        />
       </div>
-      {/* ==========================================
-          PILAR 4: OBJETIVOS DE VIDA (Acelerador)
-      ========================================== */}
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
-          <FaBullseye className="text-green-600" />
-          Objetivos de Vida (Crescimento)
-        </h2>
-        {lifeGoals.length === 0 ? (
-          <p className="text-gray-500 italic bg-white p-4 rounded-lg border border-dashed border-gray-300">
-            Qual o seu próximo grande sonho? Defina objetivos para começar a
-            investir o seu dinheiro.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lifeGoals.map((goal) => (
-              <GoalCard key={goal.id} goal={goal} onDelete={deleteGoal} />
-            ))}
-          </div>
-        )}
-      </div>
-      {/* Modal Reutilizável de Criação */}
-      <GoalsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={addGoal}
-        newGoal={newGoal}
-        handleGoalChange={handleGoalChange}
-        existingGoals={goals}
-      />{" "}
     </div>
   );
 }
