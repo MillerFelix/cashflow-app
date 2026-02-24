@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import BalanceModal from "../components/dashboard/BalanceModal";
 import Loader from "../components/common/Loader";
 import TransactionModal from "../components/transactions/TransactionModal";
+import SmartCalendar from "../components/dashboard/SmartCalendar"; // IMPORTADO AQUI
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
@@ -17,6 +18,7 @@ import {
   FaFireAlt,
   FaCalendarCheck,
   FaTrophy,
+  FaCalendarAlt,
 } from "react-icons/fa";
 
 function Dashboard() {
@@ -180,11 +182,10 @@ function Dashboard() {
     };
   }, [totalMonthIncome, totalMonthExpenseSoFar]);
 
-  // --- RANKING POR SUBCATEGORIA (Inteligência Granular) ---
+  // --- RANKING POR SUBCATEGORIA ---
   const categoryRanking = useMemo(() => {
     const expenses = monthTransactions.filter((t) => t.type === "debit");
     const grouped = expenses.reduce((acc, t) => {
-      // Prioridade: Subcategoria > Categoria
       const key = t.subcategory || t.category;
       acc[key] = (acc[key] || 0) + t.value;
       return acc;
@@ -197,7 +198,7 @@ function Dashboard() {
         percentage: (value / (realizedExpense || 1)) * 100,
       }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5); // Top 5
+      .slice(0, 5);
   }, [monthTransactions, realizedExpense]);
 
   const handleSaveInitialBalance = async (initialValue) => {
@@ -320,9 +321,9 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* --- CONTEÚDO PRINCIPAL --- */}
+        {/* --- CONTEÚDO PRINCIPAL (Ranking & Dicas) --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* RANKING DE GASTOS (Atualizado com Subcategorias e Cores Unificadas) */}
+          {/* RANKING DE GASTOS */}
           <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
             <h3 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
               <FaTrophy className="text-red-500" /> Vilões do Orçamento (Top 5)
@@ -337,8 +338,7 @@ function Dashboard() {
             ) : (
               <div className="flex flex-col gap-5">
                 {categoryRanking.map((item, index) => {
-                  // Gradiente de cores: Do vermelho escuro para o laranja claro
-                  let colorClass = "bg-gray-400"; // Fallback
+                  let colorClass = "bg-gray-400";
                   if (index === 0) colorClass = "bg-red-700";
                   else if (index === 1) colorClass = "bg-red-600";
                   else if (index === 2) colorClass = "bg-red-500";
@@ -365,7 +365,6 @@ function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Barra de Progresso Unificada */}
                       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-1000 ease-out ${colorClass}`}
@@ -382,7 +381,7 @@ function Dashboard() {
             )}
           </div>
 
-          {/* FIQUE DE OLHO (Direita - Menor) */}
+          {/* FIQUE DE OLHO */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 flex flex-col">
             <h3 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
               <FaFireAlt className="text-orange-500" /> Insights Rápidos
@@ -422,6 +421,14 @@ function Dashboard() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* --- SEÇÃO DO CALENDÁRIO INTELIGENTE --- */}
+        <div>
+          <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider flex items-center gap-2 ml-1">
+            <FaCalendarAlt className="text-gray-400" /> Agenda Financeira
+          </h3>
+          <SmartCalendar transactions={transactions} />
         </div>
       </div>
 
