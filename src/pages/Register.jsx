@@ -19,17 +19,14 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // useCallback: Memoriza a função de registro
   const handleRegister = useCallback(
     async (e) => {
       e.preventDefault();
 
-      // 1. Limpa os erros atuais
       setError("");
       setPasswordError("");
       setSuccessMessage("");
 
-      // 2. Valida ANTES de chamar o Loader
       if (password.length < 6) {
         setPasswordError("A senha deve ter no mínimo 6 caracteres.");
         return;
@@ -40,7 +37,6 @@ function Register() {
         return;
       }
 
-      // 3. Tudo válido? Agora sim, mostramos o Loader
       setLoading(true);
 
       try {
@@ -51,11 +47,16 @@ function Register() {
         );
         const user = userCredential.user;
 
-        // Salva o nome do usuário no banco de dados
-        await setDoc(doc(db, "users", user.uid), { name });
+        await setDoc(doc(db, "users", user.uid), {
+          name,
+          email,
+          createdAt: new Date().toISOString(),
+          hasSetupInitialBalance: false,
+          avatar: "1.png",
+        });
 
         setSuccessMessage("Conta criada com sucesso!");
-        setTimeout(() => navigate("/login"), 2000);
+        setTimeout(() => navigate("/"), 2000);
       } catch (err) {
         setError("Erro ao criar conta. Tente novamente.");
       } finally {
@@ -70,8 +71,9 @@ function Register() {
       {loading && <Loader />}
       <div className="p-2 sm:p-6 bg-white rounded-3xl shadow-xl w-full max-w-md sm:max-w-lg max-h-screen overflow-auto">
         <div className="text-center mb-4 sm:mb-6">
+          {/* Imagem atualizada para PNG */}
           <img
-            src="/login-image.svg"
+            src="/login-image.png"
             alt="Registro"
             className="mx-auto w-16 sm:w-32 md:w-36 lg:w-40"
           />
@@ -133,7 +135,7 @@ function Register() {
         <p className="mt-4 sm:mt-6 text-center text-gray-600 text-sm sm:text-base">
           Já tem uma conta?{" "}
           <Link
-            to="/login"
+            to="/" // Link corrigido para a raiz (Login)
             className="text-green-600 hover:text-green-700 font-bold transition"
           >
             Faça login
