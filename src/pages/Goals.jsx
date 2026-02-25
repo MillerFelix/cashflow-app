@@ -38,36 +38,59 @@ function Goals() {
     () => [
       "Moradia",
       "Alimentação",
+      "Mercado", // Adicionei Mercado explicitamente se não tiver em Alimentação
       "Transporte",
       "Saúde",
       "Seguros",
       "Impostos e Taxas",
+      "Educação", // Educação costuma ser essencial
+      "Serviços", // Água, Luz, Internet
     ],
     [],
   );
 
-  // 2. O Cérebro do Raio-X Financeiro
+  // 2. O Cérebro do Raio-X Financeiro (CORRIGIDO E INTELIGENTE)
   const { costOfLiving, emergencyFund, totalIncome } = useMemo(() => {
+    if (!transactions.length)
+      return { costOfLiving: 0, emergencyFund: 0, totalIncome: 0 };
+
+    // Agrupamento por mês para calcular média
+    const expensesByMonth = {};
+    let totalIncomeCalc = 0;
+
+    // Data atual para referência
     const currentMonthPrefix = new Date().toISOString().slice(0, 7);
 
-    let cost = 0;
-    let income = 0;
-
     transactions.forEach((t) => {
-      if (t.date.startsWith(currentMonthPrefix)) {
-        if (t.type === "debit" && essentialCategories.includes(t.category)) {
-          cost += t.value;
-        }
-        if (t.type === "credit") {
-          income += t.value;
-        }
+      // Ignora Pagamento de Fatura para não duplicar (já conta os gastos individuais do cartão)
+      if (t.category === "Pagamento de Cartão") return;
+
+      const monthKey = t.date.slice(0, 7); // "2024-03"
+
+      if (t.type === "debit" && essentialCategories.includes(t.category)) {
+        expensesByMonth[monthKey] = (expensesByMonth[monthKey] || 0) + t.value;
+      }
+
+      // Calcula renda apenas do mês ATUAL para mostrar a porcentagem de comprometimento correta hoje
+      if (t.type === "credit" && t.date.startsWith(currentMonthPrefix)) {
+        totalIncomeCalc += t.value;
       }
     });
 
+    // Cálculo da Média Mensal de Custo de Vida
+    const months = Object.keys(expensesByMonth);
+    const numberOfMonths = months.length || 1;
+    const totalEssentialExpenses = Object.values(expensesByMonth).reduce(
+      (a, b) => a + b,
+      0,
+    );
+
+    const averageEssentialCost = totalEssentialExpenses / numberOfMonths;
+
     return {
-      costOfLiving: cost,
-      emergencyFund: cost * 6, // 6 meses do custo de vida
-      totalIncome: income,
+      costOfLiving: averageEssentialCost, // Agora é a MÉDIA, não o pico do mês
+      emergencyFund: averageEssentialCost * 6, // 6 meses da média
+      totalIncome: totalIncomeCalc,
     };
   }, [transactions, essentialCategories]);
 
@@ -130,6 +153,7 @@ function Goals() {
 
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
               <FaHeartbeat className="text-red-500" /> Custo de Vida Essencial
+              (Média)
             </h3>
 
             <p className="text-3xl font-black text-gray-900 mb-1 relative z-10">
@@ -137,12 +161,12 @@ function Goals() {
             </p>
 
             <div className="text-sm text-gray-500 leading-snug relative z-10">
-              Valor gasto este mês com itens básicos (Moradia, Saúde, etc).
+              Média mensal gasta com itens básicos (Moradia, Saúde, etc).
               {totalIncome > 0 && (
                 <div className="mt-3 inline-flex items-center gap-2 bg-red-50 text-red-700 px-3 py-1 rounded-lg text-xs font-bold">
                   <FaInfoCircle />
                   Compromete {Math.round((costOfLiving / totalIncome) * 100)}%
-                  da renda
+                  da renda atual
                 </div>
               )}
             </div>
@@ -167,7 +191,7 @@ function Goals() {
 
             <p className="text-xs text-blue-100/80 mt-4 leading-relaxed max-w-sm relative z-10 font-medium">
               Este é o valor recomendado para guardar e ter segurança total
-              baseada no seu custo de vida atual.
+              baseada no seu padrão de vida médio.
             </p>
           </div>
         </div>
