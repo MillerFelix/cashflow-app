@@ -19,6 +19,7 @@ import {
   FaEnvelope,
   FaChevronDown,
   FaChevronUp,
+  FaPlusCircle,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -34,14 +35,15 @@ function Profile() {
 
   // Dados Estratégicos
   const [workModel, setWorkModel] = useState("clt");
-  const [payDay, setPayDay] = useState("");
+  const [payDay, setPayDay] = useState(""); // Pagamento Principal
+  const [payDay2, setPayDay2] = useState(""); // Adiantamento (Novo)
   const [financialFocus, setFinancialFocus] = useState("control");
 
-  // Dados de Segurança (Auth)
+  // Dados de Segurança
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showSecurity, setShowSecurity] = useState(false); // <--- CONTROLA A VISIBILIDADE
+  const [showSecurity, setShowSecurity] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,6 +66,7 @@ function Profile() {
 
             setWorkModel(data.workModel || "clt");
             setPayDay(data.payDay || "");
+            setPayDay2(data.payDay2 || ""); // Carregar o segundo dia
             setFinancialFocus(data.financialFocus || "control");
           }
           if (user?.email) setNewEmail(user.email);
@@ -84,7 +87,6 @@ function Profile() {
     setErrorType("");
 
     try {
-      // 1. Atualizar dados no Firestore
       const docRef = doc(db, "users", userId);
       await updateDoc(docRef, {
         name,
@@ -92,25 +94,22 @@ function Profile() {
         avatar: selectedAvatar,
         workModel,
         payDay: parseInt(payDay) || 1,
+        payDay2: payDay2 ? parseInt(payDay2) : null, // Salva ou remove
         financialFocus,
       });
 
       let authMessage = "";
 
-      // 2. Só tenta atualizar segurança se a aba estiver aberta
       if (showSecurity) {
         if (newEmail !== user.email) {
           await updateEmail(user, newEmail);
           authMessage += " E-mail atualizado.";
         }
-
         if (newPassword) {
-          if (newPassword !== confirmPassword) {
+          if (newPassword !== confirmPassword)
             throw new Error("As senhas não conferem.");
-          }
-          if (newPassword.length < 6) {
+          if (newPassword.length < 6)
             throw new Error("A senha deve ter pelo menos 6 caracteres.");
-          }
           await updatePassword(user, newPassword);
           authMessage += " Senha atualizada.";
         }
@@ -118,23 +117,18 @@ function Profile() {
 
       setErrorType("success");
       setMessage(`Dados salvos com sucesso!${authMessage}`);
-
       setNewPassword("");
       setConfirmPassword("");
-      if (authMessage) setShowSecurity(false); // Fecha a aba se mudou senha com sucesso
-
+      if (authMessage) setShowSecurity(false);
       setTimeout(() => setMessage(""), 4000);
     } catch (error) {
       console.error("Erro ao salvar:", error);
       setErrorType("error");
-
-      if (error.code === "auth/requires-recent-login") {
+      if (error.code === "auth/requires-recent-login")
         setMessage("Para alterar senha/email, faça logout e entre novamente.");
-      } else if (error.code === "auth/email-already-in-use") {
+      else if (error.code === "auth/email-already-in-use")
         setMessage("Este e-mail já está em uso.");
-      } else {
-        setMessage(error.message || "Erro ao salvar alterações.");
-      }
+      else setMessage(error.message || "Erro ao salvar alterações.");
     } finally {
       setSaving(false);
     }
@@ -170,11 +164,7 @@ function Profile() {
 
         {message && (
           <div
-            className={`mb-6 p-4 rounded-xl text-sm font-bold text-center border animate-fadeIn ${
-              errorType === "error"
-                ? "bg-red-50 text-red-600 border-red-200"
-                : "bg-green-50 text-green-700 border-green-200"
-            }`}
+            className={`mb-6 p-4 rounded-xl text-sm font-bold text-center border animate-fadeIn ${errorType === "error" ? "bg-red-50 text-red-600 border-red-200" : "bg-green-50 text-green-700 border-green-200"}`}
           >
             {message}
           </div>
@@ -184,11 +174,10 @@ function Profile() {
           onSubmit={handleSave}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
         >
-          {/* COLUNA 1: IDENTIDADE */}
+          {/* IDENTIDADE */}
           <div className="lg:col-span-1 flex flex-col gap-6">
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 flex flex-col items-center text-center relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-blue-600 to-indigo-900"></div>
-
               <div className="relative mt-8 mb-4 group cursor-pointer">
                 <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-gray-200 overflow-hidden relative">
                   <img
@@ -206,7 +195,6 @@ function Profile() {
                   <FaCamera size={12} />
                 </div>
               </div>
-
               <h2 className="text-xl font-bold text-gray-900 truncate w-full px-2">
                 {name || "Usuário"}
               </h2>
@@ -224,8 +212,7 @@ function Profile() {
                       key={av}
                       type="button"
                       onClick={() => setSelectedAvatar(av)}
-                      className={`relative aspect-square rounded-full overflow-hidden border-2 transition-all 
-                        ${selectedAvatar === av ? "border-blue-600 ring-2 ring-blue-100 scale-110 z-10" : "border-transparent hover:border-gray-300"}`}
+                      className={`relative aspect-square rounded-full overflow-hidden border-2 transition-all ${selectedAvatar === av ? "border-blue-600 ring-2 ring-blue-100 scale-110 z-10" : "border-transparent hover:border-gray-300"}`}
                     >
                       <img
                         src={`/avatars/${av}`}
@@ -239,9 +226,9 @@ function Profile() {
             </div>
           </div>
 
-          {/* COLUNA 2: DADOS */}
+          {/* DADOS */}
           <div className="lg:col-span-2 flex flex-col gap-6">
-            {/* 1. DADOS PESSOAIS */}
+            {/* DADOS PESSOAIS */}
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <FaUserCircle className="text-blue-500" /> Dados Básicos
@@ -273,13 +260,13 @@ function Profile() {
               </div>
             </div>
 
-            {/* 2. INTELIGÊNCIA FINANCEIRA */}
+            {/* PERFIL FINANCEIRO - ATUALIZADO */}
             <div className="bg-white p-6 rounded-3xl shadow-sm border-l-4 border-indigo-500">
               <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                 <FaBriefcase className="text-indigo-500" /> Perfil Financeiro
               </h3>
               <p className="text-sm text-gray-500 mb-6">
-                Informações para calibrar as dicas financeiras do app.
+                Informações para calibrar as dicas financeiras.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -300,27 +287,59 @@ function Profile() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Dia do Recebimento
+                {/* LOGICA DE DOIS PAGAMENTOS */}
+                <div className="sm:col-span-2 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Quando o dinheiro cai?
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                      <FaCalendarAlt />
+                  <div className="flex gap-4 items-start">
+                    <div className="flex-1">
+                      <label className="text-[10px] font-bold text-indigo-700 mb-1 block">
+                        Dia Principal
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                          <FaCalendarAlt />
+                        </div>
+                        <input
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={payDay}
+                          onChange={(e) => setPayDay(e.target.value)}
+                          className="w-full pl-10 p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-100 outline-none text-sm font-bold"
+                          placeholder="Ex: 5"
+                        />
+                      </div>
                     </div>
-                    <input
-                      type="number"
-                      min="1"
-                      max="31"
-                      value={payDay}
-                      onChange={(e) => setPayDay(e.target.value)}
-                      className="w-full pl-10 p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 outline-none text-sm font-bold text-gray-700"
-                      placeholder="Ex: 5"
-                    />
+
+                    <div className="flex-1">
+                      <label className="text-[10px] font-bold text-indigo-700 mb-1 block">
+                        Adiantamento / Vale (Opcional)
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                          <FaCalendarAlt />
+                        </div>
+                        <input
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={payDay2}
+                          onChange={(e) => setPayDay2(e.target.value)}
+                          className="w-full pl-10 p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-100 outline-none text-sm font-bold"
+                          placeholder="Ex: 20"
+                        />
+                      </div>
+                    </div>
                   </div>
+                  <p className="text-[10px] text-gray-400 mt-2">
+                    Preencha o segundo dia se você recebe quinzenalmente (Ex:
+                    dia 5 e dia 20).
+                  </p>
                 </div>
 
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-2 mt-2">
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Foco Atual
                   </label>
@@ -335,12 +354,7 @@ function Profile() {
                         key={opt.id}
                         type="button"
                         onClick={() => setFinancialFocus(opt.id)}
-                        className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all
-                          ${
-                            financialFocus === opt.id
-                              ? "bg-indigo-50 border-indigo-500 text-indigo-700 ring-1 ring-indigo-500"
-                              : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
-                          }`}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${financialFocus === opt.id ? "bg-indigo-50 border-indigo-500 text-indigo-700 ring-1 ring-indigo-500" : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"}`}
                       >
                         <span className="text-xl mb-1">{opt.icon}</span>
                         <span className="text-xs font-bold">{opt.label}</span>
@@ -351,11 +365,10 @@ function Profile() {
               </div>
             </div>
 
-            {/* 3. SEGURANÇA DA CONTA (Ocultável) */}
+            {/* SEGURANÇA */}
             <div
               className={`bg-white rounded-3xl shadow-sm border transition-all duration-300 overflow-hidden ${showSecurity ? "border-red-200" : "border-gray-200 hover:border-gray-300"}`}
             >
-              {/* Cabeçalho Clicável (Accordion) */}
               <button
                 type="button"
                 onClick={() => setShowSecurity(!showSecurity)}
@@ -378,7 +391,6 @@ function Profile() {
                 )}
               </button>
 
-              {/* Conteúdo Expansível */}
               {showSecurity && (
                 <div className="px-6 pb-6 pt-0 animate-fadeIn">
                   <div className="border-t border-gray-100 pt-4 grid grid-cols-1 gap-4">
@@ -386,8 +398,6 @@ function Profile() {
                       ⚠️ Atenção: Alterar esses dados pode exigir que você faça
                       login novamente.
                     </p>
-
-                    {/* Alterar E-mail */}
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                         Alterar E-mail
@@ -398,7 +408,7 @@ function Profile() {
                         </div>
                         <input
                           type="email"
-                          autoComplete="off" // Evita autocomplete agressivo
+                          autoComplete="off"
                           value={newEmail}
                           onChange={(e) => setNewEmail(e.target.value)}
                           className="w-full pl-10 p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-100 outline-none text-sm"
@@ -406,8 +416,6 @@ function Profile() {
                         />
                       </div>
                     </div>
-
-                    {/* Alterar Senha */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
@@ -415,7 +423,7 @@ function Profile() {
                         </label>
                         <input
                           type="password"
-                          autoComplete="new-password" // Padrão correto para evitar preenchimento automático
+                          autoComplete="new-password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-100 outline-none text-sm"

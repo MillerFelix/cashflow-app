@@ -3,50 +3,48 @@ import {
   FaHome,
   FaUtensils,
   FaCar,
-  FaMedkit,
+  FaHeartbeat,
+  FaGamepad,
   FaGraduationCap,
-  FaTicketAlt,
+  FaShoppingCart,
+  FaPlane,
   FaTshirt,
-  FaShieldAlt,
-  FaFileInvoiceDollar,
-  FaShoppingBag,
-  FaMoneyBillWave,
-  FaBriefcase,
-  FaBuilding,
-  FaChartLine,
+  FaHammer,
   FaGift,
-  FaCoins,
+  FaBriefcase,
+  FaMoneyBillWave,
+  FaChartLine,
+  FaPiggyBank,
+  FaExchangeAlt,
+  FaCreditCard,
 } from "react-icons/fa";
 
-/**
- * Lista Central de Categorias (Macro Categorias)
- * A partir daqui, o utilizador pode criar as suas próprias subcategorias detalhadas.
- */
-
 export const expenseCategories = [
-  { name: "Moradia", icon: <FaHome />, type: "expense" },
-  { name: "Alimentação", icon: <FaUtensils />, type: "expense" },
-  { name: "Transporte", icon: <FaCar />, type: "expense" },
-  { name: "Saúde", icon: <FaMedkit />, type: "expense" },
-  { name: "Educação", icon: <FaGraduationCap />, type: "expense" },
-  { name: "Lazer e Entretenimento", icon: <FaTicketAlt />, type: "expense" },
-  { name: "Roupas e Acessórios", icon: <FaTshirt />, type: "expense" },
-  { name: "Seguros", icon: <FaShieldAlt />, type: "expense" },
-  { name: "Impostos e Taxas", icon: <FaFileInvoiceDollar />, type: "expense" },
-  { name: "Outras Despesas", icon: <FaShoppingBag />, type: "expense" },
+  { name: "Moradia", icon: <FaHome />, color: "bg-blue-500" },
+  { name: "Alimentação", icon: <FaUtensils />, color: "bg-orange-500" },
+  { name: "Transporte", icon: <FaCar />, color: "bg-gray-500" },
+  { name: "Saúde", icon: <FaHeartbeat />, color: "bg-red-500" },
+  { name: "Lazer", icon: <FaGamepad />, color: "bg-purple-500" },
+  { name: "Educação", icon: <FaGraduationCap />, color: "bg-yellow-500" },
+  { name: "Mercado", icon: <FaShoppingCart />, color: "bg-green-500" },
+  { name: "Viagem", icon: <FaPlane />, color: "bg-cyan-500" },
+  { name: "Vestuário", icon: <FaTshirt />, color: "bg-pink-500" },
+  { name: "Serviços", icon: <FaHammer />, color: "bg-indigo-500" },
+  { name: "Presentes", icon: <FaGift />, color: "bg-rose-500" },
+  {
+    name: "Pagamento de Cartão",
+    icon: <FaCreditCard />,
+    color: "bg-slate-700",
+  },
+  { name: "Outros Gastos", icon: <FaExchangeAlt />, color: "bg-slate-500" },
 ];
 
 export const incomeCategories = [
-  { name: "Salário", icon: <FaMoneyBillWave />, type: "income" },
-  { name: "Freelance e Renda Extra", icon: <FaBriefcase />, type: "income" },
-  { name: "Renda de Aluguéis", icon: <FaBuilding />, type: "income" },
-  {
-    name: "Rendimentos de Investimentos",
-    icon: <FaChartLine />,
-    type: "income",
-  },
-  { name: "Doações e Presentes", icon: <FaGift />, type: "income" },
-  { name: "Outros Ganhos", icon: <FaCoins />, type: "income" },
+  { name: "Salário", icon: <FaBriefcase />, color: "bg-green-600" },
+  { name: "Freelance", icon: <FaMoneyBillWave />, color: "bg-emerald-500" },
+  { name: "Investimentos", icon: <FaChartLine />, color: "bg-blue-600" },
+  { name: "Presente", icon: <FaGift />, color: "bg-purple-500" },
+  { name: "Outros Ganhos", icon: <FaPiggyBank />, color: "bg-teal-500" },
 ];
 
 /**

@@ -6,21 +6,19 @@ import Loader from "../components/common/Loader";
 import Button from "../components/common/Button";
 import TextInput from "../components/common/TextInput";
 import MoneyInput from "../components/common/MoneyInput";
-import TransactionModal from "../components/transactions/TransactionModal";
+import ConfirmationModal from "../components/common/ConfirmationModal";
 import {
   FaPlus,
   FaCreditCard,
   FaTrash,
   FaEdit,
   FaShoppingBag,
-  FaArrowRight,
-  FaCheckCircle,
   FaHistory,
   FaFileInvoiceDollar,
   FaClock,
-  FaSyncAlt,
   FaInfoCircle,
-  FaCalendarCheck,
+  FaCheckCircle,
+  FaCalendarDay,
 } from "react-icons/fa";
 
 function Cards() {
@@ -39,10 +37,10 @@ function Cards() {
     addTransaction,
   } = useTransactions(userId);
 
+  // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCard, setEditingCard] = useState(null);
-
-  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [isPayConfirmOpen, setIsPayConfirmOpen] = useState(false);
   const [invoiceToPay, setInvoiceToPay] = useState(null);
 
   const [selectedCardDetail, setSelectedCardDetail] = useState(null);
@@ -64,12 +62,24 @@ function Cards() {
     { label: "Red", value: "from-red-700 to-red-500" },
   ];
 
-  // --- CÁLCULOS CORRIGIDOS ---
+  const getMonthName = (monthIndex) =>
+    new Date(2024, monthIndex, 1).toLocaleDateString("pt-BR", {
+      month: "long",
+    });
+  const formatCurrency = (val) =>
+    new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(val);
+  const formatDate = (dateStr) =>
+    dateStr.split("-").reverse().slice(0, 2).join("/");
+  const formatFullDate = (dateStr) => dateStr.split("-").reverse().join("/"); // DD/MM/AAAA
+
+  // --- LÓGICA DE PROCESSAMENTO ---
   const processedCards = useMemo(() => {
     if (!cards.length) return [];
 
     return cards.map((card) => {
-      // 1. Filtra despesas de crédito deste cartão
       const cardTrans = transactions.filter(
         (t) =>
           t.cardId === card.id &&
@@ -78,14 +88,12 @@ function Cards() {
       );
 
       const invoices = {};
-      let totalUsedLimit = 0; // Vai somar apenas o que de fato consome o limite HOJE
+      let totalUsedLimit = 0;
 
-      // 2. Define a data de hoje e a "Chave" da fatura aberta
       const today = new Date();
       let currentMonth = today.getMonth();
       let currentYear = today.getFullYear();
 
-      // Se já passou do dia de fechamento, a fatura atual já é a do mês seguinte
       if (today.getDate() >= card.closingDay) {
         currentMonth++;
         if (currentMonth > 11) {
@@ -95,14 +103,13 @@ function Cards() {
       }
       const openInvoiceKey = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`;
 
-      // 3. Processa cada transação
+      // Distribuição
       cardTrans.forEach((t) => {
         const tDate = new Date(t.date + "T12:00:00");
         const day = tDate.getDate();
         let invoiceMonth = tDate.getMonth();
         let invoiceYear = tDate.getFullYear();
 
-        // Regra de Ouro: Compra no dia do fechamento ou depois = Próxima Fatura
         if (day >= card.closingDay) {
           invoiceMonth++;
           if (invoiceMonth > 11) {
@@ -120,23 +127,40 @@ function Cards() {
             year: invoiceYear,
             total: 0,
             transactions: [],
+            isPaid: false,
+            paidDate: null, // <--- Novo Campo: Data do Pagamento
           };
         }
 
         invoices[invoiceKey].transactions.push(t);
         invoices[invoiceKey].total += t.value;
 
-        // --- CORREÇÃO DO LIMITE ---
-        // Somamos ao limite usado APENAS se estiver na Fatura Aberta.
-        // Transações de faturas futuras (Recorrências/Assinaturas) NÃO comem o limite visualmente agora.
-        // Se fosse uma compra parcelada, o ideal seria comer, mas como o app trata "Fixa" como assinatura,
-        // é melhor não bloquear o limite para não assustar o usuário com "84% usado".
-        if (invoiceKey === openInvoiceKey) {
+        if (invoiceKey >= openInvoiceKey) {
           totalUsedLimit += t.value;
         }
       });
 
-      // 4. Organiza os grupos (Passado, Presente, Futuro)
+      // --- DETECTOR DE PAGAMENTO (AGORA COM ANO) ---
+      Object.values(invoices).forEach((inv) => {
+        // String ÚNICA: "Pagamento Fatura Nubank - Janeiro/2026"
+        const expectedDesc = `Pagamento Fatura ${card.name} - ${getMonthName(inv.month)}/${inv.year}`;
+
+        // Encontra a transação exata
+        const paymentTrans = transactions.find(
+          (t) =>
+            (t.paymentMethod === "transfer" ||
+              t.paymentMethod === "debit" ||
+              t.paymentMethod === "money") &&
+            t.category === "Pagamento de Cartão" &&
+            t.description === expectedDesc,
+        );
+
+        if (paymentTrans) {
+          inv.isPaid = true;
+          inv.paidDate = paymentTrans.date; // <--- Guarda a data
+        }
+      });
+
       const history = [];
       const future = [];
       let openInvoice = {
@@ -145,6 +169,7 @@ function Cards() {
         year: currentYear,
         total: 0,
         transactions: [],
+        isPaid: false,
       };
 
       Object.values(invoices).forEach((inv) => {
@@ -162,7 +187,6 @@ function Cards() {
         100,
         (totalUsedLimit / numericLimit) * 100,
       );
-
       const bestBuyDay = card.closingDay + 1 > 31 ? 1 : card.closingDay + 1;
 
       return {
@@ -189,6 +213,38 @@ function Cards() {
   }, [processedCards, selectedCardDetail]);
 
   // --- HANDLERS ---
+
+  const handleRequestPayment = (invoice, cardName) => {
+    setInvoiceToPay({
+      invoiceData: invoice,
+      cardName: cardName,
+      monthName: getMonthName(invoice.month),
+      year: invoice.year, // <--- Passa o ano
+      formattedValue: formatCurrency(invoice.total),
+    });
+    setIsPayConfirmOpen(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!invoiceToPay) return;
+
+    // CRIA A TRANSAÇÃO COM O ANO NA DESCRIÇÃO
+    await addTransaction({
+      description: `Pagamento Fatura ${invoiceToPay.cardName} - ${invoiceToPay.monthName}/${invoiceToPay.year}`,
+      value: invoiceToPay.invoiceData.total,
+      date: new Date().toISOString().split("T")[0],
+      category: "Pagamento de Cartão",
+      paymentMethod: "transfer",
+      isFixed: false,
+      type: "debit",
+      cardId: null,
+    });
+
+    setIsPayConfirmOpen(false);
+    setInvoiceToPay(null);
+  };
+
+  // Handlers do Modal de Cartão
   const handleOpenModal = (card = null) => {
     if (card) {
       setEditingCard(card);
@@ -222,37 +278,6 @@ function Cards() {
     setIsModalOpen(false);
   };
 
-  const handleOpenPayModal = (invoice, cardName) => {
-    setInvoiceToPay({
-      description: `Pagamento Fatura ${cardName} - ${getMonthName(invoice.month)}`,
-      value: invoice.total,
-      date: new Date().toISOString().split("T")[0],
-    });
-    setIsPayModalOpen(true);
-  };
-
-  const handlePayInvoice = async (data) => {
-    await addTransaction({
-      ...data,
-      isFixed: false,
-      cardId: null,
-      category: "Pagamento de Cartão",
-    });
-    setIsPayModalOpen(false);
-  };
-
-  const formatCurrency = (val) =>
-    new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(val);
-  const formatDate = (dateStr) =>
-    dateStr.split("-").reverse().slice(0, 2).join("/");
-  const getMonthName = (monthIndex) =>
-    new Date(2024, monthIndex, 1).toLocaleDateString("pt-BR", {
-      month: "long",
-    });
-
   return (
     <div className="p-4 sm:p-6 bg-gray-100 min-h-screen font-sans text-gray-800 pb-24">
       <div className="max-w-7xl mx-auto flex flex-col gap-6">
@@ -266,7 +291,6 @@ function Cards() {
               Gestão de limite, faturas e vencimentos.
             </p>
           </div>
-          {/* Botão AZUL padronizado */}
           <button
             onClick={() => handleOpenModal()}
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95"
@@ -288,8 +312,7 @@ function Cards() {
               Sua carteira está vazia
             </h3>
             <p className="text-gray-500 max-w-sm mb-8">
-              Cadastre seu cartão de crédito para controlar o limite e ver as
-              previsões de fatura.
+              Cadastre seu cartão de crédito para controlar o limite.
             </p>
             <button
               onClick={() => handleOpenModal()}
@@ -300,7 +323,7 @@ function Cards() {
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-8 items-start">
-            {/* COLUNA ESQUERDA: LISTA DE CARTÕES */}
+            {/* COLUNA ESQUERDA: LISTA */}
             <div className="w-full lg:w-1/3 flex flex-col gap-5">
               <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">
                 Selecione um Cartão
@@ -315,7 +338,6 @@ function Cards() {
                     className={`relative h-48 rounded-2xl p-5 text-white shadow-lg bg-gradient-to-br ${card.color} flex flex-col justify-between overflow-hidden ring-4 ${activeDetail?.id === card.id ? "ring-blue-100" : "ring-transparent"}`}
                   >
                     <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-
                     <div className="flex justify-between items-start z-10">
                       <div>
                         <h3 className="text-xl font-bold tracking-wide">
@@ -325,7 +347,6 @@ function Cards() {
                           Vence dia {card.dueDay}
                         </p>
                       </div>
-
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => {
@@ -348,23 +369,19 @@ function Cards() {
                         </button>
                       </div>
                     </div>
-
                     <div className="z-10">
                       <div className="flex justify-between text-xs font-medium mb-1.5 opacity-90">
-                        <span>Limite Utilizado (Atual)</span>
+                        <span>Limite Utilizado</span>
                         <span className="font-bold">
                           {formatCurrency(card.totalUsedLimit)}
                         </span>
                       </div>
-
-                      {/* Barra de Progresso do Limite (Baseada apenas na fatura atual) */}
                       <div className="w-full h-1.5 bg-black/30 rounded-full mb-4 overflow-hidden backdrop-blur-sm">
                         <div
                           className={`h-full rounded-full transition-all duration-1000 ${card.usagePercentage > 90 ? "bg-red-400" : card.usagePercentage > 50 ? "bg-yellow-300" : "bg-green-400"}`}
                           style={{ width: `${card.usagePercentage}%` }}
                         ></div>
                       </div>
-
                       <div className="flex justify-between items-end">
                         <div>
                           <p className="text-[10px] font-bold opacity-70 uppercase">
@@ -389,9 +406,8 @@ function Cards() {
               ))}
             </div>
 
-            {/* COLUNA DIREITA: DETALHES DESTRINCHADOS */}
+            {/* COLUNA DIREITA: DETALHES */}
             <div className="w-full lg:w-2/3 flex flex-col gap-8 animate-fadeIn">
-              {/* CABEÇALHO DO DETALHE */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                 <div>
                   <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
@@ -403,7 +419,7 @@ function Cards() {
                   </p>
                 </div>
                 <div className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-100 flex items-center gap-2">
-                  <FaInfoCircle />
+                  <FaInfoCircle />{" "}
                   <span>
                     Melhor dia de compra:{" "}
                     <strong>Dia {activeDetail.bestBuyDay}</strong>
@@ -411,23 +427,22 @@ function Cards() {
                 </div>
               </div>
 
-              {/* BLOCO 1: FATURA ABERTA (O AGORA) */}
+              {/* FATURA ABERTA */}
               <div>
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2">
                   <FaShoppingBag className="text-blue-600" /> Fatura Aberta
                   (Atual)
                 </h3>
-
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative">
                   <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
-
                   <div className="p-6">
                     <div className="flex justify-between items-end mb-6 border-b border-gray-50 pb-4">
                       <div>
                         <p className="text-sm text-gray-500">
                           Vencimento em{" "}
                           <strong className="capitalize text-gray-800">
-                            {getMonthName(activeDetail.openInvoice.month)}
+                            {getMonthName(activeDetail.openInvoice.month)}/
+                            {activeDetail.openInvoice.year}
                           </strong>
                         </p>
                         <p className="text-3xl font-black text-gray-900 mt-1">
@@ -440,10 +455,9 @@ function Cards() {
                         </span>
                       </div>
                     </div>
-
                     {activeDetail.openInvoice.transactions.length === 0 ? (
                       <div className="text-center py-6 text-gray-400 text-sm italic">
-                        Nenhum gasto nesta fatura até agora.
+                        Nenhum gasto nesta fatura.
                       </div>
                     ) : (
                       <div className="space-y-1">
@@ -483,7 +497,7 @@ function Cards() {
                 </div>
               </div>
 
-              {/* BLOCO 2: PRÓXIMAS FATURAS (O FUTURO) */}
+              {/* FUTURAS */}
               {activeDetail.future.length > 0 && (
                 <div>
                   <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2">
@@ -498,7 +512,7 @@ function Cards() {
                         >
                           <div className="flex items-center gap-4">
                             <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1.5 rounded-lg text-xs capitalize text-center w-24">
-                              {getMonthName(inv.month)}
+                              {getMonthName(inv.month)}{" "}
                               <span className="block text-[9px] opacity-70">
                                 {inv.year}
                               </span>
@@ -522,7 +536,7 @@ function Cards() {
                 </div>
               )}
 
-              {/* BLOCO 3: HISTÓRICO (O PASSADO) */}
+              {/* HISTÓRICO DE FATURAS FECHADAS (ATUALIZADO) */}
               <div>
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2">
                   <FaHistory className="text-gray-400" /> Faturas Fechadas
@@ -530,7 +544,7 @@ function Cards() {
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                   {activeDetail.history.length === 0 ? (
                     <p className="p-6 text-sm text-gray-400 italic text-center">
-                      Nenhuma fatura fechada no histórico.
+                      Nenhuma fatura fechada.
                     </p>
                   ) : (
                     <div className="divide-y divide-gray-100">
@@ -540,30 +554,60 @@ function Cards() {
                           className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="bg-green-100 text-green-600 p-2.5 rounded-xl">
-                              <FaFileInvoiceDollar size={16} />
+                            <div
+                              className={`p-2.5 rounded-xl ${invoice.isPaid ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"}`}
+                            >
+                              {invoice.isPaid ? (
+                                <FaCheckCircle size={16} />
+                              ) : (
+                                <FaFileInvoiceDollar size={16} />
+                              )}
                             </div>
                             <div>
+                              {/* EXIBE MÊS E ANO */}
                               <p className="font-bold text-gray-800 text-sm capitalize">
-                                {getMonthName(invoice.month)}
+                                {getMonthName(invoice.month)}{" "}
+                                <span className="text-gray-400 text-xs font-normal">
+                                  / {invoice.year}
+                                </span>
                               </p>
-                              <p className="text-[10px] text-gray-500">
-                                {invoice.transactions.length} compras
+                              {/* EXIBE DATA SE PAGO */}
+                              <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                                {invoice.isPaid && invoice.paidDate ? (
+                                  <>
+                                    <FaCalendarDay size={9} /> Pago dia{" "}
+                                    {formatFullDate(invoice.paidDate)}
+                                  </>
+                                ) : (
+                                  `${invoice.transactions.length} compras`
+                                )}
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
-                            <span className="font-bold text-gray-900">
+                            <span
+                              className={`font-bold ${invoice.isPaid ? "text-green-600" : "text-gray-900"}`}
+                            >
                               {formatCurrency(invoice.total)}
                             </span>
-                            <button
-                              onClick={() =>
-                                handleOpenPayModal(invoice, activeDetail.name)
-                              }
-                              className="text-xs bg-white border border-gray-200 hover:bg-green-50 hover:text-green-700 hover:border-green-200 text-gray-600 font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm"
-                            >
-                              Pagar
-                            </button>
+
+                            {!invoice.isPaid ? (
+                              <button
+                                onClick={() =>
+                                  handleRequestPayment(
+                                    invoice,
+                                    activeDetail.name,
+                                  )
+                                }
+                                className="text-xs bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md active:scale-95"
+                              >
+                                Pagar
+                              </button>
+                            ) : (
+                              <span className="text-xs font-bold bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-100">
+                                PAGO
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -575,7 +619,7 @@ function Cards() {
           </div>
         )}
 
-        {/* MODAIS */}
+        {/* MODAL DE CRIAÇÃO DO CARTÃO */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
@@ -659,18 +703,18 @@ function Cards() {
           </div>
         )}
 
-        {isPayModalOpen && (
-          <TransactionModal
-            type="debit"
-            initialData={{
-              description: invoiceToPay.description,
-              value: invoiceToPay.value,
-              date: invoiceToPay.date,
-              category: "Pagamento de Cartão",
-              paymentMethod: "money",
-            }}
-            onClose={() => setIsPayModalOpen(false)}
-            onSave={handlePayInvoice}
+        {/* MODAL DE CONFIRMAÇÃO DE PAGAMENTO (USANDO PROPS COMPATÍVEIS) */}
+        {isPayConfirmOpen && invoiceToPay && (
+          <ConfirmationModal
+            showModal={isPayConfirmOpen}
+            title="Confirmar Pagamento de Fatura"
+            description={`Deseja confirmar o pagamento da fatura de ${invoiceToPay.monthName}/${invoiceToPay.year} no valor de ${invoiceToPay.formattedValue}?`}
+            onConfirm={handleConfirmPayment}
+            onCancel={() => setIsPayConfirmOpen(false)}
+            confirmText="Pagar Agora"
+            cancelText="Cancelar"
+            confirmBgColor="bg-green-600"
+            confirmHoverColor="hover:bg-green-700"
           />
         )}
       </div>
