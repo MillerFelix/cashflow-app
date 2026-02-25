@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom"; // Hook de navegação adicionado
 import BalanceModal from "../components/dashboard/BalanceModal";
 import Loader from "../components/common/Loader";
 import TransactionModal from "../components/transactions/TransactionModal";
-import SmartCalendar from "../components/dashboard/SmartCalendar"; // IMPORTADO AQUI
+import SmartCalendar from "../components/dashboard/SmartCalendar";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
@@ -24,10 +25,12 @@ import {
 function Dashboard() {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [userName, setUserName] = useState("");
+  const [userAvatar, setUserAvatar] = useState("1.png"); // Estado para o avatar
 
   const { fetchGoals } = useGoals();
   const user = useAuth();
   const userId = user?.uid;
+  const navigate = useNavigate(); // Hook de navegação
 
   const {
     transactions,
@@ -49,6 +52,7 @@ function Dashboard() {
           if (userSnapshot.exists()) {
             const userData = userSnapshot.data();
             setUserName(userData.name?.split(" ")[0] || "Usuário");
+            if (userData.avatar) setUserAvatar(userData.avatar); // Carrega o avatar
             if (!userData.hasSetupInitialBalance) setShowBalanceModal(true);
           }
         } catch (error) {
@@ -231,16 +235,35 @@ function Dashboard() {
   return (
     <div className="p-4 sm:p-6 bg-gray-100 min-h-screen relative font-sans text-gray-800 pb-10">
       <div className="max-w-7xl mx-auto flex flex-col gap-6">
-        {/* CABEÇALHO */}
+        {/* CABEÇALHO COM PERFIL CLICÁVEL */}
         <div className="flex justify-between items-center px-1">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-              Olá, {userName}
-            </h1>
-            <p className="text-gray-500 text-xs capitalize mt-1 flex items-center gap-1">
-              <FaCalendarCheck size={10} /> {todayFormatted}
-            </p>
+          <div
+            onClick={() => navigate("/profile")}
+            className="flex items-center gap-3 cursor-pointer group select-none"
+            title="Ver meu perfil"
+          >
+            {/* Avatarzinho */}
+            <div className="w-12 h-12 rounded-full border-2 border-white shadow-sm overflow-hidden bg-gray-200 group-hover:ring-2 ring-blue-400 transition-all">
+              <img
+                src={`/avatars/${userAvatar}`}
+                alt="User"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://via.placeholder.com/50";
+                }}
+              />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900 group-hover:text-blue-600 transition-colors">
+                Olá, {userName}
+              </h1>
+              <p className="text-gray-500 text-xs capitalize mt-0.5 flex items-center gap-1">
+                <FaCalendarCheck size={10} /> {todayFormatted}
+              </p>
+            </div>
           </div>
+
           <button
             onClick={() => setIsVisible(!isVisible)}
             className="p-2.5 bg-white rounded-xl shadow-sm border border-gray-200 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-95"
