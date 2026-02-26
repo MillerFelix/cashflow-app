@@ -7,12 +7,13 @@ export function useCards(userId) {
 
   const fetchCards = useCallback(async () => {
     if (!userId) return;
+
     setLoading(true);
     try {
       const data = await CardService.getAll(userId);
       setCards(data);
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao buscar cartões:", error);
     } finally {
       setLoading(false);
     }
@@ -25,12 +26,13 @@ export function useCards(userId) {
   const addCard = useCallback(
     async (cardData) => {
       if (!userId) return;
+
       setLoading(true);
       try {
         const newCard = await CardService.add(userId, cardData);
         setCards((prev) => [...prev, newCard]);
       } catch (error) {
-        console.error(error);
+        console.error("Erro ao adicionar cartão:", error);
       } finally {
         setLoading(false);
       }
@@ -39,16 +41,19 @@ export function useCards(userId) {
   );
 
   const updateCard = useCallback(
-    async (id, data) => {
+    async (cardId, updatedData) => {
       if (!userId) return;
+
       setLoading(true);
       try {
-        await CardService.update(userId, id, data);
+        await CardService.update(userId, cardId, updatedData);
         setCards((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, ...data } : c)),
+          prev.map((card) =>
+            card.id === cardId ? { ...card, ...updatedData } : card,
+          ),
         );
       } catch (error) {
-        console.error(error);
+        console.error("Erro ao atualizar cartão:", error);
       } finally {
         setLoading(false);
       }
@@ -57,14 +62,15 @@ export function useCards(userId) {
   );
 
   const removeCard = useCallback(
-    async (id) => {
+    async (cardId) => {
       if (!userId) return;
+
       setLoading(true);
       try {
-        await CardService.remove(userId, id);
-        setCards((prev) => prev.filter((c) => c.id !== id));
+        await CardService.remove(userId, cardId);
+        setCards((prev) => prev.filter((card) => card.id !== cardId));
       } catch (error) {
-        console.error(error);
+        console.error("Erro ao remover cartão:", error);
       } finally {
         setLoading(false);
       }

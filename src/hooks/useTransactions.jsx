@@ -10,13 +10,14 @@ export function useTransactions(userId) {
 
   const fetchTransactions = useCallback(async () => {
     if (!userId) return;
+
     setLoading(true);
     try {
       const data = await TransactionService.getAll(userId);
       setTransactions(data);
     } catch (error) {
       console.error("Erro ao buscar transações:", error);
-      setMessage("Erro ao buscar transações.");
+      setMessage("Erro ao carregar transações.");
     } finally {
       setLoading(false);
     }
@@ -26,13 +27,20 @@ export function useTransactions(userId) {
     fetchTransactions();
   }, [fetchTransactions]);
 
+  // Helper para padronizar o envio de mensagens na UI
+  const showTemporaryMessage = (msg, duration = 3000) => {
+    setMessage(msg);
+    setTimeout(() => setMessage(""), duration);
+  };
+
   const addTransaction = useCallback(
     async (transactionData) => {
       if (!userId) return;
+
       setLoading(true);
       setMessage("");
+
       try {
-        // Desestruturação segura incluindo cardId
         const {
           type,
           description,
@@ -45,7 +53,7 @@ export function useTransactions(userId) {
           cardId = null,
         } = transactionData;
 
-        const tData = {
+        const transactionPayload = {
           type,
           description,
           value,
@@ -61,7 +69,7 @@ export function useTransactions(userId) {
         if (isFixed) {
           const newTransactions = await TransactionService.addFixedBatch(
             userId,
-            tData,
+            transactionPayload,
           );
           setTransactions((prev) =>
             [...prev, ...newTransactions].sort((a, b) =>
@@ -69,7 +77,10 @@ export function useTransactions(userId) {
             ),
           );
         } else {
-          const newTransaction = await TransactionService.add(userId, tData);
+          const newTransaction = await TransactionService.add(
+            userId,
+            transactionPayload,
+          );
           setTransactions((prev) =>
             [...prev, newTransaction].sort((a, b) =>
               b.date > a.date ? 1 : -1,
@@ -78,13 +89,12 @@ export function useTransactions(userId) {
         }
 
         await updateGoalsAchievement(userId, category, value, date);
-        setMessage(
+        showTemporaryMessage(
           isFixed ? "Série de pagamentos agendada!" : "Transação registrada!",
         );
-        setTimeout(() => setMessage(""), 3000);
       } catch (error) {
-        console.error(error);
-        setMessage("Erro ao salvar.");
+        console.error("Erro ao salvar transação:", error);
+        showTemporaryMessage("Erro ao salvar transação.");
       } finally {
         setLoading(false);
       }
@@ -93,19 +103,23 @@ export function useTransactions(userId) {
   );
 
   const editTransaction = useCallback(
-    async (id, updatedData) => {
+    async (transactionId, updatedData) => {
       if (!userId) return;
+
       setLoading(true);
       try {
-        await TransactionService.update(userId, id, updatedData);
+        await TransactionService.update(userId, transactionId, updatedData);
         setTransactions((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, ...updatedData } : t)),
+          prev.map((transaction) =>
+            transaction.id === transactionId
+              ? { ...transaction, ...updatedData }
+              : transaction,
+          ),
         );
-        setMessage("Atualizado com sucesso!");
-        setTimeout(() => setMessage(""), 3000);
+        showTemporaryMessage("Transação atualizada com sucesso!");
       } catch (error) {
-        console.error(error);
-        setMessage("Erro ao atualizar.");
+        console.error("Erro ao atualizar transação:", error);
+        showTemporaryMessage("Erro ao atualizar transação.");
       } finally {
         setLoading(false);
       }
@@ -114,20 +128,24 @@ export function useTransactions(userId) {
   );
 
   const confirmTransactionValue = useCallback(
-    async (id, confirmedValue) => {
+    async (transactionId, confirmedValue) => {
       if (!userId) return;
+
       setLoading(true);
       try {
         const updates = { value: confirmedValue, isConfirmed: true };
-        await TransactionService.update(userId, id, updates);
+        await TransactionService.update(userId, transactionId, updates);
         setTransactions((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+          prev.map((transaction) =>
+            transaction.id === transactionId
+              ? { ...transaction, ...updates }
+              : transaction,
+          ),
         );
-        setMessage("Valor confirmado e atualizado!");
-        setTimeout(() => setMessage(""), 3000);
+        showTemporaryMessage("Valor confirmado com sucesso!");
       } catch (error) {
-        console.error(error);
-        setMessage("Erro ao confirmar valor.");
+        console.error("Erro ao confirmar valor:", error);
+        showTemporaryMessage("Erro ao confirmar o valor.");
       } finally {
         setLoading(false);
       }
@@ -136,43 +154,51 @@ export function useTransactions(userId) {
   );
 
   const removeTransaction = useCallback(
-    async (id) => {
+    async (transactionId) => {
       if (!userId) return;
+
       try {
-        await TransactionService.remove(userId, id);
-        setTransactions((prev) => prev.filter((t) => t.id !== id));
-        setMessage("Removido com sucesso!");
-        setTimeout(() => setMessage(""), 3000);
+        await TransactionService.remove(userId, transactionId);
+        setTransactions((prev) =>
+          prev.filter((transaction) => transaction.id !== transactionId),
+        );
+        showTemporaryMessage("Transação removida!");
       } catch (error) {
-        console.error("Erro ao remover:", error);
+        console.error("Erro ao remover transação:", error);
+        showTemporaryMessage("Erro ao remover transação.");
       }
     },
     [userId],
   );
 
   const cancelFutureFixedTransactions = useCallback(
-    async (transaction) => {
+    async (referenceTransaction) => {
       if (!userId) return;
+
       setLoading(true);
       try {
-        const futureTxs = transactions.filter(
-          (t) =>
-            t.isFixed === true &&
-            t.description === transaction.description &&
-            t.date >= transaction.date,
+        const futureTransactions = transactions.filter(
+          (transaction) =>
+            transaction.isFixed &&
+            transaction.description === referenceTransaction.description &&
+            transaction.date >= referenceTransaction.date,
         );
+
         await Promise.all(
-          futureTxs.map((t) => TransactionService.remove(userId, t.id)),
+          futureTransactions.map((transaction) =>
+            TransactionService.remove(userId, transaction.id),
+          ),
         );
-        const idsToRemove = futureTxs.map((t) => t.id);
+
+        const idsToRemove = futureTransactions.map((t) => t.id);
         setTransactions((prev) =>
           prev.filter((t) => !idsToRemove.includes(t.id)),
         );
-        setMessage("Assinatura cancelada! Cobranças futuras removidas.");
-        setTimeout(() => setMessage(""), 4000);
+
+        showTemporaryMessage("Assinatura cancelada com sucesso!", 4000);
       } catch (error) {
         console.error("Erro ao cancelar assinatura:", error);
-        setMessage("Erro ao cancelar as cobranças futuras.");
+        showTemporaryMessage("Erro ao cancelar assinatura.");
       } finally {
         setLoading(false);
       }

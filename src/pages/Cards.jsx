@@ -3,10 +3,15 @@ import { useAuth } from "../hooks/useAuth";
 import { useCards } from "../hooks/useCards";
 import { useTransactions } from "../hooks/useTransactions";
 import Loader from "../components/common/Loader";
-import Button from "../components/common/Button";
-import TextInput from "../components/common/TextInput";
-import MoneyInput from "../components/common/MoneyInput";
 import ConfirmationModal from "../components/common/ConfirmationModal";
+import CardModal from "../components/cards/CardModal";
+import {
+  processCardInvoices,
+  formatCurrency,
+  formatDate,
+  formatFullDate,
+  getMonthName,
+} from "../utils/cardUtils";
 import {
   FaPlus,
   FaCreditCard,
@@ -37,170 +42,18 @@ function Cards() {
     addTransaction,
   } = useTransactions(userId);
 
-  // Modais
+  // States de UI
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCard, setEditingCard] = useState(null);
   const [isPayConfirmOpen, setIsPayConfirmOpen] = useState(false);
   const [invoiceToPay, setInvoiceToPay] = useState(null);
-
   const [selectedCardDetail, setSelectedCardDetail] = useState(null);
 
-  // Form States
-  const [name, setName] = useState("");
-  const [limit, setLimit] = useState("");
-  const [closingDay, setClosingDay] = useState("");
-  const [dueDay, setDueDay] = useState("");
-  const [color, setColor] = useState("from-gray-900 to-gray-700");
-
-  const cardGradients = [
-    { label: "Nubank", value: "from-purple-700 to-purple-500" },
-    { label: "Black", value: "from-gray-900 to-gray-700" },
-    { label: "Platinum", value: "from-slate-700 to-slate-500" },
-    { label: "Blue", value: "from-blue-800 to-blue-500" },
-    { label: "Gold", value: "from-yellow-600 to-yellow-400" },
-    { label: "Green", value: "from-emerald-700 to-emerald-500" },
-    { label: "Red", value: "from-red-700 to-red-500" },
-  ];
-
-  const getMonthName = (monthIndex) =>
-    new Date(2024, monthIndex, 1).toLocaleDateString("pt-BR", {
-      month: "long",
-    });
-  const formatCurrency = (val) =>
-    new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(val);
-  const formatDate = (dateStr) =>
-    dateStr.split("-").reverse().slice(0, 2).join("/");
-  const formatFullDate = (dateStr) => dateStr.split("-").reverse().join("/"); // DD/MM/AAAA
-
-  // --- LÓGICA DE PROCESSAMENTO ---
-  const processedCards = useMemo(() => {
-    if (!cards.length) return [];
-
-    return cards.map((card) => {
-      const cardTrans = transactions.filter(
-        (t) =>
-          t.cardId === card.id &&
-          t.paymentMethod === "credit" &&
-          t.type === "debit",
-      );
-
-      const invoices = {};
-      let totalUsedLimit = 0;
-
-      const today = new Date();
-      let currentMonth = today.getMonth();
-      let currentYear = today.getFullYear();
-
-      if (today.getDate() >= card.closingDay) {
-        currentMonth++;
-        if (currentMonth > 11) {
-          currentMonth = 0;
-          currentYear++;
-        }
-      }
-      const openInvoiceKey = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`;
-
-      // Distribuição
-      cardTrans.forEach((t) => {
-        const tDate = new Date(t.date + "T12:00:00");
-        const day = tDate.getDate();
-        let invoiceMonth = tDate.getMonth();
-        let invoiceYear = tDate.getFullYear();
-
-        if (day >= card.closingDay) {
-          invoiceMonth++;
-          if (invoiceMonth > 11) {
-            invoiceMonth = 0;
-            invoiceYear++;
-          }
-        }
-
-        const invoiceKey = `${invoiceYear}-${String(invoiceMonth + 1).padStart(2, "0")}`;
-
-        if (!invoices[invoiceKey]) {
-          invoices[invoiceKey] = {
-            id: invoiceKey,
-            month: invoiceMonth,
-            year: invoiceYear,
-            total: 0,
-            transactions: [],
-            isPaid: false,
-            paidDate: null, // <--- Novo Campo: Data do Pagamento
-          };
-        }
-
-        invoices[invoiceKey].transactions.push(t);
-        invoices[invoiceKey].total += t.value;
-
-        if (invoiceKey >= openInvoiceKey) {
-          totalUsedLimit += t.value;
-        }
-      });
-
-      // --- DETECTOR DE PAGAMENTO (AGORA COM ANO) ---
-      Object.values(invoices).forEach((inv) => {
-        // String ÚNICA: "Pagamento Fatura Nubank - Janeiro/2026"
-        const expectedDesc = `Pagamento Fatura ${card.name} - ${getMonthName(inv.month)}/${inv.year}`;
-
-        // Encontra a transação exata
-        const paymentTrans = transactions.find(
-          (t) =>
-            (t.paymentMethod === "transfer" ||
-              t.paymentMethod === "debit" ||
-              t.paymentMethod === "money") &&
-            t.category === "Pagamento de Cartão" &&
-            t.description === expectedDesc,
-        );
-
-        if (paymentTrans) {
-          inv.isPaid = true;
-          inv.paidDate = paymentTrans.date; // <--- Guarda a data
-        }
-      });
-
-      const history = [];
-      const future = [];
-      let openInvoice = {
-        id: openInvoiceKey,
-        month: currentMonth,
-        year: currentYear,
-        total: 0,
-        transactions: [],
-        isPaid: false,
-      };
-
-      Object.values(invoices).forEach((inv) => {
-        if (inv.id === openInvoiceKey) openInvoice = inv;
-        else if (inv.id < openInvoiceKey) history.push(inv);
-        else future.push(inv);
-      });
-
-      history.sort((a, b) => b.id.localeCompare(a.id));
-      future.sort((a, b) => a.id.localeCompare(b.id));
-
-      const numericLimit = Number(card.limit);
-      const availableLimit = Math.max(0, numericLimit - totalUsedLimit);
-      const usagePercentage = Math.min(
-        100,
-        (totalUsedLimit / numericLimit) * 100,
-      );
-      const bestBuyDay = card.closingDay + 1 > 31 ? 1 : card.closingDay + 1;
-
-      return {
-        ...card,
-        openInvoice,
-        history,
-        future,
-        availableLimit,
-        usagePercentage,
-        bestBuyDay,
-        totalUsedLimit,
-      };
-    });
-  }, [cards, transactions]);
+  // Processamento Matemático importado do Utils
+  const processedCards = useMemo(
+    () => processCardInvoices(cards, transactions),
+    [cards, transactions],
+  );
 
   const activeDetail = useMemo(() => {
     if (!selectedCardDetail && processedCards.length > 0)
@@ -212,14 +65,24 @@ function Cards() {
     );
   }, [processedCards, selectedCardDetail]);
 
-  // --- HANDLERS ---
+  // Handlers
+  const handleOpenModal = (card = null) => {
+    setEditingCard(card);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveCard = async (cardData) => {
+    if (editingCard) await updateCard(editingCard.id, cardData);
+    else await addCard(cardData);
+    setIsModalOpen(false);
+  };
 
   const handleRequestPayment = (invoice, cardName) => {
     setInvoiceToPay({
       invoiceData: invoice,
       cardName: cardName,
       monthName: getMonthName(invoice.month),
-      year: invoice.year, // <--- Passa o ano
+      year: invoice.year,
       formattedValue: formatCurrency(invoice.total),
     });
     setIsPayConfirmOpen(true);
@@ -227,8 +90,6 @@ function Cards() {
 
   const handleConfirmPayment = async () => {
     if (!invoiceToPay) return;
-
-    // CRIA A TRANSAÇÃO COM O ANO NA DESCRIÇÃO
     await addTransaction({
       description: `Pagamento Fatura ${invoiceToPay.cardName} - ${invoiceToPay.monthName}/${invoiceToPay.year}`,
       value: invoiceToPay.invoiceData.total,
@@ -239,43 +100,8 @@ function Cards() {
       type: "debit",
       cardId: null,
     });
-
     setIsPayConfirmOpen(false);
     setInvoiceToPay(null);
-  };
-
-  // Handlers do Modal de Cartão
-  const handleOpenModal = (card = null) => {
-    if (card) {
-      setEditingCard(card);
-      setName(card.name);
-      setLimit((card.limit * 100).toString());
-      setClosingDay(card.closingDay);
-      setDueDay(card.dueDay);
-      setColor(card.color || cardGradients[0].value);
-    } else {
-      setEditingCard(null);
-      setName("");
-      setLimit("");
-      setClosingDay("");
-      setDueDay("");
-      setColor(cardGradients[0].value);
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleSaveCard = async (e) => {
-    e.preventDefault();
-    const cardData = {
-      name,
-      limit: parseFloat(limit) / 100,
-      closingDay: parseInt(closingDay),
-      dueDay: parseInt(dueDay),
-      color,
-    };
-    if (editingCard) await updateCard(editingCard.id, cardData);
-    else await addCard(cardData);
-    setIsModalOpen(false);
   };
 
   return (
@@ -299,12 +125,13 @@ function Cards() {
           </button>
         </div>
 
+        {/* LOADER OU ESTADO VAZIO */}
         {loadingCards || loadingTrans ? (
           <div className="flex justify-center py-20">
             <Loader />
           </div>
         ) : processedCards.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100 text-center px-4">
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100 text-center px-4 animate-fadeIn">
             <div className="bg-blue-50 p-6 rounded-full mb-6">
               <FaCreditCard className="text-5xl text-blue-300" />
             </div>
@@ -323,7 +150,7 @@ function Cards() {
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-8 items-start">
-            {/* COLUNA ESQUERDA: LISTA */}
+            {/* COLUNA ESQUERDA: LISTA DE CARTÕES */}
             <div className="w-full lg:w-1/3 flex flex-col gap-5">
               <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">
                 Selecione um Cartão
@@ -406,7 +233,7 @@ function Cards() {
               ))}
             </div>
 
-            {/* COLUNA DIREITA: DETALHES */}
+            {/* COLUNA DIREITA: DETALHES DO CARTÃO */}
             <div className="w-full lg:w-2/3 flex flex-col gap-8 animate-fadeIn">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                 <div>
@@ -431,7 +258,6 @@ function Cards() {
               <div>
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2">
                   <FaShoppingBag className="text-blue-600" /> Fatura Aberta
-                  (Atual)
                 </h3>
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative">
                   <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
@@ -503,40 +329,38 @@ function Cards() {
                   <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2">
                     <FaClock className="text-orange-500" /> Previsão (Futuro)
                   </h3>
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="divide-y divide-gray-100">
-                      {activeDetail.future.map((inv) => (
-                        <div
-                          key={inv.id}
-                          className="p-4 flex items-center justify-between hover:bg-orange-50/30 transition-colors"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1.5 rounded-lg text-xs capitalize text-center w-24">
-                              {getMonthName(inv.month)}{" "}
-                              <span className="block text-[9px] opacity-70">
-                                {inv.year}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-gray-700">
-                                Fatura Prevista
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {inv.transactions.length} lançamentos
-                              </p>
-                            </div>
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden divide-y divide-gray-100">
+                    {activeDetail.future.map((inv) => (
+                      <div
+                        key={inv.id}
+                        className="p-4 flex items-center justify-between hover:bg-orange-50/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1.5 rounded-lg text-xs capitalize text-center w-24">
+                            {getMonthName(inv.month)}{" "}
+                            <span className="block text-[9px] opacity-70">
+                              {inv.year}
+                            </span>
                           </div>
-                          <span className="font-bold text-gray-900">
-                            {formatCurrency(inv.total)}
-                          </span>
+                          <div>
+                            <p className="text-sm font-bold text-gray-700">
+                              Fatura Prevista
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {inv.transactions.length} lançamentos
+                            </p>
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                        <span className="font-bold text-gray-900">
+                          {formatCurrency(inv.total)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
-              {/* HISTÓRICO DE FATURAS FECHADAS (ATUALIZADO) */}
+              {/* HISTÓRICO DE FATURAS */}
               <div>
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2">
                   <FaHistory className="text-gray-400" /> Faturas Fechadas
@@ -564,14 +388,12 @@ function Cards() {
                               )}
                             </div>
                             <div>
-                              {/* EXIBE MÊS E ANO */}
                               <p className="font-bold text-gray-800 text-sm capitalize">
                                 {getMonthName(invoice.month)}{" "}
                                 <span className="text-gray-400 text-xs font-normal">
                                   / {invoice.year}
                                 </span>
                               </p>
-                              {/* EXIBE DATA SE PAGO */}
                               <p className="text-[10px] text-gray-500 flex items-center gap-1">
                                 {invoice.isPaid && invoice.paidDate ? (
                                   <>
@@ -590,7 +412,6 @@ function Cards() {
                             >
                               {formatCurrency(invoice.total)}
                             </span>
-
                             {!invoice.isPaid ? (
                               <button
                                 onClick={() =>
@@ -619,104 +440,25 @@ function Cards() {
           </div>
         )}
 
-        {/* MODAL DE CRIAÇÃO DO CARTÃO */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
-                {editingCard ? "Editar Cartão" : "Novo Cartão"}
-              </h3>
-              <form onSubmit={handleSaveCard} className="flex flex-col gap-4">
-                <TextInput
-                  label="Apelido"
-                  placeholder="Ex: Nubank"
-                  value={name}
-                  onChange={setName}
-                />
-                <MoneyInput
-                  label="Limite Total"
-                  value={limit}
-                  onChange={setLimit}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 mb-1 block">
-                      Dia Fechamento
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="31"
-                      value={closingDay}
-                      onChange={(e) => setClosingDay(e.target.value)}
-                      className="w-full p-3 border rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-600 bg-gray-50"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 mb-1 block">
-                      Dia Vencimento
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="31"
-                      value={dueDay}
-                      onChange={(e) => setDueDay(e.target.value)}
-                      className="w-full p-3 border rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-600 bg-gray-50"
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 mb-2 block">
-                    Cor do Cartão
-                  </label>
-                  <div className="flex gap-2 flex-wrap">
-                    {cardGradients.map((g) => (
-                      <button
-                        key={g.value}
-                        type="button"
-                        onClick={() => setColor(g.value)}
-                        className={`w-8 h-8 rounded-full bg-gradient-to-br ${g.value} ${color === g.value ? "ring-2 ring-offset-2 ring-gray-900 scale-110" : "opacity-70"} transition-all shadow-sm`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex gap-3 mt-4">
-                  <Button
-                    type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200"
-                  >
-                    Salvar
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="w-full bg-white border border-gray-200 text-gray-700 font-bold rounded-xl py-3 hover:bg-gray-50"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        {/* MODAIS COMPONENTIZADOS */}
+        <CardModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveCard}
+          editingCard={editingCard}
+        />
 
-        {/* MODAL DE CONFIRMAÇÃO DE PAGAMENTO (USANDO PROPS COMPATÍVEIS) */}
-        {isPayConfirmOpen && invoiceToPay && (
-          <ConfirmationModal
-            showModal={isPayConfirmOpen}
-            title="Confirmar Pagamento de Fatura"
-            description={`Deseja confirmar o pagamento da fatura de ${invoiceToPay.monthName}/${invoiceToPay.year} no valor de ${invoiceToPay.formattedValue}?`}
-            onConfirm={handleConfirmPayment}
-            onCancel={() => setIsPayConfirmOpen(false)}
-            confirmText="Pagar Agora"
-            cancelText="Cancelar"
-            confirmBgColor="bg-green-600"
-            confirmHoverColor="hover:bg-green-700"
-          />
-        )}
+        <ConfirmationModal
+          showModal={isPayConfirmOpen}
+          title="Confirmar Pagamento de Fatura"
+          description={`Deseja confirmar o pagamento da fatura de ${invoiceToPay?.monthName}/${invoiceToPay?.year} no valor de ${invoiceToPay?.formattedValue}?`}
+          onConfirm={handleConfirmPayment}
+          onCancel={() => setIsPayConfirmOpen(false)}
+          confirmText="Pagar Agora"
+          cancelText="Cancelar"
+          confirmBgColor="bg-green-600"
+          confirmHoverColor="hover:bg-green-700"
+        />
       </div>
     </div>
   );

@@ -12,9 +12,6 @@ function Container({ children }) {
     <div className="flex flex-col min-h-screen">
       <Navbar />
 
-      {/* A classe 'flex-grow' é crucial aqui: ela faz com que o conteúdo principal 
-        ocupe todo o espaço restante da tela, empurrando o Footer para baixo. 
-      */}
       <main className="flex-grow">{children}</main>
 
       <Footer />

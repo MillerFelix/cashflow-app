@@ -64,7 +64,6 @@ function Login() {
 
       await sendPasswordResetEmail(auth, resetEmail);
 
-      // MENSAGEM CLARA SOBRE SPAM
       setResetMessage(
         "E-mail enviado! Verifique sua caixa de entrada e a pasta de SPAM/Lixo Eletrônico.",
       );
@@ -207,7 +206,6 @@ function Login() {
                 </p>
               )}
 
-              {/* MENSAGEM DE SUCESSO MELHORADA COM ALERTA VISUAL */}
               {resetMessage && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <p className="text-green-700 text-xs font-bold text-center flex flex-col gap-1">

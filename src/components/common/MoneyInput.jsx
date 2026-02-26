@@ -1,23 +1,23 @@
 import React, { useCallback } from "react";
 
 /**
- * Componente MoneyInput
- * Input especializado para valores monetários.
- * Ele exibe o valor formatado para o usuário (ex: R$ 10,00), mas envia
- * apenas os números (centavos) para o estado pai, facilitando cálculos no banco de dados.
+ * Input com máscara para valores monetários
  */
-function MoneyInput({ label, value = "", onChange, error }) {
-  // useCallback: Garante que a função de limpeza não seja recriada a cada renderização
+function MoneyInput({
+  label,
+  value = "",
+  onChange,
+  error,
+  placeholder = "R$ 0,00",
+}) {
   const handleValueChange = useCallback(
     (rawValue) => {
-      // Expressão Regular (Regex) que remove tudo que NÃO for número
       const numericValue = rawValue.replace(/[^\d]/g, "");
       onChange(numericValue);
     },
     [onChange],
   );
 
-  // Função auxiliar para formatar o valor visualmente no input
   const formatValue = (val) => {
     if (!val) return "";
     const numericValue = parseInt(val, 10);
@@ -28,20 +28,23 @@ function MoneyInput({ label, value = "", onChange, error }) {
 
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
+      {label && (
+        <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wide">
+          {label}
+        </label>
+      )}
       <input
         type="text"
         value={formatValue(value)}
+        placeholder={placeholder}
         onChange={(e) => handleValueChange(e.target.value)}
-        className={`w-full p-2 border rounded-lg focus:outline-none transition-colors ${
-          error
-            ? "border-red-500 focus:ring-2 focus:ring-red-500"
-            : "focus:ring-2 focus:ring-green-800"
-        }`}
+        className={`w-full p-3 border rounded-xl bg-gray-50 focus:bg-white text-gray-800 font-medium outline-none transition-all
+          ${error ? "border-red-500 focus:ring-2 focus:ring-red-500" : "border-gray-200 focus:ring-2 focus:ring-green-600 focus:border-green-600"}
+        `}
       />
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {error && (
+        <p className="text-red-500 text-xs font-bold mt-1.5">{error}</p>
+      )}
     </div>
   );
 }

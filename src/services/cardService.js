@@ -11,54 +11,30 @@ import {
 } from "firebase/firestore";
 
 export const CardService = {
-  // Adicionar Cartão
-  async add(userId, card) {
-    try {
-      const docRef = await addDoc(collection(db, "cards"), {
-        userId,
-        ...card,
-        createdAt: new Date().toISOString(),
-      });
-      return { id: docRef.id, ...card };
-    } catch (error) {
-      console.error("Erro ao adicionar cartão:", error);
-      throw error;
-    }
+  add: async (userId, cardData) => {
+    const docRef = await addDoc(collection(db, "cards"), {
+      userId,
+      ...cardData,
+      createdAt: new Date().toISOString(),
+    });
+    return { id: docRef.id, ...cardData };
   },
 
-  // Listar Cartões
-  async getAll(userId) {
-    try {
-      const q = query(collection(db, "cards"), where("userId", "==", userId));
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-    } catch (error) {
-      console.error("Erro ao buscar cartões:", error);
-      throw error;
-    }
+  getAll: async (userId) => {
+    const cardsQuery = query(
+      collection(db, "cards"),
+      where("userId", "==", userId),
+    );
+    const querySnapshot = await getDocs(cardsQuery);
+    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   },
 
-  // Editar Cartão
-  async update(userId, cardId, updatedData) {
-    try {
-      const cardRef = doc(db, "cards", cardId);
-      await updateDoc(cardRef, updatedData);
-    } catch (error) {
-      console.error("Erro ao atualizar cartão:", error);
-      throw error;
-    }
+  update: async (userId, cardId, updatedData) => {
+    const cardRef = doc(db, "cards", cardId);
+    await updateDoc(cardRef, updatedData);
   },
 
-  // Remover Cartão
-  async remove(userId, cardId) {
-    try {
-      await deleteDoc(doc(db, "cards", cardId));
-    } catch (error) {
-      console.error("Erro ao remover cartão:", error);
-      throw error;
-    }
+  remove: async (userId, cardId) => {
+    await deleteDoc(doc(db, "cards", cardId));
   },
 };

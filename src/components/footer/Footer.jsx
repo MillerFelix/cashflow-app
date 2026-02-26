@@ -5,14 +5,12 @@ import { HiOutlineInformationCircle } from "react-icons/hi";
 import { BsCalculator } from "react-icons/bs";
 
 /**
- * Componente Footer
- * Rodapé principal do app. Também gerencia a abertura dos modais flutuantes (Ajuda e Calculadora).
+ * Rodapé do App e Gerenciador de Modais Flutuantes (Ajuda / Calculadora).
  */
 function Footer() {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
-  // useCallback evita recriação das funções ao re-renderizar
   const toggleCalculator = useCallback(
     () => setIsCalculatorOpen((prev) => !prev),
     [],
@@ -21,35 +19,35 @@ function Footer() {
 
   return (
     <>
-      <footer className="bg-gradient-to-r from-green-700 via-green-800 to-green-900 text-white text-center py-6 shadow-inner rounded-t-3xl relative px-4 sm:px-6 mt-auto">
-        <div className="container mx-auto flex flex-col items-center">
-          <p className="text-sm font-light tracking-wide text-transparent bg-clip-text bg-gradient-to-l from-yellow-500 to-lime-400">
+      <footer className="bg-gradient-to-r from-green-700 via-green-800 to-green-950 text-white text-center py-6 shadow-inner rounded-t-3xl relative mt-auto border-t border-green-600/30">
+        <div className="container mx-auto flex flex-col items-center justify-center space-y-1">
+          <p className="text-xs font-light tracking-wide text-green-100">
             CashFlow developed by{" "}
-            <span className="font-semibold">Miller Felix</span> &copy; 2024
+            <span className="font-semibold text-lime-400">Miller Felix</span>{" "}
+            &copy; {new Date().getFullYear()}
           </p>
-          {/* Tag de Versão adicionada aqui */}
-          <p className="text-[10px] text-green-200/50 mt-1 font-mono tracking-widest uppercase">
+          <p className="text-[10px] text-green-300/50 font-mono tracking-widest uppercase">
             v1.0.0-Beta
           </p>
         </div>
       </footer>
 
-      {/* Botões Flutuantes (Fixos na tela) */}
-      <div className="fixed bottom-4 right-4 flex flex-col gap-3 z-40">
+      {/* Botões Flutuantes */}
+      <div className="fixed bottom-6 right-4 flex flex-col gap-3 z-40">
         <button
-          className="flex items-center justify-center bg-green-600 text-white rounded-full p-3 shadow-lg hover:bg-green-700 transition-transform hover:scale-110 active:scale-95"
           onClick={toggleCalculator}
           title="Calculadora"
+          className="flex items-center justify-center bg-green-600/90 backdrop-blur-md text-white rounded-full p-3.5 shadow-lg border border-green-500/50 hover:bg-green-600 transition-all hover:scale-110 active:scale-95"
         >
-          <BsCalculator size={24} />
+          <BsCalculator size={22} />
         </button>
 
         <button
-          className="flex items-center justify-center bg-green-600 text-white rounded-full p-3 shadow-lg hover:bg-green-700 transition-transform hover:scale-110 active:scale-95"
           onClick={openHelp}
           title="Ajuda"
+          className="flex items-center justify-center bg-green-600/90 backdrop-blur-md text-white rounded-full p-3.5 shadow-lg border border-green-500/50 hover:bg-green-600 transition-all hover:scale-110 active:scale-95"
         >
-          <HiOutlineInformationCircle size={24} />
+          <HiOutlineInformationCircle size={22} />
         </button>
       </div>
 

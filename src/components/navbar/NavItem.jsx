@@ -2,11 +2,9 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
 /**
- * Componente NavItem
- * Renderiza um link individual na Navbar.
- * Ele usa o hook `useLocation` para saber em qual página o usuário está e destacar o link ativo.
+ * Renderiza um link individual da Navbar.
  */
-function NavItem({ to, icon, label, onClick }) {
+function NavItem({ to, icon, label, onClick, isMobile = false }) {
   const location = useLocation();
   const isActive = location.pathname === to;
 
@@ -14,12 +12,20 @@ function NavItem({ to, icon, label, onClick }) {
     <li>
       <Link
         to={to}
-        className={`flex items-center gap-2 py-2 transition-transform duration-200 
-          active:scale-95 hover:scale-105
-          ${isActive ? "text-lime-400 font-bold" : "text-green-300 hover:text-lime-400"}`}
         onClick={onClick}
+        className={`flex items-center gap-2 transition-all duration-200 active:scale-95
+          ${isMobile ? "py-3 px-4 rounded-xl" : "py-2 px-1 hover:scale-105"} 
+          ${
+            isActive
+              ? isMobile
+                ? "bg-green-800/50 text-lime-400 font-bold"
+                : "text-lime-400 font-bold"
+              : "text-green-100 hover:text-white"
+          }
+        `}
       >
-        {icon} {label}
+        {icon}
+        <span className="text-sm tracking-wide">{label}</span>
       </Link>
     </li>
   );

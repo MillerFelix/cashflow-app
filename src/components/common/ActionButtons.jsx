@@ -17,8 +17,6 @@ function ActionButtons({ onClose, onSave }) {
         Cancelar
       </Button>
 
-      {/* ATENÇÃO: type="submit" garante que, se estiver dentro de um <form>, 
-          ele vai disparar o 'onSubmit' nativo do HTML e acionar as validações. */}
       <Button
         onClick={onSave}
         type="submit"

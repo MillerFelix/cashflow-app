@@ -10,10 +10,6 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
-/**
- * Category Service
- * Responsável por gerir as Subcategorias personalizadas criadas pelo utilizador.
- */
 export const CategoryService = {
   // 1. Buscar todas as subcategorias do utilizador
   getSubcategories: async (userId) => {
@@ -30,7 +26,7 @@ export const CategoryService = {
     const newSub = {
       parentCategory,
       name,
-      isActive: true, // Para no futuro podermos ocultar sem apagar o histórico
+      isActive: true,
       createdAt: new Date().toISOString(),
     };
     const docRef = await addDoc(
