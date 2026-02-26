@@ -13,24 +13,36 @@ export default defineConfig({
         "pwa-192x192.png",
         "pwa-512x512.png",
       ],
-      icons: [
-        {
-          src: "pwa-192x192.png",
-          sizes: "192x192",
-          type: "image/png",
-        },
-        {
-          src: "pwa-512x512.png",
-          sizes: "512x512",
-          type: "image/png",
-        },
-        {
-          src: "pwa-512x512.png",
-          sizes: "512x512",
-          type: "image/png",
-          purpose: "any maskable",
-        },
-      ],
+      manifest: {
+        name: "Cash$Flow Oficial",
+        short_name: "CashFlow",
+        description: "Seu assistente financeiro inteligente",
+        theme_color: "#22c55e",
+        background_color: "#f3f4f6",
+        display: "standalone",
+        start_url: "/",
+        orientation: "portrait",
+        icons: [
+          {
+            src: "/pwa-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/maskable-icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
     }),
   ],
   build: {
