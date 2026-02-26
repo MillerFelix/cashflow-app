@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import BalanceModal from "../components/dashboard/BalanceModal";
+import HelpModal from "../components/footer/HelpModal";
 import Loader from "../components/common/Loader";
 import SmartCalendar from "../components/dashboard/SmartCalendar";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -28,7 +28,9 @@ import {
 } from "react-icons/fa";
 
 function Dashboard() {
-  const [showBalanceModal, setShowBalanceModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(true); // Controla o loading inicial do perfil
+
   const [userProfile, setUserProfile] = useState({
     name: "Usuário",
     avatar: "1.png",
@@ -49,19 +51,20 @@ function Dashboard() {
     addTransaction,
   } = useTransactions(userId);
   const { cards } = useCards(userId);
-  const [loading, setLoading] = useState(true);
 
   const storedVisibility = localStorage.getItem("balanceVisibility");
   const [isVisible, setIsVisible] = useState(storedVisibility === "true");
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchUserData() {
       if (userId) {
         try {
-          setLoading(true);
           const userDoc = doc(db, "users", userId);
           const userSnapshot = await getDoc(userDoc);
-          if (userSnapshot.exists()) {
+
+          if (isMounted && userSnapshot.exists()) {
             const data = userSnapshot.data();
             setUserProfile({
               name: data.name?.split(" ")[0] || "Usuário",
@@ -71,26 +74,37 @@ function Dashboard() {
               workModel: data.workModel || null,
               financialFocus: data.financialFocus || null,
             });
-            if (!data.hasSetupInitialBalance) setShowBalanceModal(true);
+
+            if (!data.hasSetupInitialBalance) {
+              setShowOnboarding(true);
+            }
           }
         } catch (error) {
-          console.error("Erro:", error);
+          console.error("Erro ao carregar perfil:", error);
         } finally {
-          setLoading(false);
+          if (isMounted) setIsProfileLoading(false);
         }
+      } else {
+        if (isMounted) setIsProfileLoading(false);
       }
     }
+
     if (userId) {
       fetchGoals();
       fetchUserData();
     }
-  }, [userId, fetchGoals]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   useEffect(
     () => localStorage.setItem("balanceVisibility", isVisible),
     [isVisible],
   );
 
+  // --- CÁLCULOS FINANCEIROS ---
   const formatCurrency = (val) =>
     new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -102,8 +116,6 @@ function Dashboard() {
     day: "numeric",
     month: "long",
   });
-
-  // --- LÓGICA FINANCEIRA ---
 
   const globalBalance = useMemo(() => {
     const todayStr = new Date().toISOString().split("T")[0];
@@ -141,11 +153,9 @@ function Dashboard() {
       };
     }, [monthTransactions]);
 
+  const projectedBalance = globalBalance + futureIncome - futureExpense;
   const totalMonthIncome = realizedIncome + futureIncome;
   const totalMonthExpenseSoFar = realizedExpense;
-  const projectedBalance = globalBalance + futureIncome - futureExpense;
-
-  // --- LÓGICA INTELIGENTE ---
 
   const daysUntilPayday = useMemo(() => {
     const payDays = [];
@@ -275,16 +285,13 @@ function Dashboard() {
     };
   }, [globalBalance, daysUntilPayday, userProfile, futureExpense]);
 
-  // Ranking de Gastos Rico (Top 5)
   const categoryRanking = useMemo(() => {
     const expenses = monthTransactions.filter((t) => t.type === "debit");
     const grouped = expenses.reduce((acc, t) => {
-      // Prioridade para Subcategoria para ser mais específico
       const key = t.subcategory || t.category;
       acc[key] = (acc[key] || 0) + t.value;
       return acc;
     }, {});
-
     return Object.entries(grouped)
       .map(([name, value]) => ({
         name,
@@ -292,38 +299,50 @@ function Dashboard() {
         percentage: (value / (realizedExpense || 1)) * 100,
       }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5); // TOP 5
+      .slice(0, 5);
   }, [monthTransactions, realizedExpense]);
 
-  const handleSaveInitialBalance = async (initialValue) => {
-    if (initialValue > 0) {
+  // --- SALVAR SALDO ---
+  const handleSaveInitialBalance = async (initialValueRaw) => {
+    let value = 0;
+    if (typeof initialValueRaw === "string") {
+      // Remove não dígitos e divide por 100 (centavos -> reais)
+      const onlyDigits = initialValueRaw.replace(/\D/g, "");
+      value = parseInt(onlyDigits, 10) / 100;
+    } else {
+      value = initialValueRaw;
+    }
+
+    if (value > 0) {
       await addTransaction({
         type: "credit",
         description: "Saldo Inicial",
-        value: initialValue,
+        value: value,
         date: new Date().toISOString().split("T")[0],
         category: "Outros Ganhos",
         paymentMethod: "transfer",
         isFixed: false,
       });
     }
+
     await setDoc(
       doc(db, "users", userId),
       { hasSetupInitialBalance: true },
       { merge: true },
     );
-    setShowBalanceModal(false);
+    setShowOnboarding(false);
   };
 
-  if (loading || transactionsLoading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader />
-      </div>
-    );
-
+  // --- RENDERIZAÇÃO SEM BLOQUEIO ---
   return (
     <div className="p-4 sm:p-6 bg-gray-100 min-h-screen relative font-sans text-gray-800 pb-10">
+      {/* LOADER SUAVE (Overlay) - Não pisca a tela toda */}
+      {isProfileLoading && (
+        <div className="absolute inset-0 bg-gray-100/80 z-40 flex items-center justify-center backdrop-blur-sm transition-opacity duration-500">
+          <Loader />
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto flex flex-col gap-6">
         {/* HEADER */}
         <div className="flex justify-between items-center px-1">
@@ -381,7 +400,6 @@ function Dashboard() {
           </div>
         )}
 
-        {/* KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="p-6 rounded-3xl shadow-lg text-white bg-gradient-to-br from-emerald-600 to-teal-900 flex flex-col justify-between relative overflow-hidden h-40 group hover:scale-[1.01] transition-transform">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
@@ -393,14 +411,17 @@ function Dashboard() {
                 </p>
               </div>
               <h2 className="text-3xl font-black tracking-tight mt-2">
-                {isVisible ? formatCurrency(globalBalance) : "••••••"}
+                {transactionsLoading
+                  ? "..."
+                  : isVisible
+                    ? formatCurrency(globalBalance)
+                    : "••••••"}
               </h2>
             </div>
             <p className="text-[10px] text-emerald-100/70 font-medium">
               Disponível em conta
             </p>
           </div>
-
           <div className="p-6 rounded-3xl shadow-lg text-white bg-gradient-to-br from-blue-600 to-indigo-900 flex flex-col justify-between relative overflow-hidden h-40 group hover:scale-[1.01] transition-transform">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
             <div>
@@ -411,7 +432,11 @@ function Dashboard() {
                 </p>
               </div>
               <h2 className="text-3xl font-black tracking-tight mt-2">
-                {isVisible ? formatCurrency(projectedBalance) : "••••••"}
+                {transactionsLoading
+                  ? "..."
+                  : isVisible
+                    ? formatCurrency(projectedBalance)
+                    : "••••••"}
               </h2>
             </div>
             {daysUntilPayday !== null ? (
@@ -424,7 +449,6 @@ function Dashboard() {
               </p>
             )}
           </div>
-
           <div
             className={`p-6 rounded-3xl shadow-lg text-white flex flex-col justify-between relative overflow-hidden h-40 transition-colors duration-500 ${financialPace.color === "red" ? "bg-gradient-to-br from-red-600 to-rose-900" : financialPace.color === "yellow" ? "bg-gradient-to-br from-orange-400 to-orange-600" : "bg-gradient-to-br from-green-600 to-emerald-800"}`}
           >
@@ -439,7 +463,7 @@ function Dashboard() {
                 </div>
               </div>
               <h2 className="text-xl font-black tracking-tight leading-none">
-                {financialPace.title}
+                {transactionsLoading ? "..." : financialPace.title}
               </h2>
             </div>
             <p className="text-xs font-medium opacity-90 leading-snug mt-2">
@@ -448,85 +472,58 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* --- SEÇÃO DE ANÁLISE DETALHADA --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* RANKING RICO (Substituindo o Gráfico e o Vilão Antigo) */}
           <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
             <h3 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
               <FaTags className="text-blue-500" /> Para onde foi seu dinheiro
             </h3>
-
             {categoryRanking.length === 0 ? (
               <div className="flex items-center justify-center h-40 text-gray-400 text-xs italic">
                 Nenhum gasto registrado neste mês.
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                {categoryRanking.map((item, index) => {
-                  // Cores sem alarme: tons de azul/indigo para neutralidade
-                  const isTop1 = index === 0;
-                  return (
-                    <div key={item.name} className="relative">
-                      {/* Labels */}
-                      <div className="flex justify-between items-end mb-1.5 z-10 relative">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-6 h-6 flex items-center justify-center rounded-lg text-xs font-bold 
-                            ${isTop1 ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "bg-gray-100 text-gray-500"}`}
-                          >
-                            {index + 1}
-                          </div>
-                          <span
-                            className={`text-sm font-bold truncate ${isTop1 ? "text-gray-900" : "text-gray-600"}`}
-                          >
-                            {item.name}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span
-                            className={`block text-sm font-bold ${isTop1 ? "text-gray-900" : "text-gray-600"}`}
-                          >
-                            {isVisible ? formatCurrency(item.value) : "••••"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Barra de Progresso Rica */}
-                      <div className="w-full h-3 bg-gray-50 rounded-full overflow-hidden flex items-center relative">
+                {categoryRanking.map((item, index) => (
+                  <div key={item.name} className="relative">
+                    <div className="flex justify-between items-end mb-1.5 z-10 relative">
+                      <div className="flex items-center gap-3">
                         <div
-                          className={`h-full rounded-full transition-all duration-1000 ease-out 
-                            ${isTop1 ? "bg-gradient-to-r from-blue-500 to-indigo-600" : "bg-gray-300"}`}
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
-                        {/* Texto da porcentagem dentro/fora da barra */}
-                        <span className="absolute right-0 -top-5 text-[10px] text-gray-400 font-medium">
-                          {Math.round(item.percentage)}%
+                          className={`w-6 h-6 flex items-center justify-center rounded-lg text-xs font-bold ${index === 0 ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "bg-gray-100 text-gray-500"}`}
+                        >
+                          {index + 1}
+                        </div>
+                        <span
+                          className={`text-sm font-bold truncate ${index === 0 ? "text-gray-900" : "text-gray-600"}`}
+                        >
+                          {item.name}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span
+                          className={`block text-sm font-bold ${index === 0 ? "text-gray-900" : "text-gray-600"}`}
+                        >
+                          {isVisible ? formatCurrency(item.value) : "••••"}
                         </span>
                       </div>
                     </div>
-                  );
-                })}
-
-                {/* Rodapé do Card */}
-                <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center text-xs text-gray-400">
-                  <span>Top 5 categorias do mês</span>
-                  <button
-                    onClick={() => navigate("/transactions")}
-                    className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-                  >
-                    Ver tudo <FaArrowRight size={10} />
-                  </button>
-                </div>
+                    <div className="w-full h-3 bg-gray-50 rounded-full overflow-hidden flex items-center relative">
+                      <div
+                        className={`h-full rounded-full transition-all duration-1000 ease-out ${index === 0 ? "bg-gradient-to-r from-blue-500 to-indigo-600" : "bg-gray-300"}`}
+                        style={{ width: `${item.percentage}%` }}
+                      ></div>
+                      <span className="absolute right-0 -top-5 text-[10px] text-gray-400 font-medium">
+                        {Math.round(item.percentage)}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-
-          {/* ASSISTENTE INTELIGENTE (Direita) */}
           <div className="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-200 flex flex-col">
             <h3 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
               <FaLightbulb className="text-yellow-500" /> Inteligência
             </h3>
-
             <div className="flex flex-col gap-4 flex-grow">
               <div
                 className={`p-4 rounded-2xl border-l-4 ${smartInsight.type === "alert" || smartInsight.type === "warning" ? "bg-red-50 border-red-500" : smartInsight.type === "success" ? "bg-green-50 border-green-500" : "bg-blue-50 border-blue-500"}`}
@@ -558,7 +555,6 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* CALENDÁRIO */}
         <div>
           <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider flex items-center gap-2 ml-1">
             <FaCalendarAlt className="text-gray-400" /> Agenda Financeira
@@ -566,10 +562,13 @@ function Dashboard() {
           <SmartCalendar transactions={transactions} cards={cards} />
         </div>
       </div>
-      {showBalanceModal && (
-        <BalanceModal
-          onClose={() => setShowBalanceModal(false)}
-          onSave={handleSaveInitialBalance}
+
+      {showOnboarding && (
+        <HelpModal
+          isOpen={showOnboarding}
+          isOnboarding={true}
+          onSaveBalance={handleSaveInitialBalance}
+          onClose={() => {}}
         />
       )}
     </div>

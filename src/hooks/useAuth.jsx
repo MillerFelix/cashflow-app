@@ -1,57 +1,55 @@
-import { useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
-/**
- * Hook Customizado: useAuth
- * Gerencia o estado de autenticação do usuário.
- * Escuta as mudanças do Firebase e busca o nome do usuário no Firestore.
- */
-export function useAuth() {
+// 1. Criamos o Contexto Global
+const AuthContext = createContext();
+
+// 2. Criamos o Provider que vai abraçar a aplicação
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // Evita renderizar a tela antes de saber o auth
 
   useEffect(() => {
-    // Flag de segurança: impede que o estado seja atualizado se o componente for destruído (Memory Leak)
-    let isMounted = true;
-
-    // Cria o "olheiro" que avisa sempre que alguém logar ou deslogar
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Busca os dados adicionais do usuário (como o nome) no Firestore
           const userDocRef = doc(db, "users", firebaseUser.uid);
           const userDocSnap = await getDoc(userDocRef);
 
-          // Só atualiza a tela se ela ainda estiver aberta
-          if (isMounted) {
-            if (userDocSnap.exists()) {
-              const userData = userDocSnap.data();
-              setUser({
-                uid: firebaseUser.uid,
-                displayName: userData.name || "Usuário",
-              });
-            } else {
-              setUser({ uid: firebaseUser.uid, displayName: "Usuário" });
-            }
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            setUser({
+              uid: firebaseUser.uid,
+              displayName: userData.name || "Usuário",
+            });
+          } else {
+            setUser({ uid: firebaseUser.uid, displayName: "Usuário" });
           }
         } catch (error) {
           console.error("Erro ao buscar dados do usuário:", error);
-          if (isMounted) {
-            setUser({ uid: firebaseUser.uid, displayName: "Usuário" }); // Fallback seguro em caso de erro
-          }
+          setUser({ uid: firebaseUser.uid, displayName: "Usuário" });
         }
       } else {
-        if (isMounted) setUser(null); // Limpa o usuário se deslogou
+        setUser(null);
       }
+      setLoading(false); // Finaliza o loading global
     });
 
-    // Função de Limpeza (Cleanup): Para de ouvir o Firebase quando o hook é desmontado
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
-  return user;
+  return (
+    <AuthContext.Provider value={{ user }}>
+      {/* Só exibe a aplicação quando terminar de verificar o Firebase */}
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+}
+
+// 3. O hook agora apenas consome o contexto (não quebra o resto do seu app)
+export function useAuth() {
+  const context = useContext(AuthContext);
+  return context?.user || null;
 }

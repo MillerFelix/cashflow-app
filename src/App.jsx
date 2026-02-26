@@ -1,12 +1,13 @@
 import React from "react";
 import AppRoutes from "./routes";
+import { AuthProvider } from "./hooks/useAuth";
 
-/**
- * Componente Raiz (App)
- * Ponto de entrada da aplicação. Apenas invoca o gerenciador de rotas.
- */
 function App() {
-  return <AppRoutes />;
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
+  );
 }
 
 export default App;
