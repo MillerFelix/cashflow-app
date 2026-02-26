@@ -14,13 +14,13 @@ export default defineConfig({
         "pwa-512x512.png",
       ],
       manifest: {
-        name: "Cash$Flow Oficial",
-        short_name: "CashFlow",
+        name: "Cash$Flow",
+        short_name: "Cash$Flow",
         description: "Seu assistente financeiro inteligente",
         theme_color: "#22c55e",
-        background_color: "#f3f4f6",
+        background_color: "#22c55e",
         display: "standalone",
-        start_url: "/?v=2",
+        start_url: "/?v=3",
         orientation: "portrait",
         icons: [
           {
