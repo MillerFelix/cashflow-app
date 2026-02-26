@@ -27,6 +27,10 @@ function Footer() {
             CashFlow developed by{" "}
             <span className="font-semibold">Miller Felix</span> &copy; 2024
           </p>
+          {/* Tag de Versão adicionada aqui */}
+          <p className="text-[10px] text-green-200/50 mt-1 font-mono tracking-widest uppercase">
+            v1.0.0-Beta
+          </p>
         </div>
       </footer>
 

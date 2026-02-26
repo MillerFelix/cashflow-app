@@ -6,18 +6,19 @@ import {
   FaExchangeAlt,
   FaCreditCard,
   FaBullseye,
-  FaUser,
   FaTimes,
   FaArrowRight,
   FaArrowLeft,
   FaCheck,
   FaCode,
   FaLinkedin,
-  FaGithub,
+  FaInstagram,
+  FaEnvelope,
   FaWallet,
   FaLightbulb,
   FaInfoCircle,
   FaExclamationCircle,
+  FaMobileAlt,
 } from "react-icons/fa";
 
 function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
@@ -38,11 +39,11 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
     {
       id: "welcome",
       title: "Bem-vindo ao CashFlow",
-      icon: <FaWallet className="text-5xl text-green-600" />,
+      icon: <FaWallet className="text-4xl sm:text-5xl text-green-600" />,
       color: "bg-green-50",
       content: (
         <div className="space-y-3 text-center">
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm sm:text-base">
             Sua jornada para a liberdade financeira começa agora. Vamos fazer um
             tour rápido pelo sistema.
           </p>
@@ -56,7 +57,7 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
     {
       id: "dashboard",
       title: "Dashboard Inteligente",
-      icon: <FaChartPie className="text-5xl text-blue-500" />,
+      icon: <FaChartPie className="text-4xl sm:text-5xl text-blue-500" />,
       color: "bg-blue-50",
       content: (
         <div className="text-left text-sm text-gray-600 space-y-2">
@@ -78,7 +79,7 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
     {
       id: "transactions",
       title: "Transações",
-      icon: <FaExchangeAlt className="text-5xl text-purple-500" />,
+      icon: <FaExchangeAlt className="text-4xl sm:text-5xl text-purple-500" />,
       color: "bg-purple-50",
       content: (
         <div className="text-left text-sm text-gray-600 space-y-2">
@@ -96,7 +97,7 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
     {
       id: "cards",
       title: "Cartões de Crédito",
-      icon: <FaCreditCard className="text-5xl text-orange-500" />,
+      icon: <FaCreditCard className="text-4xl sm:text-5xl text-orange-500" />,
       color: "bg-orange-50",
       content: (
         <div className="text-left text-sm text-gray-600 space-y-2">
@@ -113,11 +114,11 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
     {
       id: "goals",
       title: "Metas & Objetivos",
-      icon: <FaBullseye className="text-5xl text-red-500" />,
+      icon: <FaBullseye className="text-4xl sm:text-5xl text-red-500" />,
       color: "bg-red-50",
       content: (
-        <div className="text-left text-sm text-gray-600">
-          <p className="mb-2">
+        <div className="text-left text-sm text-gray-600 space-y-2">
+          <p>
             <strong>Orçamentos:</strong> Defina limites para não estourar.
           </p>
           <p>
@@ -131,15 +132,52 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
       id: "balance-setup",
       isBalanceStep: true,
       title: "Ponto de Partida",
-      icon: <FaWallet className="text-5xl text-green-600" />,
+      icon: <FaWallet className="text-4xl sm:text-5xl text-green-600" />,
       color: "bg-green-100",
       content: null,
+    },
+    {
+      id: "install-pwa",
+      title: "Tenha o App no Celular",
+      icon: <FaMobileAlt className="text-4xl sm:text-5xl text-teal-500" />,
+      color: "bg-teal-50",
+      content: (
+        <div className="text-left text-gray-600 space-y-2 w-full">
+          <p className="text-center mb-2 text-xs sm:text-sm">
+            Use o CashFlow direto da sua tela inicial!
+          </p>
+          <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-gray-100 shadow-sm flex items-start gap-3">
+            <div className="text-xl sm:text-2xl mt-0.5">🤖</div>
+            <div>
+              <p className="font-bold text-gray-800 text-sm">
+                No Android (Chrome)
+              </p>
+              <p className="text-[11px] sm:text-xs text-gray-500 leading-snug">
+                Toque na mensagem <strong>"Adicionar à Tela Inicial"</strong> ou
+                vá no menu do navegador e instale.
+              </p>
+            </div>
+          </div>
+          <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-gray-100 shadow-sm flex items-start gap-3">
+            <div className="text-xl sm:text-2xl mt-0.5">🍏</div>
+            <div>
+              <p className="font-bold text-gray-800 text-sm">
+                No iPhone (Safari)
+              </p>
+              <p className="text-[11px] sm:text-xs text-gray-500 leading-snug">
+                Toque em <strong>"Compartilhar"</strong> na barra inferior e
+                escolha <strong>"Adicionar à Tela de Início"</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+      ),
     },
     {
       id: "developer",
       isDeveloper: true,
       title: "Sobre o Desenvolvedor",
-      icon: <FaCode className="text-4xl text-gray-800" />,
+      icon: <FaCode className="text-3xl sm:text-4xl text-gray-800" />,
       color: "bg-gray-200",
       content: null,
     },
@@ -154,7 +192,6 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
   const getNumericValue = (val) => {
     if (!val) return 0;
     if (typeof val === "number") return val;
-    // Remove tudo que não é dígito e divide por 100 (para considerar centavos)
     const clean = val.toString().replace(/\D/g, "");
     return parseInt(clean, 10) / 100 || 0;
   };
@@ -163,7 +200,7 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
     if (activeStepData.isBalanceStep && isOnboarding) {
       const numericVal = getNumericValue(initialBalance);
       if (numericVal <= 0) {
-        setError("Por favor, insira um valor maior que zero para continuar.");
+        setError("Por favor, insira um valor maior que zero.");
         return;
       }
       setError("");
@@ -202,15 +239,15 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
     if (activeStepData.isBalanceStep) {
       return (
         <div className="flex flex-col items-center text-center animate-fadeIn w-full">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
-            <FaWallet className="text-4xl text-green-600" />
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-green-100 rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-sm">
+            <FaWallet className="text-3xl sm:text-4xl text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">
             Defina seu Saldo Inicial
           </h2>
-          <p className="text-gray-500 mb-6 text-sm max-w-xs mx-auto leading-relaxed">
+          <p className="text-gray-500 mb-4 sm:mb-6 text-xs sm:text-sm max-w-xs mx-auto leading-relaxed">
             Para o CashFlow funcionar, precisamos saber quanto você tem hoje.
-            Some o saldo de todas as suas contas bancárias e carteira.
+            Some o saldo de todas as suas contas bancárias.
           </p>
           <div className="w-full max-w-xs mx-auto">
             <MoneyInput
@@ -234,9 +271,8 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
     if (activeStepData.isDeveloper) {
       return (
         <div className="flex flex-col items-center text-center animate-fadeIn w-full">
-          <div className="mb-5 relative">
-            <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-green-500 shadow-lg mx-auto bg-gray-200">
-              {/* CORREÇÃO: referrerPolicy para desbloquear imagem do GitHub */}
+          <div className="mb-3 sm:mb-5 relative">
+            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-green-500 shadow-lg mx-auto bg-gray-200">
               <img
                 src="https://github.com/millerfelix.png"
                 alt="Miller Felix"
@@ -250,39 +286,54 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
               />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
             Miller Felix
           </h2>
-          <p className="text-green-600 font-bold text-xs uppercase tracking-widest mb-6">
+          <p className="text-green-600 font-bold text-[10px] sm:text-xs uppercase tracking-widest mb-3 sm:mb-4">
             Fullstack Developer
           </p>
-          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 text-sm text-gray-600 italic mb-6 w-full shadow-sm">
-            "Criei o CashFlow com o objetivo de simplificar a gestão financeira
-            pessoal. Espero que esta ferramenta ajude você a realizar seus
-            sonhos!"
+          <div className="bg-gray-50 p-3 sm:p-4 rounded-2xl border border-gray-100 text-xs sm:text-sm text-gray-600 italic mb-4 sm:mb-5 w-full shadow-sm">
+            "Criei o CashFlow para simplificar a gestão financeira. Espero que
+            te ajude a realizar seus sonhos!"
           </div>
-          <div className="flex justify-center gap-8 w-full">
+
+          <div className="flex justify-center gap-4 sm:gap-6 w-full">
             <a
               href="https://www.linkedin.com/in/millerfelix"
               target="_blank"
               rel="noreferrer"
               className="flex flex-col items-center text-blue-600 hover:text-blue-800 transition-colors gap-1 group"
             >
-              <div className="p-3 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
-                <FaLinkedin className="text-2xl" />
+              <div className="p-2 sm:p-3 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
+                <FaLinkedin className="text-xl sm:text-2xl" />
               </div>
-              <span className="text-xs font-bold">LinkedIn</span>
+              <span className="text-[10px] sm:text-xs font-bold">LinkedIn</span>
             </a>
+
             <a
-              href="https://github.com/millerfelix"
+              href="https://instagram.com/millerfelix_"
               target="_blank"
               rel="noreferrer"
-              className="flex flex-col items-center text-gray-800 hover:text-black transition-colors gap-1 group"
+              className="flex flex-col items-center text-pink-600 hover:text-pink-800 transition-colors gap-1 group"
             >
-              <div className="p-3 bg-gray-100 rounded-full group-hover:bg-gray-200 transition-colors">
-                <FaGithub className="text-2xl" />
+              <div className="p-2 sm:p-3 bg-pink-50 rounded-full group-hover:bg-pink-100 transition-colors">
+                <FaInstagram className="text-xl sm:text-2xl" />
               </div>
-              <span className="text-xs font-bold">GitHub</span>
+              <span className="text-[10px] sm:text-xs font-bold">
+                Instagram
+              </span>
+            </a>
+
+            <a
+              href="mailto:contato.millerfelix@gmail.com"
+              target="_blank"
+              rel="noreferrer"
+              className="flex flex-col items-center text-gray-600 hover:text-gray-800 transition-colors gap-1 group"
+            >
+              <div className="p-2 sm:p-3 bg-gray-100 rounded-full group-hover:bg-gray-200 transition-colors">
+                <FaEnvelope className="text-xl sm:text-2xl" />
+              </div>
+              <span className="text-[10px] sm:text-xs font-bold">Suporte</span>
             </a>
           </div>
         </div>
@@ -292,11 +343,11 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
     return (
       <div className="flex flex-col items-center text-center animate-fadeIn w-full">
         <div
-          className={`w-28 h-28 ${activeStepData.color} rounded-full flex items-center justify-center mb-6 shadow-sm mx-auto transition-colors duration-300`}
+          className={`w-20 h-20 sm:w-28 sm:h-28 ${activeStepData.color} rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-sm mx-auto transition-colors duration-300`}
         >
           {activeStepData.icon}
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">
           {activeStepData.title}
         </h2>
         <div className="w-full max-w-sm mx-auto">{activeStepData.content}</div>
@@ -305,30 +356,33 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col min-h-[500px] max-h-[90vh] relative animate-scaleIn">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] md:min-h-[500px] relative animate-scaleIn">
         {!isOnboarding && (
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-all z-10"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-all z-10"
           >
             <FaTimes size={20} />
           </button>
         )}
 
-        <div className="h-1.5 w-full bg-gray-100">
+        <div className="h-1.5 w-full bg-gray-100 flex-shrink-0">
           <div
             className="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-300 ease-out"
             style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
           ></div>
         </div>
 
-        <div className="p-8 flex-grow flex items-center justify-center">
-          {renderStepContent()}
+        {/* Adicionado overflow-y-auto aqui para permitir rolagem no celular se necessário */}
+        <div className="p-5 sm:p-8 flex-grow flex flex-col items-center justify-center overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+          <div className="my-auto w-full flex flex-col items-center">
+            {renderStepContent()}
+          </div>
         </div>
 
-        <div className="p-6 bg-gray-50 border-t border-gray-100 flex flex-col gap-4">
+        <div className="p-4 sm:p-6 bg-gray-50 border-t border-gray-100 flex flex-col gap-4 flex-shrink-0">
           <div className="flex gap-3">
             <button
               type="button"
@@ -343,7 +397,7 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
               type="button"
               onClick={handleNext}
               className={`flex-1 py-3 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 
-              ${error ? "bg-red-500 hover:bg-red-600" : "bg-gray-900 hover:bg-black shadow-gray-300"}`}
+              ${error ? "bg-red-500 hover:bg-red-600" : "bg-green-700 hover:bg-green-800 shadow-green-700/30"}`}
             >
               {currentStep === totalSteps - 1 ? (
                 isOnboarding ? (

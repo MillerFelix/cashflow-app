@@ -13,7 +13,6 @@ import {
   incomeCategories,
 } from "../components/category/CategoryList";
 import ConfirmationModal from "../components/common/ConfirmationModal";
-import NoData from "../components/common/NoData";
 import { generateMonthlyReportPDF } from "../utils/pdfGenerator";
 import {
   FaFilePdf,
@@ -22,6 +21,7 @@ import {
   FaArrowDown,
   FaPlus,
   FaMinus,
+  FaExchangeAlt, // <-- Ícone novo importado aqui!
 } from "react-icons/fa";
 
 const getCurrentMonthYear = () => {
@@ -260,18 +260,36 @@ function Transactions() {
 
         <StatusMessage message={message} />
 
-        {/* LISTA */}
-        {loading && (
+        {/* LOADING */}
+        {loading || loadingRemove ? (
           <div className="py-10">
             <Loader />
           </div>
-        )}
-        {loadingRemove && (
-          <div className="py-10">
-            <Loader />
+        ) : null}
+
+        {/* ESTADO VAZIO (QUANDO NÃO HÁ DADOS FILTRADOS) */}
+        {!loading && filteredTransactions.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100 text-center px-4 animate-fadeIn">
+            <div className="bg-gray-50 p-6 rounded-full mb-6">
+              <FaExchangeAlt className="text-5xl text-gray-300" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              Nenhuma transação encontrada
+            </h3>
+            <p className="text-gray-500 max-w-sm mb-8">
+              Não encontramos nenhum registro financeiro para o período e os
+              filtros selecionados.
+            </p>
+            <button
+              onClick={clearFilters}
+              className="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-black transition-colors active:scale-95"
+            >
+              Limpar Filtros
+            </button>
           </div>
         )}
 
+        {/* LISTA DE TRANSAÇÕES */}
         {!loading && filteredTransactions.length > 0 && (
           <div className="flex flex-col gap-6 animate-fadeIn">
             <RecurringSection
