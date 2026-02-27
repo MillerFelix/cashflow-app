@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { updateEmail, updatePassword } from "firebase/auth";
-import { db } from "../firebase";
+// Substituímos o updateEmail pelo verifyBeforeUpdateEmail
+import { verifyBeforeUpdateEmail, updatePassword } from "firebase/auth";
+import { db, auth } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 
 import Button from "../components/common/Button";
@@ -56,7 +57,11 @@ function Profile() {
           setPayDay2(data.payDay2 || "");
           setFinancialFocus(data.financialFocus || "control");
         }
-        if (user?.email) setNewEmail(user.email);
+
+        // Pega o e-mail diretamente da instância oficial do Firebase
+        if (auth.currentUser?.email) {
+          setNewEmail(auth.currentUser.email);
+        }
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
       } finally {
@@ -64,7 +69,7 @@ function Profile() {
       }
     }
     fetchProfile();
-  }, [userId, user]);
+  }, [userId]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -73,6 +78,7 @@ function Profile() {
     setErrorType("");
 
     try {
+      // 1. Salvar os dados do perfil (Firestore)
       await updateDoc(doc(db, "users", userId), {
         name,
         phone,
@@ -84,39 +90,78 @@ function Profile() {
       });
 
       let authMessage = "";
+      let hasAuthError = false;
 
+      // 2. Salvar Segurança com o Objeto Oficial do Firebase
       if (showSecurity) {
-        if (newEmail !== user.email) {
-          await updateEmail(user, newEmail);
-          authMessage += " E-mail atualizado.";
-        }
-        if (newPassword) {
-          if (newPassword !== confirmPassword)
-            throw new Error("As senhas não conferem.");
-          if (newPassword.length < 6)
-            throw new Error("A senha deve ter pelo menos 6 caracteres.");
-          await updatePassword(user, newPassword);
-          authMessage += " Senha atualizada.";
+        try {
+          const currentUser = auth.currentUser;
+          if (!currentUser) throw new Error("Sessão não encontrada.");
+
+          if (
+            newEmail &&
+            newEmail.trim() !== "" &&
+            newEmail.trim() !== currentUser.email
+          ) {
+            // Nova regra de segurança do Firebase: Exige validação do novo e-mail antes de mudar
+            await verifyBeforeUpdateEmail(currentUser, newEmail.trim());
+            authMessage +=
+              " Um link de verificação foi enviado para o seu novo e-mail. Confirme lá para alterar.";
+          }
+
+          if (newPassword) {
+            if (newPassword !== confirmPassword) {
+              throw new Error("As senhas não conferem.");
+            }
+            if (newPassword.length < 6) {
+              throw new Error("A senha deve ter pelo menos 6 caracteres.");
+            }
+            await updatePassword(currentUser, newPassword);
+            authMessage += " Senha atualizada.";
+          }
+        } catch (authError) {
+          hasAuthError = true;
+          console.error("Erro Auth:", authError);
+
+          let authErrorMsg = "Erro ao atualizar credenciais.";
+          if (authError.code === "auth/requires-recent-login") {
+            authErrorMsg =
+              "Por segurança, faça logout e entre novamente para alterar e-mail ou senha.";
+          } else if (authError.code === "auth/email-already-in-use") {
+            authErrorMsg = "Este e-mail já está sendo usado por outra conta.";
+          } else if (authError.code === "auth/invalid-email") {
+            authErrorMsg = "Formato de e-mail inválido.";
+          } else if (authError.message) {
+            authErrorMsg = authError.message.replace(/Firebase: /g, "");
+          }
+
+          setErrorType("warning");
+          setMessage(`Perfil salvo, mas a segurança falhou: ${authErrorMsg}`);
         }
       }
 
-      setErrorType("success");
-      setMessage(`Dados salvos com sucesso!${authMessage}`);
-      setNewPassword("");
-      setConfirmPassword("");
-      if (authMessage) setShowSecurity(false);
-
-      setTimeout(() => setMessage(""), 4000);
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
+      // 3. Sucesso Total
+      if (!hasAuthError) {
+        setErrorType("success");
+        setMessage(`Perfil atualizado com sucesso!${authMessage}`);
+        setNewPassword("");
+        setConfirmPassword("");
+        if (authMessage) setShowSecurity(false);
+      }
+    } catch (dbError) {
+      console.error("Erro ao salvar perfil:", dbError);
       setErrorType("error");
-      if (error.code === "auth/requires-recent-login")
-        setMessage("Para alterar senha/email, faça logout e entre novamente.");
-      else if (error.code === "auth/email-already-in-use")
-        setMessage("Este e-mail já está em uso.");
-      else setMessage(error.message || "Erro ao salvar alterações.");
+      setMessage(
+        "Erro ao salvar seus dados de perfil. Verifique sua conexão e tente novamente.",
+      );
     } finally {
       setSaving(false);
+
+      // UX Aprimorado: Rola suavemente para o topo da página para o usuário ver o feedback!
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      // Limpa a mensagem após 8 segundos (tempo maior para lerem instruções grandes)
+      setTimeout(() => setMessage(""), 8000);
     }
   };
 
@@ -146,7 +191,14 @@ function Profile() {
 
         {message && (
           <div
-            className={`mb-6 p-4 rounded-xl text-sm font-bold text-center border animate-fadeIn ${errorType === "error" ? "bg-red-50 text-red-600 border-red-200" : "bg-green-50 text-green-700 border-green-200"}`}
+            className={`mb-6 p-4 rounded-xl text-sm font-bold text-center border animate-fadeIn shadow-sm
+              ${
+                errorType === "error"
+                  ? "bg-red-50 text-red-600 border-red-200"
+                  : errorType === "warning"
+                    ? "bg-orange-50 text-orange-700 border-orange-200"
+                    : "bg-green-50 text-green-700 border-green-200"
+              }`}
           >
             {message}
           </div>
@@ -160,7 +212,7 @@ function Profile() {
           <div className="lg:col-span-1 flex flex-col gap-6">
             <AvatarCard
               name={name}
-              email={user?.email}
+              email={auth.currentUser?.email || ""} // Email exibido agora vem direto do Firebase oficial
               selectedAvatar={selectedAvatar}
               setSelectedAvatar={setSelectedAvatar}
             />

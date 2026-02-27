@@ -49,7 +49,7 @@ function HelpModal({ isOpen, onClose, isOnboarding = false, onSaveBalance }) {
           </p>
           <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl text-xs text-blue-700 font-medium">
             <FaInfoCircle className="inline mr-1" /> Você pode rever este
-            tutorial clicando no botão de ajuda (?) flutuante.
+            tutorial clicando no botão de ajuda (!) flutuante.
           </div>
         </div>
       ),
