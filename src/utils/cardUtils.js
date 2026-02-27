@@ -55,6 +55,10 @@ export const processCardInvoices = (cards, transactions) => {
 
       const invoiceKey = `${invoiceYear}-${String(invoiceMonth + 1).padStart(2, "0")}`;
 
+      if (t.isFixed && invoiceKey > openInvoiceKey) {
+        return; // Pula essa transação neste momento
+      }
+
       if (!invoices[invoiceKey]) {
         invoices[invoiceKey] = {
           id: invoiceKey,

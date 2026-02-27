@@ -8,7 +8,6 @@ import { expenseCategories, incomeCategories } from "../category/CategoryList";
 import { CategoryService } from "../../services/categoryService";
 import { useAuth } from "../../hooks/useAuth";
 import { useCards } from "../../hooks/useCards";
-// Adicionado FaUniversity abaixo
 import {
   FaMoneyBillWave,
   FaCreditCard,
@@ -40,11 +39,10 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
   const categories = type === "credit" ? incomeCategories : expenseCategories;
   const isEditing = !!(initialData && initialData.id);
 
-  // --- NOVA LISTA DE MÉTODOS ---
   const paymentMethods = [
     { id: "money", label: "Dinheiro", icon: <FaMoneyBillWave /> },
     { id: "pix", label: "Pix", icon: <FaQrcode /> },
-    { id: "transfer", label: "Transf.", icon: <FaUniversity /> }, // Nova opção
+    { id: "transfer", label: "Transf.", icon: <FaUniversity /> },
     { id: "debit", label: "Débito", icon: <FaRegCreditCard /> },
     { id: "credit", label: "Crédito", icon: <FaCreditCard /> },
   ];
@@ -202,12 +200,10 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
             onAddNewSubcategory={handleAddNewSubcategory}
           />
 
-          {/* SELETOR DE MÉTODO DE PAGAMENTO (AGORA COM 5 OPÇÕES EM GRID) */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
               Forma de Pagamento
             </label>
-            {/* Ajustei o grid para grid-cols-5 para caber todos, ou quebra em telas pequenas */}
             <div className="grid grid-cols-5 gap-1.5">
               {paymentMethods.map((method) => (
                 <button
@@ -276,7 +272,7 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
                     type="button"
                     onClick={() => {
                       onClose();
-                      navigate("/app/cards");
+                      navigate("/cards");
                     }}
                     className="text-xs bg-orange-200 text-orange-900 px-3 py-1.5 rounded-lg font-bold hover:bg-orange-300 transition-colors"
                   >

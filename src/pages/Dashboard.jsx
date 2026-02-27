@@ -88,8 +88,7 @@ function Dashboard() {
     localStorage.setItem("balanceVisibility", isVisible);
   }, [isVisible]);
 
-  // Hook isolado que processa toda a matemática baseada nos dados do Firebase
-  const metrics = useDashboardMetrics(transactions, userProfile);
+  const metrics = useDashboardMetrics(transactions, userProfile, cards);
 
   const handleSaveInitialBalance = async (initialValueRaw) => {
     const value =
@@ -126,7 +125,6 @@ function Dashboard() {
       )}
 
       <div className="max-w-7xl mx-auto flex flex-col gap-6">
-        {/* Cabeçalho Isolado */}
         <DashboardHeader
           userProfile={userProfile}
           todayFormatted={metrics.todayFormatted}
@@ -135,7 +133,6 @@ function Dashboard() {
           navigate={navigate}
         />
 
-        {/* Cards de Métricas Isolados */}
         <DashboardCards
           transactionsLoading={transactionsLoading}
           isVisible={isVisible}
@@ -146,7 +143,6 @@ function Dashboard() {
           formatCurrency={metrics.formatCurrency}
         />
 
-        {/* Rankings e Insights Isolados */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <CategoryRankingCard
             categoryRanking={metrics.categoryRanking}
@@ -160,7 +156,6 @@ function Dashboard() {
           />
         </div>
 
-        {/* Calendário */}
         <div>
           <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider flex items-center gap-2 ml-1">
             <FaCalendarAlt className="text-gray-400" /> Agenda Financeira

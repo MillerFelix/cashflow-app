@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Button from "../common/Button";
 import TextInput from "../common/TextInput";
 import MoneyInput from "../common/MoneyInput";
+import Loader from "../common/Loader";
 
 const CARD_GRADIENTS = [
   { label: "Nubank", value: "from-purple-700 to-purple-500" },
@@ -19,9 +20,11 @@ function CardModal({ isOpen, onClose, onSave, editingCard }) {
   const [closingDay, setClosingDay] = useState("");
   const [dueDay, setDueDay] = useState("");
   const [color, setColor] = useState(CARD_GRADIENTS[0].value);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setIsSaving(false);
       if (editingCard) {
         setName(editingCard.name);
         setLimit((editingCard.limit * 100).toString());
@@ -40,15 +43,21 @@ function CardModal({ isOpen, onClose, onSave, editingCard }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave({
-      name,
-      limit: parseFloat(limit) / 100,
-      closingDay: parseInt(closingDay, 10),
-      dueDay: parseInt(dueDay, 10),
-      color,
-    });
+    setIsSaving(true);
+
+    try {
+      await onSave({
+        name,
+        limit: parseFloat(limit) / 100,
+        closingDay: parseInt(closingDay, 10),
+        dueDay: parseInt(dueDay, 10),
+        color,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -123,13 +132,15 @@ function CardModal({ isOpen, onClose, onSave, editingCard }) {
           <div className="flex gap-3 mt-6">
             <Button
               type="submit"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/30"
+              disabled={isSaving}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/30 flex items-center justify-center gap-2"
             >
-              Salvar
+              {isSaving ? <Loader size="small" color="white" /> : "Salvar"}
             </Button>
             <Button
               type="button"
               onClick={onClose}
+              disabled={isSaving}
               bgColor="bg-gray-100"
               hoverColor="hover:bg-gray-200"
               className="flex-1 text-gray-700 shadow-none border border-gray-200"
