@@ -32,20 +32,28 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
   const [userSubcategories, setUserSubcategories] = useState([]);
 
   const [isFixed, setIsFixed] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("debit");
+
+  const [paymentMethod, setPaymentMethod] = useState(
+    type === "credit" ? "pix" : "debit",
+  );
   const [selectedCardId, setSelectedCardId] = useState("");
   const [error, setError] = useState("");
 
   const categories = type === "credit" ? incomeCategories : expenseCategories;
   const isEditing = !!(initialData && initialData.id);
 
-  const paymentMethods = [
+  const allPaymentMethods = [
     { id: "money", label: "Dinheiro", icon: <FaMoneyBillWave /> },
     { id: "pix", label: "Pix", icon: <FaQrcode /> },
     { id: "transfer", label: "Transf.", icon: <FaUniversity /> },
     { id: "debit", label: "Débito", icon: <FaRegCreditCard /> },
     { id: "credit", label: "Crédito", icon: <FaCreditCard /> },
   ];
+
+  const paymentMethods =
+    type === "credit"
+      ? allPaymentMethods.filter((m) => m.id !== "credit" && m.id !== "debit")
+      : allPaymentMethods;
 
   useEffect(() => {
     const fetchSubcategories = async () => {
@@ -67,10 +75,12 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
       setSelectedCategory(initialData.category || "");
       setSelectedSubcategory(initialData.subcategory || "");
       setIsFixed(initialData.isFixed || false);
-      setPaymentMethod(initialData.paymentMethod || "debit");
+      setPaymentMethod(
+        initialData.paymentMethod || (type === "credit" ? "pix" : "debit"),
+      );
       setSelectedCardId(initialData.cardId || "");
     }
-  }, [initialData]);
+  }, [initialData, type]);
 
   const handleAddNewSubcategory = useCallback(
     async (parentCategory, subName) => {
@@ -204,7 +214,9 @@ function TransactionModal({ type, onClose, onSave, initialData }) {
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
               Forma de Pagamento
             </label>
-            <div className="grid grid-cols-5 gap-1.5">
+            <div
+              className={`grid gap-1.5 ${type === "credit" ? "grid-cols-3" : "grid-cols-5"}`}
+            >
               {paymentMethods.map((method) => (
                 <button
                   key={method.id}
